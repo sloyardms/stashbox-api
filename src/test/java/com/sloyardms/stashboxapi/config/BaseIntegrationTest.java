@@ -1,12 +1,16 @@
 package com.sloyardms.stashboxapi.config;
 
 import io.restassured.RestAssured;
+import io.restassured.http.ContentType;
+import io.restassured.specification.RequestSpecification;
 import org.junit.jupiter.api.BeforeEach;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.util.Assert;
 import org.testcontainers.junit.jupiter.Testcontainers;
+
+import static io.restassured.RestAssured.given;
 
 /**
  * Abstract base class for integration tests.
@@ -16,6 +20,10 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @Testcontainers
 public abstract class BaseIntegrationTest extends TestContainersConfig {
+
+    private static final String KEYCLOAK_TOKEN_PATH = "/realms/" + KEYCLOAK_REALM + "/protocol/openid-connect/token";
+    private static final String KEYCLOAK_CLIENT_ID = "stashbox-nextjs-client";
+    private static final String KEYCLOAK_GRANT_TYPE = "password";
 
     @LocalServerPort
     private int port;
@@ -29,13 +37,16 @@ public abstract class BaseIntegrationTest extends TestContainersConfig {
     public String normalUserUsername;
 
     @Value("${tests.users.normal.password}")
-    public String normalUserPassword;
+    private String normalUserPassword;
 
     @Value("${tests.users.admin.username}")
     public String adminUserUsername;
 
     @Value("${tests.users.admin.password}")
-    public String adminUserPassword;
+    private String adminUserPassword;
+
+    private String normalUserToken;
+    private String adminUserToken;
 
     @BeforeEach
     void setupTestBase() {
@@ -46,6 +57,39 @@ public abstract class BaseIntegrationTest extends TestContainersConfig {
                 "defaultPageSize must be greater than 5, current value is " + defaultPageSize);
         smallPageSize = defaultPageSize - 5;
         largePageSize = defaultPageSize;
+
+        normalUserToken = generateAccessToken(normalUserUsername, normalUserPassword);
+        adminUserToken = generateAccessToken(adminUserUsername, adminUserPassword);
+    }
+
+    public RequestSpecification normalUserRequest() {
+        return authenticatedRequest(normalUserToken);
+    }
+
+    public RequestSpecification adminUserRequest() {
+        return authenticatedRequest(adminUserToken);
+    }
+
+    private RequestSpecification authenticatedRequest(String token) {
+        return given()
+                .auth().oauth2(token)
+                .contentType(ContentType.JSON)
+                .accept(ContentType.JSON);
+    }
+
+    private String generateAccessToken(String username, String password) {
+        return given()
+                .contentType("application/x-www-form-urlencoded")
+                .formParam("grant_type", KEYCLOAK_GRANT_TYPE)
+                .formParam("client_id", KEYCLOAK_CLIENT_ID)
+                .formParam("username", username)
+                .formParam("password", password)
+                .when()
+                .post(KEYCLOAK_CONTAINER.getAuthServerUrl() + KEYCLOAK_TOKEN_PATH)
+                .then()
+                .statusCode(200)
+                .extract()
+                .path("access_token");
     }
 
 }

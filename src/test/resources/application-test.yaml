@@ -19,4 +19,3 @@ tests:
     admin:
       username: admin_user
       password: password
-
