@@ -1,8 +1,8 @@
 package com.sloyardms.stashboxapi.security.handler;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.sloyardms.stashboxapi.error.ErrorCatalog;
-import com.sloyardms.stashboxapi.error.ProblemDetailFactory;
+import com.sloyardms.stashboxapi.exception.ErrorCatalog;
+import com.sloyardms.stashboxapi.exception.ProblemDetailFactory;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;

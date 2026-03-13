@@ -1,4 +1,4 @@
-package com.sloyardms.stashboxapi.error;
+package com.sloyardms.stashboxapi.exception;
 
 import lombok.Getter;
 import org.springframework.http.HttpStatus;
