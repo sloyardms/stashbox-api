@@ -1,5 +1,6 @@
 package com.sloyardms.stashboxapi.config;
 
+import dasniko.testcontainers.keycloak.KeycloakContainer;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.testcontainers.containers.PostgreSQLContainer;
@@ -14,22 +15,32 @@ public abstract class TestContainersConfig {
 
     // Image names
     private static final DockerImageName POSTGRES_IMAGE = DockerImageName.parse("postgres:18.2");
+    private static final DockerImageName KEYCLOAK_IMAGE = DockerImageName.parse("quay.io/keycloak/keycloak:26.5");
 
-    // Contaniers
-    private static final PostgreSQLContainer<?> POSTGRES_CONTAINER;
+    protected static final String KEYCLOAK_REALM = "sloyard";
+
+    // Containers
+    protected static final PostgreSQLContainer<?> POSTGRES_CONTAINER =
+            new PostgreSQLContainer<>(POSTGRES_IMAGE);
+
+    protected static final KeycloakContainer KEYCLOAK_CONTAINER =
+            new KeycloakContainer(KEYCLOAK_IMAGE.toString())
+                    .withRealmImportFile("keycloak/sloyard-realm-test.json");
 
     static {
-        POSTGRES_CONTAINER = new PostgreSQLContainer<>(POSTGRES_IMAGE)
-                .withReuse(true);
-
         POSTGRES_CONTAINER.start();
+        KEYCLOAK_CONTAINER.start();
     }
 
     @DynamicPropertySource
-    static void configurePostgresqlContainer(DynamicPropertyRegistry registry) {
+    static void configureContainers(DynamicPropertyRegistry registry) {
+        // Postgresql
         registry.add("spring.datasource.url", POSTGRES_CONTAINER::getJdbcUrl);
         registry.add("spring.datasource.username", POSTGRES_CONTAINER::getUsername);
         registry.add("spring.datasource.password", POSTGRES_CONTAINER::getPassword);
+        // Keycloak
+        registry.add("spring.security.oauth2.resourceserver.jwt.issuer-uri",
+                () -> KEYCLOAK_CONTAINER.getAuthServerUrl() + "/realms/" + KEYCLOAK_REALM);
     }
 
 }
