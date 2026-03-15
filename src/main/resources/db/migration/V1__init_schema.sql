@@ -32,7 +32,7 @@ CREATE TABLE user_filters (
     CONSTRAINT user_filters_user_name_unique UNIQUE (user_id, name),
     CONSTRAINT user_filters_user_url_pattern_unique UNIQUE (user_id, url_pattern),
     CONSTRAINT user_filters_priority_positive CHECK (priority >= 0),
-    CONSTRAINT user_filters_extraction_group_positive CHECK (extraction_group > 0)
+    CONSTRAINT user_filters_extraction_group_positive CHECK (extraction_group >= 0)
 );
 
 CREATE TABLE item_groups (
@@ -56,7 +56,9 @@ CREATE TABLE stash_items (
     user_id UUID NOT NULL,
     group_id UUID,
     title TEXT,
+    title_normalized TEXT GENERATED ALWAYS AS (lower(trim(regexp_replace(title, '\s+', ' ', 'g')))) STORED,
     url TEXT,
+    url_normalized TEXT GENERATED ALWAYS AS (lower(trim(url))) STORED,
     description TEXT,
     image_path TEXT,
     is_favorite BOOLEAN NOT NULL DEFAULT false,
@@ -68,8 +70,10 @@ CREATE TABLE stash_items (
     CONSTRAINT stash_items_group_id_fk FOREIGN KEY(group_id) REFERENCES item_groups(id) ON DELETE SET NULL
 
 );
-CREATE INDEX stash_items_user_active_idx ON stash_items(user_id, created_at DESC) WHERE deleted_at IS NULL;
-CREATE INDEX stash_items_user_deleted_idx ON stash_items(user_id, deleted_at DESC) WHERE deleted_at IS NOT NULL;
+CREATE INDEX stash_items_user_group_active_idx ON stash_items(user_id, group_id, created_at DESC) WHERE deleted_at IS NULL;
+CREATE INDEX stash_items_user_group_deleted_idx ON stash_items(user_id, group_id, deleted_at DESC) WHERE deleted_at IS NOT NULL;
+CREATE INDEX stash_items_user_group_title_normalized_idx ON stash_items(user_id, group_id, title_normalized) WHERE deleted_at IS NULL;
+CREATE INDEX stash_items_user_group_url_normalized_idx ON stash_items(user_id, group_id, url_normalized) WHERE deleted_at IS NULL;
 
 CREATE TABLE tags (
     id UUID PRIMARY KEY,
@@ -109,7 +113,7 @@ CREATE TABLE tag_usage (
 CREATE TYPE upload_status_enum AS ENUM (
     'PENDING',
     'PROCESSING',
-    'COMPLETE',
+    'COMPLETED',
     'FAILED'
     );
 
@@ -147,5 +151,5 @@ CREATE TABLE note_files (
     CONSTRAINT note_files_user_id_fk FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE,
     CONSTRAINT note_files_item_note_id_fk FOREIGN KEY(note_id) REFERENCES item_notes(id) ON DELETE CASCADE
 );
-CREATE INDEX note_files_user_note_idx ON note_files(note_id, user_id);
+CREATE INDEX note_files_user_note_idx ON note_files(user_id, note_id);
 
