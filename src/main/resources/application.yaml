@@ -2,11 +2,14 @@ server:
   port: ${STASHBOX_PORT:9001}
 
 stashbox-api:
-  app:
-    routes:
-      saved: /stashbox/saved
-      temp: /stashbox/temp
-      logs: /stashbox/logs
+  routes:
+    saved: /stashbox/saved
+    temp: /stashbox/temp
+    logs: /stashbox/logs
+  security:
+    cors:
+      allowed-origins: ${STASHBOX_CORS_ORIGINS:http://localhost:3001}
+#     public-endpoints: ${STASHBOX_PUBLIC_ENDPOINTS:/actuator/health}
 
 spring:
   application:

@@ -1,4 +1,4 @@
-package com.sloyardms.stashboxapi.error;
+package com.sloyardms.stashboxapi.exception;
 
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
