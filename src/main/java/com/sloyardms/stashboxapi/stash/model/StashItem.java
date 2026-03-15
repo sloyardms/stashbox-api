@@ -4,7 +4,6 @@ import com.sloyardms.stashboxapi.common.model.AuditableEntity;
 import com.sloyardms.stashboxapi.note.model.ItemNote;
 import com.sloyardms.stashboxapi.tag.model.Tag;
 import com.sloyardms.stashboxapi.user.model.User;
-import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
