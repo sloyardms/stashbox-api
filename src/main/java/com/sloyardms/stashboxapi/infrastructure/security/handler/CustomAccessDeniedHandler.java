@@ -25,7 +25,7 @@ public class CustomAccessDeniedHandler implements AccessDeniedHandler {
     private final ObjectMapper objectMapper;
 
     @Override
-    public void handle(HttpServletRequest request, HttpServletResponse response,
+    public void handle(@NonNull HttpServletRequest request, HttpServletResponse response,
                        @NonNull AccessDeniedException accessDeniedException) throws IOException {
 
         ProblemDetail problemDetail = problemDetailFactory.create(ErrorCatalog.FORBIDDEN, request);

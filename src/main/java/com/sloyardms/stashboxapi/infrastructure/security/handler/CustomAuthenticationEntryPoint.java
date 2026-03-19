@@ -25,7 +25,7 @@ public class CustomAuthenticationEntryPoint implements AuthenticationEntryPoint 
     private final ObjectMapper objectMapper;
 
     @Override
-    public void commence(HttpServletRequest request, @NonNull HttpServletResponse response,
+    public void commence(@NonNull HttpServletRequest request, @NonNull HttpServletResponse response,
                          @NonNull AuthenticationException authException) throws IOException {
 
         ProblemDetail problemDetail = problemDetailFactory.create(ErrorCatalog.UNAUTHORIZED, request);

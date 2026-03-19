@@ -1,6 +1,7 @@
 package com.sloyardms.stashboxapi.domain.user.service;
 
 import com.sloyardms.stashboxapi.infrastructure.cache.CacheNames;
+import com.sloyardms.stashboxapi.infrastructure.cache.CacheService;
 import com.sloyardms.stashboxapi.shared.exception.ResourceNotFoundException;
 import com.sloyardms.stashboxapi.domain.user.dto.UpdateUserSettingsRequest;
 import com.sloyardms.stashboxapi.domain.user.dto.UserProfileResponse;
@@ -33,7 +34,7 @@ public class UserService {
     private final UserMapper userMapper;
     private final UserSettingsMapper userSettingsMapper;
 
-    private final CacheManager cacheManager;
+    private final CacheService cacheService;
 
     /**
      * Resolves the application user ID associated with the given user provider ID.
@@ -79,11 +80,7 @@ public class UserService {
                 .orElseThrow(() -> new ResourceNotFoundException("User", "Id", id));
         userRepository.deleteById(id);
 
-        Cache cache = cacheManager.getCache(CacheNames.USER_ID_BY_PROVIDER_ID);
-        if(cache != null){
-
-        }
-        Objects.requireNonNull(cacheManager.getCache(CacheNames.USER_ID_BY_PROVIDER_ID)).evict(CacheNames.USER_ID_BY_PROVIDER_ID);
+        cacheService.evict(CacheNames.USER_ID_BY_PROVIDER_ID, id);
     }
 
     @Transactional(rollbackFor = Exception.class)

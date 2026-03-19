@@ -11,7 +11,7 @@ import java.util.List;
 @Configuration
 public class WebMvcConfig implements WebMvcConfigurer {
 
-    private PageSortArgumentResolver pageSortArgumentResolver;
+    private final PageSortArgumentResolver pageSortArgumentResolver;
 
     @Override
     public void addArgumentResolvers(List<HandlerMethodArgumentResolver> resolvers) {

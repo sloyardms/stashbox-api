@@ -3,6 +3,7 @@ package com.sloyardms.stashboxapi.infrastructure.web;
 import com.sloyardms.stashboxapi.shared.validation.SortableFields;
 import com.sloyardms.stashboxapi.shared.exception.InvalidSortFieldException;
 import lombok.RequiredArgsConstructor;
+import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import org.springframework.core.MethodParameter;
 import org.springframework.data.domain.PageRequest;
@@ -29,10 +30,10 @@ public class PageSortArgumentResolver implements HandlerMethodArgumentResolver {
     }
 
     @Override
-    public @Nullable Object resolveArgument(MethodParameter parameter, @Nullable ModelAndViewContainer mavContainer,
-                                            NativeWebRequest webRequest,
+    public @Nullable Object resolveArgument(@NonNull MethodParameter parameter, @Nullable ModelAndViewContainer mavContainer,
+                                            @NonNull NativeWebRequest webRequest,
                                             @Nullable WebDataBinderFactory binderFactory) throws Exception {
-        Pageable pageable = (Pageable) pageableHandlerMethodArgumentResolver.resolveArgument(
+        Pageable pageable = pageableHandlerMethodArgumentResolver.resolveArgument(
                 parameter, mavContainer, webRequest, binderFactory);
 
         SortableFields annotation = parameter.getParameterAnnotation(SortableFields.class);
