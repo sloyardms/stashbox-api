@@ -1,7 +1,9 @@
 package com.sloyardms.stashboxapi.shared.exception;
 
 import lombok.experimental.UtilityClass;
+import org.springframework.http.ProblemDetail;
 
+import java.util.Map;
 import java.util.UUID;
 
 @UtilityClass

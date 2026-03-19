@@ -13,6 +13,7 @@ import org.springframework.stereotype.Component;
 import java.net.URI;
 import java.time.Instant;
 import java.util.Locale;
+import java.util.Map;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -63,5 +64,11 @@ public class ProblemDetailFactory {
         problem.setProperty("timestamp", Instant.now().toString());
         problem.setProperty(TraceIdProvider.TRACE_ID_KEY, traceId);
         return problem;
+    }
+
+    public String getTraceId(ProblemDetail problemDetail) {
+        Map<String, Object> props = problemDetail.getProperties();
+        if (props == null) return "unknown";
+        return (String) props.getOrDefault(TraceIdProvider.TRACE_ID_KEY, "unknown");
     }
 }

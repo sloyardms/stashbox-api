@@ -3,6 +3,7 @@ package com.sloyardms.stashboxapi.infrastructure.security.handler;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sloyardms.stashboxapi.shared.exception.ErrorCatalog;
 import com.sloyardms.stashboxapi.shared.exception.ProblemDetailFactory;
+import com.sloyardms.stashboxapi.shared.exception.TraceIdProvider;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
@@ -30,8 +31,10 @@ public class CustomAuthenticationEntryPoint implements AuthenticationEntryPoint 
 
         ProblemDetail problemDetail = problemDetailFactory.create(ErrorCatalog.UNAUTHORIZED, request);
 
-        log.warn("Unauthorized access attempt: {} {} - traceId: {}", request.getMethod(), request.getRequestURI(),
-                problemDetail.getProperties().get("traceId"));
+        log.warn("[{}] Unauthorized access attempt from IP {}, Path: {}",
+                problemDetailFactory.getTraceId(problemDetail),
+                request.getRemoteAddr(),
+                request.getRequestURI());
 
         response.setStatus(problemDetail.getStatus());
         response.setContentType(MediaType.APPLICATION_PROBLEM_JSON_VALUE);

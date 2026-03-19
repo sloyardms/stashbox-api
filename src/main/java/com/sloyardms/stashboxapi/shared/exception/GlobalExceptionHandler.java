@@ -9,8 +9,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
-import java.util.Map;
-
 @Slf4j
 @RequiredArgsConstructor
 @RestControllerAdvice
@@ -21,7 +19,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ProblemDetail> handleGenericException(Exception ex, HttpServletRequest req) {
         ProblemDetail problemDetail = problemDetailFactory.create(ErrorCatalog.INTERNAL_ERROR, req);
-        String traceId = getTraceId(problemDetail);
+        String traceId = problemDetailFactory.getTraceId(problemDetail);
         log.error("[{}] Unexpected error, Path: {}", traceId, req.getRequestURI(), ex);
         return ResponseEntity.internalServerError().body(problemDetail);
     }
@@ -32,7 +30,7 @@ public class GlobalExceptionHandler {
         Object[] details = {ex.getResourceType(), ex.getIdentifier(), ex.getValue()};
         ProblemDetail problemDetail = problemDetailFactory.createWithArgs(ErrorCatalog.RESOURCE_NOT_FOUND, details,
                 req);
-        String traceId = getTraceId(problemDetail);
+        String traceId = problemDetailFactory.getTraceId(problemDetail);
 
         problemDetail.setProperty("resourceType", ex.getResourceType());
         problemDetail.setProperty("identifier", ex.getIdentifier());
@@ -43,9 +41,4 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(problemDetail);
     }
 
-    private String getTraceId(ProblemDetail problemDetail) {
-        Map<String, Object> props = problemDetail.getProperties();
-        if (props == null) return "unknown";
-        return (String) props.getOrDefault(TraceIdProvider.TRACE_ID_KEY, "unknown");
-    }
 }

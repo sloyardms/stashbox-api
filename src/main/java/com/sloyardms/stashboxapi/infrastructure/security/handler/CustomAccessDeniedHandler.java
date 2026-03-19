@@ -30,8 +30,10 @@ public class CustomAccessDeniedHandler implements AccessDeniedHandler {
 
         ProblemDetail problemDetail = problemDetailFactory.create(ErrorCatalog.FORBIDDEN, request);
 
-        log.warn("Access denied: {} {} - traceId: {}", request.getMethod(), request.getRequestURI(),
-                problemDetail.getProperties().get("traceId"));
+        log.warn("[{}] Access denied for IP {}, Path: {}",
+                problemDetailFactory.getTraceId(problemDetail),
+                request.getRemoteAddr(),
+                request.getRequestURI());
 
         response.setStatus(problemDetail.getStatus());
         response.setContentType(MediaType.APPLICATION_PROBLEM_JSON_VALUE);
