@@ -19,3 +19,6 @@ tests:
     admin:
       username: admin_user
       password: password
+
+cache:
+  record-stats: true
