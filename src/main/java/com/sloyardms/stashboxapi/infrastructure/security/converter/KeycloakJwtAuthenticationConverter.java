@@ -1,7 +1,8 @@
 package com.sloyardms.stashboxapi.infrastructure.security.converter;
 
-import com.sloyardms.stashboxapi.infrastructure.security.AuthenticatedUser;
+import com.sloyardms.stashboxapi.domain.user.model.User;
 import com.sloyardms.stashboxapi.domain.user.service.UserService;
+import com.sloyardms.stashboxapi.infrastructure.security.AuthenticatedUser;
 import lombok.RequiredArgsConstructor;
 import org.springframework.core.convert.converter.Converter;
 import org.springframework.security.authentication.AbstractAuthenticationToken;
@@ -36,10 +37,10 @@ public class KeycloakJwtAuthenticationConverter implements Converter<Jwt, Abstra
         String username = jwt.getClaimAsString(USERNAME_CLAIM);
         String email = jwt.getClaimAsString(EMAIL_CLAIM);
 
-        UUID userId = userService.resolveOrCreateUser(providerId, username, email);
+        User user = userService.findOrCreate(providerId, username, email);
 
         AuthenticatedUser authenticatedUser = new AuthenticatedUser(
-                userId,
+                user.getId(),
                 providerId,
                 username,
                 email
