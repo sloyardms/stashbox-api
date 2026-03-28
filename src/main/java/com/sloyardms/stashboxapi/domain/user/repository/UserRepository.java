@@ -1,18 +1,15 @@
 package com.sloyardms.stashboxapi.domain.user.repository;
 
 import com.sloyardms.stashboxapi.domain.user.model.User;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
 
-import java.util.Optional;
+import java.util.List;
 import java.util.UUID;
 
 public interface UserRepository extends JpaRepository<User, UUID> {
 
-    Optional<User> findByProviderId(UUID providerId);
-
-    Page<User> findAllByEmailContainingIgnoreCaseOrUsernameContainingIgnoreCase(String username, String email,
-                                                                                Pageable pageable);
+    @Query("SELECT u.id FROM User u")
+    List<UUID> findAllUsersIds();
 
 }

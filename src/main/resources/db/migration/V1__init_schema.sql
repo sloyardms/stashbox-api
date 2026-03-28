@@ -1,15 +1,8 @@
 CREATE TABLE users (
     id UUID PRIMARY KEY,
-    provider_id UUID NOT NULL,
-    email TEXT NOT NULL,
-    username TEXT NOT NULL,
     settings JSONB NOT NULL DEFAULT '{}'::jsonb,
     created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-    updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-
-    CONSTRAINT users_provider_id_unique UNIQUE (provider_id),
-    CONSTRAINT users_username_unique UNIQUE (username),
-    CONSTRAINT users_email_unique UNIQUE (email)
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
 CREATE TABLE user_filters (

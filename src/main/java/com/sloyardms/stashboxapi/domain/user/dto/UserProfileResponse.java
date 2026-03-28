@@ -18,8 +18,6 @@ import java.util.UUID;
 public class UserProfileResponse {
 
     private UUID id;
-    private String email;
-    private String username;
     private UserSettingsResponse settings;
     private Instant createdAt;
     private Instant updatedAt;

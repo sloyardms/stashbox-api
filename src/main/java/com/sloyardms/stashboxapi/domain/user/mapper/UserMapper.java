@@ -1,7 +1,6 @@
 package com.sloyardms.stashboxapi.domain.user.mapper;
 
 import com.sloyardms.stashboxapi.domain.user.dto.UserProfileResponse;
-import com.sloyardms.stashboxapi.domain.user.dto.UserSummaryResponse;
 import com.sloyardms.stashboxapi.domain.user.model.User;
 import org.mapstruct.Mapper;
 
@@ -9,8 +8,6 @@ import org.mapstruct.Mapper;
 public interface UserMapper {
 
     UserProfileResponse toProfileResponse(User user);
-
-    UserSummaryResponse toSummaryResponse(User user);
 
 }
 

@@ -1,9 +1,9 @@
 package com.sloyardms.stashboxapi.infrastructure.security.converter;
 
-import com.sloyardms.stashboxapi.domain.user.model.User;
 import com.sloyardms.stashboxapi.domain.user.service.UserService;
-import com.sloyardms.stashboxapi.infrastructure.security.AuthenticatedUser;
+import com.sloyardms.stashboxapi.infrastructure.security.dto.AuthenticatedUser;
 import lombok.RequiredArgsConstructor;
+import org.jspecify.annotations.NonNull;
 import org.springframework.core.convert.converter.Converter;
 import org.springframework.security.authentication.AbstractAuthenticationToken;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -15,7 +15,6 @@ import org.springframework.stereotype.Component;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
 
 @Component
@@ -24,26 +23,24 @@ public class KeycloakJwtAuthenticationConverter implements Converter<Jwt, Abstra
 
     private static final String USERNAME_CLAIM = "preferred_username";
     private static final String EMAIL_CLAIM = "email";
-    private static final String REALM_ACCESS_CLAIM = "realm_access";
-    private static final String ROLES_CLAIM = "roles";
+    private static final String ROLES_CLAIM = "client_roles";
 
     private final UserService userService;
 
     @Override
-    public AbstractAuthenticationToken convert(Jwt jwt) {
+    public AbstractAuthenticationToken convert(@NonNull Jwt jwt) {
         Collection<GrantedAuthority> authorities = extractAuthorities(jwt);
 
-        UUID providerId = UUID.fromString(jwt.getSubject());
+        UUID userId = UUID.fromString(jwt.getSubject());
         String username = jwt.getClaimAsString(USERNAME_CLAIM);
         String email = jwt.getClaimAsString(EMAIL_CLAIM);
-
-        User user = userService.findOrCreate(providerId, username, email);
+        List<String> roles = extractRoles(jwt);
 
         AuthenticatedUser authenticatedUser = new AuthenticatedUser(
-                user.getId(),
-                providerId,
+                userId,
                 username,
-                email
+                email,
+                roles
         );
 
         return new UsernamePasswordAuthenticationToken(
@@ -54,23 +51,20 @@ public class KeycloakJwtAuthenticationConverter implements Converter<Jwt, Abstra
     }
 
     private List<GrantedAuthority> extractAuthorities(Jwt jwt) {
-        Map<String, Object> claims = jwt.getClaimAsMap(REALM_ACCESS_CLAIM);
+        List<String> roles = jwt.getClaimAsStringList(ROLES_CLAIM);
 
-        if (claims == null || claims.isEmpty()) {
+        if (roles == null || roles.isEmpty()) {
             return Collections.emptyList();
         }
-
-        Object rolesObj = claims.get(ROLES_CLAIM);
-        if (!(rolesObj instanceof List<?>)) {
-            return Collections.emptyList();
-        }
-
-        @SuppressWarnings("unchecked")
-        List<String> roles = (List<String>) rolesObj;
 
         return roles.stream()
                 .map(role -> (GrantedAuthority) new SimpleGrantedAuthority("ROLE_" + role.toUpperCase()))
                 .toList();
+    }
+
+    private List<String> extractRoles(Jwt jwt) {
+        List<String> roles = jwt.getClaimAsStringList(ROLES_CLAIM);
+        return roles != null ? roles : Collections.emptyList();
     }
 
 }
