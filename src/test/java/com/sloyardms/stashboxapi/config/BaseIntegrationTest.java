@@ -7,6 +7,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.server.LocalServerPort;
+import org.springframework.http.HttpStatus;
 import org.springframework.util.Assert;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
@@ -22,8 +23,7 @@ import static io.restassured.RestAssured.given;
 public abstract class BaseIntegrationTest extends TestContainersConfig {
 
     private static final String KEYCLOAK_TOKEN_PATH = "/realms/" + KEYCLOAK_REALM + "/protocol/openid-connect/token";
-    private static final String KEYCLOAK_CLIENT_ID = "stashbox-nextjs-client";
-    private static final String KEYCLOAK_GRANT_TYPE = "password";
+    private final String USER_ENDPOINT = "/api/v1/users/me";
 
     @LocalServerPort
     private int port;
@@ -34,13 +34,13 @@ public abstract class BaseIntegrationTest extends TestContainersConfig {
     public int largePageSize;
 
     @Value("${tests.users.normal.username}")
-    public String normalUserUsername;
+    private String normalUserUsername;
 
     @Value("${tests.users.normal.password}")
     private String normalUserPassword;
 
     @Value("${tests.users.admin.username}")
-    public String adminUserUsername;
+    private String adminUserUsername;
 
     @Value("${tests.users.admin.password}")
     private String adminUserPassword;
@@ -87,9 +87,25 @@ public abstract class BaseIntegrationTest extends TestContainersConfig {
                 .when()
                 .post(KEYCLOAK_CONTAINER.getAuthServerUrl() + KEYCLOAK_TOKEN_PATH)
                 .then()
-                .statusCode(200)
+                .statusCode(HttpStatus.OK.value())
                 .extract()
                 .path("access_token");
+    }
+
+    public void ensureNormalUserExists() {
+        normalUserRequest()
+                .when()
+                .post(USER_ENDPOINT)
+                .then()
+                .statusCode(HttpStatus.OK.value());
+    }
+
+    public void ensueAdminUserExists() {
+        adminUserRequest()
+                .when()
+                .post(USER_ENDPOINT)
+                .then()
+                .statusCode(HttpStatus.OK.value());
     }
 
 }
