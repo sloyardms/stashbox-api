@@ -1,26 +1,21 @@
 package com.sloyardms.stashboxapi.domain.user.service;
 
-import com.sloyardms.stashboxapi.infrastructure.cache.CacheNames;
-import com.sloyardms.stashboxapi.infrastructure.cache.CacheService;
-import com.sloyardms.stashboxapi.shared.exception.ResourceNotFoundException;
 import com.sloyardms.stashboxapi.domain.user.dto.UpdateUserSettingsRequest;
 import com.sloyardms.stashboxapi.domain.user.dto.UserProfileResponse;
-import com.sloyardms.stashboxapi.domain.user.dto.UserSummaryResponse;
+import com.sloyardms.stashboxapi.domain.user.dto.UserSettingsResponse;
 import com.sloyardms.stashboxapi.domain.user.mapper.UserMapper;
 import com.sloyardms.stashboxapi.domain.user.mapper.UserSettingsMapper;
 import com.sloyardms.stashboxapi.domain.user.model.User;
 import com.sloyardms.stashboxapi.domain.user.repository.UserRepository;
+import com.sloyardms.stashboxapi.infrastructure.security.client.KeycloakClient;
+import com.sloyardms.stashboxapi.infrastructure.storage.event.UserFolderDeleteEvent;
+import com.sloyardms.stashboxapi.shared.exception.ResourceNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.cache.Cache;
-import org.springframework.cache.CacheManager;
-import org.springframework.cache.annotation.Cacheable;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -34,63 +29,47 @@ public class UserService {
     private final UserMapper userMapper;
     private final UserSettingsMapper userSettingsMapper;
 
-    private final CacheService cacheService;
+    private final ApplicationEventPublisher eventPublisher;
+    private final KeycloakClient keycloakClient;
 
-    /**
-     * Resolves the application user ID associated with the given user provider ID.
-     * If no user exists for the given user provider ID, a new user data is created using the provided username and
-     * email.
-     * Results are cached by the user provider ID to avoid repeated database lookups
-     *
-     * @param providerId the unique user ID from the identity provider (e.g., Keycloak)
-     * @param username   the username from the identity provider
-     * @param email      the email from the identity provider
-     * @return the new user corresponding to the provider ID
-     */
-    @Cacheable(value = CacheNames.USER_ID_BY_PROVIDER_ID, key = "#providerId")
-    public User findOrCreate(UUID providerId, String username, String email) {
-        Optional<User> foundUser = userRepository.findByProviderId(providerId);
-
+    public UserProfileResponse findOrCreate(UUID id) {
+        Optional<User> foundUser = userRepository.findById(id);
         if (foundUser.isPresent()) {
-            return foundUser.get();
+            return userMapper.toProfileResponse(foundUser.get());
         }
 
         User newUser = new User();
-        newUser.setProviderId(providerId);
-        newUser.setUsername(username);
-        newUser.setEmail(email);
-
+        newUser.setId(id);
         newUser = userRepository.save(newUser);
 
-        log.info("User created for providerId: {}", providerId);
+        log.info("User created for keycloak id: {}", id);
 
-        return newUser;
+        return userMapper.toProfileResponse(newUser);
     }
 
-    @Transactional(readOnly = true)
-    public Page<UserSummaryResponse> findAllByQuery(String query, Pageable pageable) {
-        Page<User> results = userRepository.findAllByEmailContainingIgnoreCaseOrUsernameContainingIgnoreCase(query,
-                query, pageable);
-        return results.map(userMapper::toSummaryResponse);
+    @Transactional(rollbackFor = Exception.class)
+    public void deleteAndSyncWithKeycloak(UUID id) {
+        User user = userRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("User", "Id", id));
+        keycloakClient.deleteUser(user.getId().toString());
+        userRepository.delete(user);
+        eventPublisher.publishEvent(new UserFolderDeleteEvent(id));
     }
 
     @Transactional(rollbackFor = Exception.class)
     public void delete(UUID id) {
-        User user = userRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("User", "Id", id));
-        userRepository.deleteById(id);
-
-        cacheService.evict(CacheNames.USER_ID_BY_PROVIDER_ID, id);
+        User user = userRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("User", "Id", id));
+        userRepository.delete(user);
+        eventPublisher.publishEvent(new UserFolderDeleteEvent(id));
     }
 
     @Transactional(rollbackFor = Exception.class)
-    public UserProfileResponse updateSettings(UUID id, UpdateUserSettingsRequest request) {
-        User user = userRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("User", "Id", id));
-        userSettingsMapper.updateEntity(request, user.getSettings());
+    public UserSettingsResponse updateSettings(UUID id, UpdateUserSettingsRequest request) {
+        User user = userRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("User", "Id", id));
 
+        userSettingsMapper.updateEntity(request, user.getSettings());
         user = userRepository.save(user);
-        return userMapper.toProfileResponse(user);
+
+        return userSettingsMapper.toResponse(user.getSettings());
     }
 
 }
