@@ -1,6 +1,5 @@
 package com.sloyardms.stashboxapi.infrastructure.security.converter;
 
-import com.sloyardms.stashboxapi.domain.user.service.UserService;
 import com.sloyardms.stashboxapi.infrastructure.security.dto.AuthenticatedUser;
 import lombok.RequiredArgsConstructor;
 import org.jspecify.annotations.NonNull;
@@ -24,8 +23,6 @@ public class KeycloakJwtAuthenticationConverter implements Converter<Jwt, Abstra
     private static final String USERNAME_CLAIM = "preferred_username";
     private static final String EMAIL_CLAIM = "email";
     private static final String ROLES_CLAIM = "client_roles";
-
-    private final UserService userService;
 
     @Override
     public AbstractAuthenticationToken convert(@NonNull Jwt jwt) {

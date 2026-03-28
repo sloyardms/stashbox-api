@@ -49,9 +49,10 @@ public class KeycloakEventsController {
 
         log.info("Received keycloak webhook event: {}", event.type());
 
-        switch (event.type()) {
-            case "admin.USER-DELETE" -> applicationEventPublisher.publishEvent(new UserDeletedEvent(event.userId()));
-            default -> log.debug("Ignoring unhandled event type: {}", event.type());
+        if (event.type().equals("admin.USER-DELETE")) {
+            applicationEventPublisher.publishEvent(new UserDeletedEvent(event.userId()));
+        } else {
+            log.debug("Ignoring unhandled event type: {}", event.type());
         }
 
         return ResponseEntity.ok().build();

@@ -1,15 +1,10 @@
 package com.sloyardms.stashboxapi.config;
 
 import dasniko.testcontainers.keycloak.KeycloakContainer;
-import org.slf4j.LoggerFactory;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.testcontainers.containers.PostgreSQLContainer;
-import org.testcontainers.containers.output.Slf4jLogConsumer;
-import org.testcontainers.containers.wait.strategy.Wait;
 import org.testcontainers.utility.DockerImageName;
-
-import java.time.Duration;
 
 /**
  * Abstract base class for integration tests requiring external services via Testcontainers.

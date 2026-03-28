@@ -23,7 +23,6 @@ import static io.restassured.RestAssured.given;
 public abstract class BaseIntegrationTest extends TestContainersConfig {
 
     private static final String KEYCLOAK_TOKEN_PATH = "/realms/" + KEYCLOAK_REALM + "/protocol/openid-connect/token";
-    private final String USER_ENDPOINT = "/api/v1/users/me";
 
     @LocalServerPort
     private int port;
@@ -93,15 +92,8 @@ public abstract class BaseIntegrationTest extends TestContainersConfig {
     }
 
     public void ensureNormalUserExists() {
+        String USER_ENDPOINT = "/api/v1/users/me";
         normalUserRequest()
-                .when()
-                .post(USER_ENDPOINT)
-                .then()
-                .statusCode(HttpStatus.OK.value());
-    }
-
-    public void ensueAdminUserExists() {
-        adminUserRequest()
                 .when()
                 .post(USER_ENDPOINT)
                 .then()

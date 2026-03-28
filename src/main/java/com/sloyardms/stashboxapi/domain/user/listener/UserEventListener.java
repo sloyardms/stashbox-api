@@ -2,7 +2,6 @@ package com.sloyardms.stashboxapi.domain.user.listener;
 
 import com.sloyardms.stashboxapi.domain.user.event.UserDeletedEvent;
 import com.sloyardms.stashboxapi.domain.user.service.UserService;
-import com.sloyardms.stashboxapi.infrastructure.security.client.KeycloakClient;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.event.EventListener;
@@ -16,7 +15,6 @@ import java.util.UUID;
 @Component
 public class UserEventListener {
 
-    private final KeycloakClient keycloakClient;
     private final UserService userService;
 
     @Async("webhookExecutor")
