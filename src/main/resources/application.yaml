@@ -1,15 +1,23 @@
 server:
-  port: ${STASHBOX_PORT:9001}
+  port: ${BACKEND_PORT}
 
-stashbox-api:
-  routes:
-    saved: /stashbox/saved
-    temp: /stashbox/temp
-    logs: /stashbox/logs
+app:
+  storage:
+    base-path: ${STORAGE_BASE_PATH}
+    users-dir: generated
+    temp-dir: temp
+    logs-dir: logs
   security:
+    keycloak:
+      server-url: ${KEYCLOAK_URL}
+      realm: ${KEYCLOAK_REALM}
+      client-id: ${KEYCLOAK_CLIENT_ID}
+      client-secret: ${KEYCLOAK_CLIENT_SECRET}
+      webhook:
+        hmac-secret: ${KEYCLOAK_WEBHOOK_HMAC_SECRET}
     cors:
-      allowed-origins: ${STASHBOX_CORS_ORIGINS:http://localhost:3001}
-#     public-endpoints: ${STASHBOX_PUBLIC_ENDPOINTS:/actuator/health}
+      allowed-origins: ${FRONTEND_URL}
+    public-endpoints: ${PUBLIC_ENDPOINTS}
 
 spring:
   application:
@@ -24,9 +32,9 @@ spring:
         max-page-size: 50
         one-indexed-parameters: false
   datasource:
-    url: ${STASHBOX_DB_URL:jdbc:postgresql://localhost:5432/stashboxdb}
-    username: ${STASHBOX_DB_USER:stashboxdbuser}
-    password: ${STASHBOX_DB_PASSWORD:stashboxdbpassword}
+    url: ${STASHBOX_DB_URL}
+    username: ${STASHBOX_DB_USER}
+    password: ${STASHBOX_DB_PASSWORD}
     driver-class-name: org.postgresql.Driver
     hikari:
       minimum-idle: 2
@@ -44,13 +52,31 @@ spring:
     locations: classpath:db/migration
   servlet:
     multipart:
-      max-file-size: 50MB
-      max-request-size: 200MB
+      max-file-size: 10MB
+      max-request-size: 50MB
+
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: ${KEYCLOAK_URL}/realms/${KEYCLOAK_REALM}
+      client:
+        registration:
+          keycloak:
+            client-id: ${KEYCLOAK_CLIENT_ID}
+            client-secret: ${KEYCLOAK_CLIENT_SECRET}
+            authorization-grant-type: client_credentials
+            scope: openid
+        provider:
+          keycloak:
+            issuer-uri: ${KEYCLOAK_URL}/realms/${KEYCLOAK_REALM}
 
 logging:
   level:
     root: INFO
     org.springframework.web: WARN
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
 
 management:
   endpoints:
