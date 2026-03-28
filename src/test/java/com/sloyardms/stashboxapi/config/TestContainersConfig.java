@@ -17,7 +17,9 @@ public abstract class TestContainersConfig {
     private static final DockerImageName POSTGRES_IMAGE = DockerImageName.parse("postgres:18.2");
     private static final DockerImageName KEYCLOAK_IMAGE = DockerImageName.parse("quay.io/keycloak/keycloak:26.5");
 
-    protected static final String KEYCLOAK_REALM = "sloyard";
+    protected static final String KEYCLOAK_REALM = "stashbox";
+    protected static final String KEYCLOAK_CLIENT_ID = "stashbox-frontend";
+    protected static final String KEYCLOAK_GRANT_TYPE = "password";
 
     // Containers
     protected static final PostgreSQLContainer<?> POSTGRES_CONTAINER =
@@ -25,7 +27,7 @@ public abstract class TestContainersConfig {
 
     protected static final KeycloakContainer KEYCLOAK_CONTAINER =
             new KeycloakContainer(KEYCLOAK_IMAGE.toString())
-                    .withRealmImportFile("keycloak/sloyard-realm-test.json");
+                    .withRealmImportFile("config/keycloak/stashbox-realm-test.json");
 
     static {
         POSTGRES_CONTAINER.start();
@@ -41,6 +43,9 @@ public abstract class TestContainersConfig {
         // Keycloak
         registry.add("spring.security.oauth2.resourceserver.jwt.issuer-uri",
                 () -> KEYCLOAK_CONTAINER.getAuthServerUrl() + "/realms/" + KEYCLOAK_REALM);
+        registry.add("spring.security.oauth2.client.provider.keycloak.issuer-uri",
+                () -> KEYCLOAK_CONTAINER.getAuthServerUrl() + "/realms/" + KEYCLOAK_REALM);
+        registry.add("app.security.keycloak.server-url", KEYCLOAK_CONTAINER::getAuthServerUrl);
     }
 
 }

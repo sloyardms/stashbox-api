@@ -1,0 +1,200 @@
+{
+  "realm": "stashbox",
+  "displayName": "Stashbox App",
+  "enabled": true,
+  "sslRequired": "none",
+  "registrationAllowed": true,
+  "loginWithEmailAllowed": true,
+  "duplicateEmailsAllowed": false,
+  "resetPasswordAllowed": true,
+  "editUsernameAllowed": true,
+  "rememberMe": true,
+  "bruteForceProtected": true,
+  "permanentLockout": false,
+  "accessTokenLifespan": 300,
+  "ssoSessionMaxLifespan": 36000,
+  "maxFailureWaitSeconds": 900,
+  "minimumQuickLoginWaitSeconds": 60,
+  "waitIncrementSeconds": 60,
+  "quickLoginCheckMilliSeconds": 1000,
+  "maxDeltaTimeSeconds": 43200,
+  "failureFactor": 30,
+  "eventsEnabled": true,
+  "adminEventsEnabled": true,
+  "adminEventsDetailsEnabled": true,
+  "enabledEventTypes": [
+    "REGISTER",
+    "DELETE_ACCOUNT",
+    "UPDATE_PROFILE",
+    "UPDATE_EMAIL",
+    "UPDATE_PASSWORD",
+    "LOGIN",
+    "LOGOUT",
+    "LOGIN_ERROR"
+  ],
+  "eventsListeners": [
+    "jboss-logging",
+    "ext-event-webhook"
+  ],
+  "clients": [
+    {
+      "clientId": "stashbox-frontend",
+      "name": "Stashbox Frontend",
+      "enabled": true,
+      "publicClient": true,
+      "protocol": "openid-connect",
+      "standardFlowEnabled": false,
+      "implicitFlowEnabled": false,
+      "directAccessGrantsEnabled": true,
+      "serviceAccountsEnabled": false,
+      "redirectUris": [
+        "https://localhost:3000/*"
+      ],
+      "webOrigins": [
+        "https://localhost:3000"
+      ],
+      "attributes": {
+        "pkce.code.challenge.method": "S256",
+        "post.logout.redirect.uris": "https://localhost:3000/*",
+        "access.token.lifespan": "300",
+        "client.session.idle.timeout": "1800",
+        "client.session.max.lifespan": "36000"
+      },
+      "protocolMappers": [
+        {
+          "name": "stashbox-backend-roles",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-usermodel-client-role-mapper",
+          "consentRequired": false,
+          "config": {
+            "usermodel.clientRoleMapping.clientId": "stashbox-backend",
+            "claim.name": "client_roles",
+            "jsonType.label": "String",
+            "multivalued": "true",
+            "access.token.claim": "true",
+            "id.token.claim": "false",
+            "userinfo.token.claim": "false"
+          }
+        }
+      ]
+    },
+    {
+      "clientId": "stashbox-backend",
+      "name": "Stashbox Backend",
+      "enabled": true,
+      "protocol": "openid-connect",
+      "publicClient": false,
+      "bearerOnly": false,
+      "standardFlowEnabled": false,
+      "implicitFlowEnabled": false,
+      "directAccessGrantsEnabled": false,
+      "clientAuthenticatorType": "client-secret",
+      "secret": "stashbox-backend-secret",
+      "serviceAccountsEnabled": true
+    }
+  ],
+  "roles": {
+    "client": {
+      "stashbox-backend": [
+        {
+          "name": "user",
+          "description": "Regular user"
+        },
+        {
+          "name": "admin",
+          "description": "Administrator"
+        }
+      ]
+    }
+  },
+  "groups": [
+    {
+      "name": "users",
+      "clientRoles": {
+        "stashbox-backend": [
+          "user"
+        ]
+      }
+    },
+    {
+      "name": "admins",
+      "clientRoles": {
+        "stashbox-backend": [
+          "user",
+          "admin"
+        ]
+      }
+    }
+  ],
+  "defaultGroups": [
+    "/users"
+  ],
+  "users": [
+    {
+      "username": "service-account-stashbox-backend",
+      "emailVerified": true,
+      "enabled": true,
+      "totp": false,
+      "serviceAccountClientId": "stashbox-backend",
+      "clientRoles": {
+        "realm-management": [
+          "view-events",
+          "manage-events",
+          "query-users",
+          "view-users",
+          "query-groups",
+          "view-realm",
+          "view-clients"
+        ]
+      }
+    },
+    {
+      "username": "admin_user",
+      "enabled": true,
+      "email": "admin@test.com",
+      "emailVerified": true,
+      "firstName": "Admin",
+      "lastName": "User",
+      "credentials": [
+        {
+          "type": "password",
+          "value": "password",
+          "temporary": false
+        }
+      ],
+      "groups": [
+        "admins"
+      ],
+      "clientRoles": {
+        "realm-management": [
+          "manage-users",
+          "view-users",
+          "query-users",
+          "query-groups",
+          "manage-groups",
+          "view-realm",
+          "view-events",
+          "manage-events"
+        ]
+      }
+    },
+    {
+      "username": "normal_user",
+      "enabled": true,
+      "email": "user@test.com",
+      "emailVerified": true,
+      "firstName": "Normal",
+      "lastName": "User",
+      "credentials": [
+        {
+          "type": "password",
+          "value": "password",
+          "temporary": false
+        }
+      ],
+      "groups": [
+        "users"
+      ]
+    }
+  ]
+}
