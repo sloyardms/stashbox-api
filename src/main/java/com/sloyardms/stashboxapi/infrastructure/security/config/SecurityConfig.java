@@ -29,10 +29,10 @@ public class SecurityConfig {
     private final CustomAuthenticationEntryPoint customAuthenticationEntryPoint;
     private final CustomAccessDeniedHandler customAccessDeniedHandler;
 
-    @Value("${stashbox-api.security.cors.allowed-origins}")
+    @Value("${app.security.cors.allowed-origins}")
     private List<String> allowedOrigins;
 
-    @Value("${stashbox-api.security.public-endpoints:/actuator/health}")
+    @Value("${app.security.public-endpoints}")
     private String[] publicEndpoints;
 
     @Bean
