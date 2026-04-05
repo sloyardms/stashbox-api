@@ -13,6 +13,7 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
+import jakarta.validation.constraints.PositiveOrZero;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -47,23 +48,32 @@ public class ItemGroup extends AuditableEntity {
             foreignKey = @ForeignKey(name = "item_groups_user_id_fk"))
     private User user;
 
-    @Column(name = "name", nullable = false)
+    @Column(name = "name", nullable = false, length = 50)
     @ToString.Include
     private String name;
 
-    @Column(name = "slug", nullable = false)
+    @Column(name = "slug", nullable = false, length = 75)
     @ToString.Include
     private String slug;
 
-    @Column(name = "description")
+    @Column(name = "description", length = 255)
     @ToString.Include
     private String description;
+
+    @Column(name = "icon", length = 50)
+    @ToString.Include
+    private String icon;
+
+    @Column(name = "default_group", nullable = false)
+    @ToString.Include
+    private boolean defaultGroup;
 
     @Column(name = "settings", columnDefinition = "jsonb not null default '{}'::jsonb", nullable = false)
     @JdbcTypeCode(SqlTypes.JSON)
     private ItemGroupSettings settings = new ItemGroupSettings();
 
     @Column(name = "position", nullable = false)
+    @PositiveOrZero
     @ToString.Include
     private Integer position = 0;
 
