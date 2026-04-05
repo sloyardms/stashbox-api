@@ -149,6 +149,7 @@
       }
     },
     {
+      "id": "438536b5-335b-4182-9f1b-cc3388b3b707",
       "username": "admin_user",
       "enabled": true,
       "email": "admin@test.com",
@@ -179,6 +180,7 @@
       }
     },
     {
+      "id": "1a9d5015-5330-46af-959b-d6d9913ad75c",
       "username": "normal_user",
       "enabled": true,
       "email": "user@test.com",
