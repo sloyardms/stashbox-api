@@ -2,6 +2,7 @@ package com.sloyardms.stashboxapi.controller.user;
 
 import com.sloyardms.stashboxapi.config.BaseIntegrationTest;
 import com.sloyardms.stashboxapi.infrastructure.security.client.KeycloakClient;
+import com.sloyardms.stashboxapi.shared.exception.ErrorCatalog;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -11,6 +12,7 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
 import static io.restassured.RestAssured.given;
+import static org.hamcrest.Matchers.equalTo;
 import static org.mockito.Mockito.anyString;
 import static org.mockito.Mockito.verify;
 
@@ -58,7 +60,8 @@ public class UserSelfDeletionIT extends BaseIntegrationTest {
                     .delete(ENDPOINT)
                     .then()
                     .log().body()
-                    .statusCode(HttpStatus.UNAUTHORIZED.value());
+                    .statusCode(HttpStatus.UNAUTHORIZED.value())
+                    .body("type", equalTo(ErrorCatalog.UNAUTHORIZED.getType().toString()));
         }
 
     }

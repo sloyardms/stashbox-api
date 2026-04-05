@@ -1,4 +1,4 @@
-package com.sloyardms.stashboxapi.shared.exception;
+package com.sloyardms.stashboxapi.shared.exception.types;
 
 import lombok.Getter;
 

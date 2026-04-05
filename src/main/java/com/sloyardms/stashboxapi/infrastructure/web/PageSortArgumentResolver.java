@@ -1,7 +1,7 @@
 package com.sloyardms.stashboxapi.infrastructure.web;
 
 import com.sloyardms.stashboxapi.shared.validation.SortableFields;
-import com.sloyardms.stashboxapi.shared.exception.InvalidSortFieldException;
+import com.sloyardms.stashboxapi.shared.exception.types.InvalidSortFieldException;
 import lombok.RequiredArgsConstructor;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;

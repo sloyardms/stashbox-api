@@ -1,6 +1,6 @@
 package com.sloyardms.stashboxapi.infrastructure.security.client;
 
-import com.sloyardms.stashboxapi.shared.exception.ResourceNotFoundException;
+import com.sloyardms.stashboxapi.shared.exception.types.ResourceNotFoundException;
 import jakarta.ws.rs.core.Response;
 import lombok.RequiredArgsConstructor;
 import org.keycloak.admin.client.resource.RealmResource;
