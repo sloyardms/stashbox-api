@@ -13,7 +13,7 @@ import lombok.Setter;
 @EqualsAndHashCode
 public class UserSettings {
 
-    private boolean darkMode = false;
-    private boolean useFilters = false;
+    private boolean darkModeEnabled = false;
+    private boolean filtersEnabled = false;
 
 }
