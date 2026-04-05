@@ -34,15 +34,18 @@ CREATE TABLE item_groups (
     name TEXT NOT NULL,
     slug TEXT NOT NULL,
     description TEXT,
+    icon TEXT,
+    default_group BOOLEAN NOT NULL DEFAULT true,
     settings JSONB NOT NULL DEFAULT '{}'::jsonb,
     position INTEGER NOT NULL DEFAULT 0,
     created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
 
     CONSTRAINT item_groups_user_id_fk FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
-
-    CONSTRAINT item_groups_slug_unique UNIQUE (user_id, slug)
+    CONSTRAINT item_groups_slug_unique UNIQUE (user_id, slug),
+    CONSTRAINT item_groups_position_positive_check CHECK (position >= 0)
 );
+CREATE UNIQUE INDEX item_groups_one_default_group ON item_groups(default_group) WHERE default_group = true;
 
 CREATE TABLE stash_items (
     id UUID PRIMARY KEY,
