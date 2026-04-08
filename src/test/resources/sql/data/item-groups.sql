@@ -1,4 +1,4 @@
-INSERT INTO item_groups (id, user_id, name, slug, description, icon, is_default,settings, position, created_at, updated_at)
+INSERT INTO item_groups (id, user_id, name, slug, description, icon, default_group,settings, position, created_at, updated_at)
 VALUES ('a1b2c3d4-0001-4000-8000-000000000001',
         '1a9d5015-5330-46af-959b-d6d9913ad75c',
         'Ungrouped',
