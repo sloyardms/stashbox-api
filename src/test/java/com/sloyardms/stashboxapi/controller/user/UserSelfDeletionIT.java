@@ -36,7 +36,7 @@ public class UserSelfDeletionIT extends BaseIntegrationTest {
         @Test
         @DisplayName("Should delete user profile and return 204")
         void shouldDeleteUserProfileAndReturn204() {
-            normalUserRequest()
+            givenNormalUserRequest()
                     .when()
                     .delete(ENDPOINT)
                     .then()
@@ -60,7 +60,7 @@ public class UserSelfDeletionIT extends BaseIntegrationTest {
                     .delete(ENDPOINT)
                     .then()
                     .log().body()
-                    .statusCode(HttpStatus.UNAUTHORIZED.value())
+                    .statusCode(ErrorCatalog.UNAUTHORIZED.getStatus().value())
                     .body("type", equalTo(ErrorCatalog.UNAUTHORIZED.getType().toString()));
         }
 

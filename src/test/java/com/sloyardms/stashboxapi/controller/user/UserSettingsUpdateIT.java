@@ -37,7 +37,7 @@ public class UserSettingsUpdateIT extends BaseIntegrationTest {
                     }
                     """;
 
-            UserSettingsResponse response = normalUserRequest()
+            UserSettingsResponse response = givenNormalUserRequest()
                     .body(request)
                     .when()
                     .patch(ENDPOINT)
@@ -59,25 +59,25 @@ public class UserSettingsUpdateIT extends BaseIntegrationTest {
         @Test
         @DisplayName("Should return 400 when body is missing")
         void shouldReturn400WhenBodyIsMissing() {
-            normalUserRequest()
+            givenNormalUserRequest()
                     .when()
                     .patch(ENDPOINT)
                     .then()
                     .log().body()
-                    .statusCode(HttpStatus.BAD_REQUEST.value())
+                    .statusCode(ErrorCatalog.MALFORMED_REQUEST_BODY.getStatus().value())
                     .body("type", equalTo(ErrorCatalog.MALFORMED_REQUEST_BODY.getType().toString()));
         }
 
         @Test
         @DisplayName("Should return 400 when body is empty")
         void shouldReturn400WhenBodyIsEmpty() {
-            normalUserRequest()
+            givenNormalUserRequest()
                     .body("{}")
                     .when()
                     .patch(ENDPOINT)
                     .then()
                     .log().body()
-                    .statusCode(HttpStatus.BAD_REQUEST.value())
+                    .statusCode(ErrorCatalog.EMPTY_PATCH_BODY.getStatus().value())
                     .body("type", equalTo(ErrorCatalog.EMPTY_PATCH_BODY.getType().toString()));
         }
 
@@ -90,13 +90,13 @@ public class UserSettingsUpdateIT extends BaseIntegrationTest {
                       "filtersEnabled": "test"
                     }
                     """;
-            normalUserRequest()
+            givenNormalUserRequest()
                     .body(requestBody)
                     .when()
                     .patch(ENDPOINT)
                     .then()
                     .log().body()
-                    .statusCode(HttpStatus.BAD_REQUEST.value())
+                    .statusCode(ErrorCatalog.INVALID_PATCH_FIELD_TYPE.getStatus().value())
                     .body("type", equalTo(ErrorCatalog.INVALID_PATCH_FIELD_TYPE.getType().toString()));
         }
 
@@ -115,7 +115,7 @@ public class UserSettingsUpdateIT extends BaseIntegrationTest {
                     .then()
                     .log().body()
                     .statusCode(HttpStatus.UNAUTHORIZED.value())
-                    .body("type", equalTo("urn:stashbox:error:unauthorized"));
+                    .body("type", equalTo(ErrorCatalog.UNAUTHORIZED.getType().toString()));
         }
 
     }
