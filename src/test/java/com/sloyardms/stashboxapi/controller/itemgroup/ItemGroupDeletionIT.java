@@ -53,8 +53,8 @@ public class ItemGroupDeletionIT extends BaseIntegrationTest {
             UUID nonExistentGroupId = UUID.randomUUID();
 
             givenNormalUserRequest()
-                    .when()
                     .pathParam("id", nonExistentGroupId)
+                    .when()
                     .delete(ENDPOINT)
                     .then()
                     .log().body()
@@ -72,8 +72,8 @@ public class ItemGroupDeletionIT extends BaseIntegrationTest {
         @DisplayName("Should return 401 when the user is not authenticated")
         void shouldReturn401WhenUserIsNotAuthenticated() {
             given()
-                    .when()
                     .pathParam("id", UUID.randomUUID())
+                    .when()
                     .delete(ENDPOINT)
                     .then()
                     .log().body()

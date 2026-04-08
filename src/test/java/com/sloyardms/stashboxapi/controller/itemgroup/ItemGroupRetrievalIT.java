@@ -32,8 +32,8 @@ public class ItemGroupRetrievalIT extends BaseIntegrationTest {
         @Sql({"/sql/data/users.sql", "/sql/data/item-groups.sql"})
         void shouldReturn200AndTheItemGroup() {
             ItemGroupDetailResponse response = givenNormalUserRequest()
-                    .when()
                     .pathParam("id", TestConstants.USER_DEFAULT_GROUP_ID)
+                    .when()
                     .get(ENDPOINT)
                     .then()
                     .statusCode(HttpStatus.OK.value())
@@ -67,8 +67,8 @@ public class ItemGroupRetrievalIT extends BaseIntegrationTest {
             UUID nonExistentItemGroupId = UUID.randomUUID();
 
             givenNormalUserRequest()
-                    .when()
                     .pathParam("id", nonExistentItemGroupId)
+                    .when()
                     .get(ENDPOINT)
                     .then()
                     .log().body()
@@ -81,8 +81,8 @@ public class ItemGroupRetrievalIT extends BaseIntegrationTest {
         @Sql({"/sql/data/users.sql", "/sql/data/item-groups.sql"})
         void shouldReturn404WhenItemGroupBelongsToAnotherUser() {
             givenNormalUserRequest()
-                    .when()
                     .pathParam("id", TestConstants.ADMIN_USER_DEFAULT_GROUP_ID)
+                    .when()
                     .get(ENDPOINT)
                     .then()
                     .log().body()
@@ -94,8 +94,8 @@ public class ItemGroupRetrievalIT extends BaseIntegrationTest {
         @DisplayName("Should return 400 when id is not a valid UUID")
         void shouldReturn400WhenIdIsNotValidUUID() {
             givenNormalUserRequest()
-                    .when()
                     .pathParam("id", "invalidUuid")
+                    .when()
                     .get(ENDPOINT)
                     .then()
                     .log().body()
@@ -113,8 +113,8 @@ public class ItemGroupRetrievalIT extends BaseIntegrationTest {
         @DisplayName("Should return 401 when the user is not authenticated")
         void shouldReturn401WhenUserIsNotAuthenticated() {
             given()
-                    .when()
                     .pathParam("id", UUID.randomUUID())
+                    .when()
                     .get(ENDPOINT)
                     .then()
                     .log().body()

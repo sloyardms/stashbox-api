@@ -93,8 +93,8 @@ public class ItemGroupCreationIT extends BaseIntegrationTest {
             request.setSettings(new CreateItemGroupSettingsRequest());
 
             givenNormalUserRequest()
-                    .when()
                     .body(request)
+                    .when()
                     .post(ENDPOINT)
                     .then()
                     .log().body()
@@ -132,8 +132,8 @@ public class ItemGroupCreationIT extends BaseIntegrationTest {
             request.setSettings(new CreateItemGroupSettingsRequest());
 
             givenNormalUserRequest()
-                    .when()
                     .body(request)
+                    .when()
                     .post(ENDPOINT)
                     .then()
                     .log().body()
