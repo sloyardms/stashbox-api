@@ -61,11 +61,11 @@ public abstract class BaseIntegrationTest extends TestContainersConfig {
         adminUserToken = generateAccessToken(adminUserUsername, adminUserPassword);
     }
 
-    public RequestSpecification normalUserRequest() {
+    public RequestSpecification givenNormalUserRequest() {
         return authenticatedRequest(normalUserToken);
     }
 
-    public RequestSpecification adminUserRequest() {
+    public RequestSpecification givenAdminUserRequest() {
         return authenticatedRequest(adminUserToken);
     }
 
@@ -93,7 +93,7 @@ public abstract class BaseIntegrationTest extends TestContainersConfig {
 
     public void ensureNormalUserExists() {
         String USER_ENDPOINT = "/api/v1/users/me";
-        normalUserRequest()
+        givenNormalUserRequest()
                 .when()
                 .post(USER_ENDPOINT)
                 .then()
