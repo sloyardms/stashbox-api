@@ -1,0 +1,186 @@
+package com.sloyardms.stashboxapi.controller.itemgroup;
+
+import com.sloyardms.stashboxapi.config.BaseIntegrationTest;
+import com.sloyardms.stashboxapi.config.TestConstants;
+import com.sloyardms.stashboxapi.domain.stash.dto.response.ItemGroupDetailResponse;
+import com.sloyardms.stashboxapi.domain.stash.model.ItemGroup;
+import com.sloyardms.stashboxapi.domain.stash.repository.ItemGroupRepository;
+import com.sloyardms.stashboxapi.shared.exception.ErrorCatalog;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Nested;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.jdbc.Sql;
+import org.springframework.test.context.jdbc.SqlMergeMode;
+
+import java.util.UUID;
+
+import static io.restassured.RestAssured.given;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.hamcrest.Matchers.equalTo;
+
+@ActiveProfiles("test")
+@Sql(scripts = "/sql/cleanup.sql", executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD)
+@SqlMergeMode(SqlMergeMode.MergeMode.MERGE)
+public class ItemGroupUpdateIT extends BaseIntegrationTest {
+
+    private final String ENDPOINT = "/api/v1/item-groups/{id}";
+
+    @Autowired
+    private ItemGroupRepository itemGroupRepository;
+
+    @Nested
+    @DisplayName("Successful Operations")
+    class SuccessfulOperations {
+
+        @Test
+        @DisplayName("Should return 200 and update the item group")
+        @Sql({"/sql/data/users.sql", "/sql/data/item-groups.sql"})
+        void shouldReturn200AndUpdateTheItemGroup() {
+            ItemGroup itemGroup1 = itemGroupRepository.findById(TestConstants.USER_GROUP_1_ID).orElse(null);
+            assertThat(itemGroup1).isNotNull();
+
+            String request = """
+                    {
+                      "name": "new name",
+                      "icon": "new icon",
+                      "settings": {
+                        "requiredTitle": false,
+                        "uniqueTitle": false
+                      }
+                    }
+                    """;
+
+            ItemGroupDetailResponse response = givenNormalUserRequest()
+                    .body(request)
+                    .pathParam("id", TestConstants.USER_GROUP_1_ID)
+                    .when()
+                    .patch(ENDPOINT)
+                    .then()
+                    .statusCode(HttpStatus.OK.value())
+                    .extract().as(ItemGroupDetailResponse.class);
+
+            //ItemGroup
+            assertThat(response).isNotNull();
+            assertThat(response.getId()).isEqualTo(itemGroup1.getId());
+            assertThat(response.getName()).isEqualTo("new name");
+            assertThat(response.getSlug()).isEqualTo("new-name");
+            assertThat(response.getIcon()).isEqualTo("new icon");
+            assertThat(response.getDefaultGroup()).isEqualTo(itemGroup1.isDefaultGroup());
+            assertThat(response.getPosition()).isEqualTo(itemGroup1.getPosition());
+            assertThat(response.getCreatedAt()).isNotNull();
+            assertThat(response.getUpdatedAt()).isNotNull();
+            //ItemGroup Settings
+            assertThat(response.getSettings()).isNotNull();
+            assertThat(response.getSettings().isRequiredTitle()).isFalse();
+            assertThat(response.getSettings().isUniqueTitle()).isFalse();
+            assertThat(response.getSettings().isRequiredUrl()).isTrue();
+            assertThat(response.getSettings().isUniqueUrl()).isTrue();
+            assertThat(response.getSettings().isRequiredImage()).isFalse();
+        }
+
+    }
+
+    @Nested
+    @DisplayName("General Errors")
+    class GeneralErrors {
+
+        @Test
+        @DisplayName("Should return 400 when body is missing")
+        void shouldReturn400WhenBodyIsMissing() {
+            UUID groupId = TestConstants.USER_GROUP_1_ID;
+
+            givenNormalUserRequest()
+                    .pathParam("id", groupId)
+                    .when()
+                    .patch(ENDPOINT)
+                    .then()
+                    .log().body()
+                    .statusCode(ErrorCatalog.MALFORMED_REQUEST_BODY.getStatus().value())
+                    .body("type", equalTo(ErrorCatalog.MALFORMED_REQUEST_BODY.getType().toString()));
+        }
+
+        @Test
+        @DisplayName("Should return 400 when body is empty")
+        @Sql({"/sql/data/users.sql", "/sql/data/item-groups.sql"})
+        void shouldReturn400WhenBodyIsEmpty() {
+            UUID groupId = TestConstants.USER_GROUP_1_ID;
+
+            givenNormalUserRequest()
+                    .pathParam("id", groupId)
+                    .body("{}")
+                    .when()
+                    .patch(ENDPOINT)
+                    .then()
+                    .log().body()
+                    .statusCode(ErrorCatalog.EMPTY_PATCH_BODY.getStatus().value())
+                    .body("type", equalTo(ErrorCatalog.EMPTY_PATCH_BODY.getType().toString()));
+        }
+
+        @Test
+        @DisplayName("Should return 400 when name is set to null")
+        @Sql({"/sql/data/users.sql", "/sql/data/item-groups.sql"})
+        void shouldReturn400WhenNameIsSetToNull() {
+            UUID groupId = TestConstants.USER_GROUP_1_ID;
+
+            String request = """
+                    {
+                      "name": null
+                    }
+                    """;
+
+            givenNormalUserRequest()
+                    .pathParam("id", groupId)
+                    .body(request)
+                    .when()
+                    .patch(ENDPOINT)
+                    .then()
+                    .log().body()
+                    .statusCode(ErrorCatalog.VALIDATION_ERROR.getStatus().value())
+                    .body("type", equalTo(ErrorCatalog.VALIDATION_ERROR.getType().toString()));
+        }
+
+        @Test
+        @DisplayName("Should return 400 when name exceeds max length")
+        @Sql({"/sql/data/users.sql", "/sql/data/item-groups.sql"})
+        void shouldReturn400WhenNameExceedsMaxLength() {
+            UUID groupId = TestConstants.USER_GROUP_1_ID;
+
+            String name = "N".repeat(100);
+            String request = String.format("{ \"name\": \"%s\" }", name);
+
+            givenNormalUserRequest()
+                    .pathParam("id", groupId)
+                    .body(request)
+                    .when()
+                    .patch(ENDPOINT)
+                    .then()
+                    .log().body()
+                    .statusCode(ErrorCatalog.VALIDATION_ERROR.getStatus().value())
+                    .body("type", equalTo(ErrorCatalog.VALIDATION_ERROR.getType().toString()));
+        }
+
+    }
+
+    @Nested
+    @DisplayName("Authentication and Authorization Errors")
+    class AuthenticationAndAuthorization {
+
+        @Test
+        @DisplayName("Should return 401 when the user is not authenticated")
+        void shouldReturn401WhenUserIsNotAuthenticated() {
+            given()
+                    .pathParam("id", UUID.randomUUID())
+                    .when()
+                    .patch(ENDPOINT)
+                    .then()
+                    .log().body()
+                    .statusCode(ErrorCatalog.UNAUTHORIZED.getStatus().value())
+                    .body("type", equalTo(ErrorCatalog.UNAUTHORIZED.getType().toString()));
+        }
+
+    }
+
+}
