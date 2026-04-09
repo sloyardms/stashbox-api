@@ -13,7 +13,9 @@ public interface UserSettingsMapper {
 
     UserSettingsResponse toResponse(UserSettings userSettings);
 
-    @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
-    void updateEntity(UpdateUserSettingsRequest request, @MappingTarget UserSettings userSettings);
+    UpdateUserSettingsRequest toUpdateRequest(UserSettings userSettings);
+
+    @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.SET_TO_NULL)
+    void updateEntityFromDto(UpdateUserSettingsRequest request, @MappingTarget UserSettings userSettings);
 
 }

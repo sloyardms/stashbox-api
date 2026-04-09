@@ -1,5 +1,6 @@
 package com.sloyardms.stashboxapi.domain.user.service;
 
+import com.sloyardms.stashboxapi.domain.stash.service.ItemGroupService;
 import com.sloyardms.stashboxapi.domain.user.dto.UpdateUserSettingsRequest;
 import com.sloyardms.stashboxapi.domain.user.dto.UserProfileResponse;
 import com.sloyardms.stashboxapi.domain.user.dto.UserSettingsResponse;
@@ -9,12 +10,14 @@ import com.sloyardms.stashboxapi.domain.user.model.User;
 import com.sloyardms.stashboxapi.domain.user.repository.UserRepository;
 import com.sloyardms.stashboxapi.infrastructure.security.client.KeycloakClient;
 import com.sloyardms.stashboxapi.infrastructure.storage.event.UserFolderDeleteEvent;
-import com.sloyardms.stashboxapi.shared.exception.ResourceNotFoundException;
+import com.sloyardms.stashboxapi.shared.exception.types.ResourceNotFoundException;
+import com.sloyardms.stashboxapi.shared.service.JsonPatchService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import tools.jackson.databind.JsonNode;
 
 import java.util.Optional;
 import java.util.UUID;
@@ -25,13 +28,16 @@ import java.util.UUID;
 public class UserService {
 
     private final UserRepository userRepository;
+    private final ItemGroupService userGroupService;
 
     private final UserMapper userMapper;
     private final UserSettingsMapper userSettingsMapper;
 
     private final ApplicationEventPublisher eventPublisher;
     private final KeycloakClient keycloakClient;
+    private final JsonPatchService jsonPatchService;
 
+    @Transactional(rollbackFor = Exception.class)
     public UserProfileResponse findOrCreate(UUID id) {
         Optional<User> foundUser = userRepository.findById(id);
         if (foundUser.isPresent()) {
@@ -43,6 +49,7 @@ public class UserService {
         newUser = userRepository.save(newUser);
 
         log.info("User created for keycloak id: {}", id);
+        userGroupService.createDefaultGroup(newUser);
 
         return userMapper.toProfileResponse(newUser);
     }
@@ -63,13 +70,18 @@ public class UserService {
     }
 
     @Transactional(rollbackFor = Exception.class)
-    public UserSettingsResponse updateSettings(UUID id, UpdateUserSettingsRequest request) {
-        User user = userRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("User", "Id", id));
+    public UserSettingsResponse updateSettings(UUID id, JsonNode patch) {
+        User targetUser = userRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("User", "Id", id));
 
-        userSettingsMapper.updateEntity(request, user.getSettings());
-        user = userRepository.save(user);
+        UpdateUserSettingsRequest updateDto = userSettingsMapper.toUpdateRequest(targetUser.getSettings());
+        UpdateUserSettingsRequest patchedDto = jsonPatchService.applyPatch(patch, updateDto,
+                UpdateUserSettingsRequest.class);
+        userSettingsMapper.updateEntityFromDto(patchedDto, targetUser.getSettings());
 
-        return userSettingsMapper.toResponse(user.getSettings());
+        userRepository.save(targetUser);
+
+        return userSettingsMapper.toResponse(targetUser.getSettings());
     }
 
 }
