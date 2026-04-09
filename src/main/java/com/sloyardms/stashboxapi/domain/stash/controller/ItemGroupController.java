@@ -63,7 +63,7 @@ public class ItemGroupController {
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
-    @PatchMapping(path = "/{id}", consumes = "application/merge-patch+json")
+    @PatchMapping(path = "/{id}")
     public ResponseEntity<ItemGroupDetailResponse> patch(@PathVariable UUID id,
                                                          @RequestBody JsonNode body,
                                                          @AuthenticationPrincipal AuthenticatedUser authenticatedUser) {
@@ -79,7 +79,7 @@ public class ItemGroupController {
     }
 
     @PutMapping("/{id}/default")
-    public ResponseEntity<ItemGroupDetailResponse> updateDefaultItemGroup(@PathVariable UUID id,
+    public ResponseEntity<Void> updateDefaultItemGroup(@PathVariable UUID id,
                                                                           @AuthenticationPrincipal AuthenticatedUser authenticatedUser) {
         itemGroupService.setDefaultGroup(id, authenticatedUser.id());
         return ResponseEntity.noContent().build();
