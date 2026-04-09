@@ -12,14 +12,14 @@ import org.hibernate.validator.constraints.Length;
 @NoArgsConstructor
 public class UpdateItemGroupRequest {
 
-    @NotBlank(message = "{validations.itemGroup.name.notBlank}")
-    @Length(max = 75, message = "{validations.itemGroup.name.maxLength}")
+    @NotBlank(message = "{validation.itemGroup.name.notBlank}")
+    @Length(max = 75, message = "{validation.itemGroup.name.maxLength}")
     private String name;
 
-    @Length(max = 255, message = "{validations.itemGroup.description.maxLength}")
+    @Length(max = 255, message = "{validation.itemGroup.description.maxLength}")
     private String description;
 
-    @Length(max = 50, message = "{validations.itemGroup.icon.maxLength}")
+    @Length(max = 50, message = "{validation.itemGroup.icon.maxLength}")
     private String icon;
 
     @Valid
