@@ -10,13 +10,11 @@ import com.sloyardms.stashboxapi.domain.tag.model.Tag;
 import com.sloyardms.stashboxapi.domain.tag.projection.TagCountProjection;
 import com.sloyardms.stashboxapi.domain.tag.projection.TagDetailProjection;
 import com.sloyardms.stashboxapi.domain.tag.repository.TagRepository;
-import com.sloyardms.stashboxapi.domain.user.model.User;
 import com.sloyardms.stashboxapi.domain.user.repository.UserRepository;
 import com.sloyardms.stashboxapi.shared.exception.types.DuplicateResourceException;
 import com.sloyardms.stashboxapi.shared.exception.types.ResourceNotFoundException;
 import com.sloyardms.stashboxapi.shared.service.JsonPatchService;
 import com.sloyardms.stashboxapi.shared.utils.SlugUtils;
-import jakarta.persistence.EntityManager;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -33,7 +31,6 @@ import java.util.UUID;
 @Service
 public class TagService {
 
-    private final EntityManager entityManager;
     private final TagRepository tagRepository;
     private final UserRepository userRepository;
     private final ItemGroupRepository itemGroupRepository;
