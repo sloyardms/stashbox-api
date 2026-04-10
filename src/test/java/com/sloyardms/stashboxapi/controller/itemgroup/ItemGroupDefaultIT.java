@@ -37,7 +37,7 @@ public class ItemGroupDefaultIT extends BaseIntegrationTest {
         @DisplayName("Should set the group to default and return 204")
         @Sql({"/sql/data/users.sql", "/sql/data/item-groups.sql"})
         void shouldSetGroupToDefaultAndReturn204() {
-            UUID itemGroup1Id = TestConstants.USER_GROUP_1_ID;
+            UUID itemGroup1Id = TestConstants.Groups.DEV_RESOURCES_ID;
 
             givenNormalUserRequest()
                     .pathParam("id", itemGroup1Id)
@@ -46,7 +46,7 @@ public class ItemGroupDefaultIT extends BaseIntegrationTest {
                     .then()
                     .statusCode(HttpStatus.NO_CONTENT.value());
 
-            ItemGroup oldDefaultGroup = itemGroupRepository.findById(TestConstants.USER_DEFAULT_GROUP_ID).orElse(null);
+            ItemGroup oldDefaultGroup = itemGroupRepository.findById(TestConstants.Groups.UNGROUPED_ID).orElse(null);
             assertThat(oldDefaultGroup).isNotNull();
             assertThat(oldDefaultGroup.isDefaultGroup()).isFalse();
 

@@ -57,7 +57,7 @@ public class UserProfileRetrievalIT extends BaseIntegrationTest {
 
             // Verify that a default group was assigned to the user
             ItemGroup defaultGroup =
-                    itemGroupRepository.findAllByUserId(TestConstants.USER_ID, Pageable.unpaged())
+                    itemGroupRepository.findAllByUserId(TestConstants.Users.NORMAL_USER_ID, Pageable.unpaged())
                             .getContent().getFirst();
             assertThat(defaultGroup.getName()).isEqualTo("Ungrouped");
             assertThat(defaultGroup.getSlug()).isEqualTo("ungrouped");

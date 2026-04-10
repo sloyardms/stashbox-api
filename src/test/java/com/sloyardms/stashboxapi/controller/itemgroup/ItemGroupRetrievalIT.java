@@ -32,7 +32,7 @@ public class ItemGroupRetrievalIT extends BaseIntegrationTest {
         @Sql({"/sql/data/users.sql", "/sql/data/item-groups.sql"})
         void shouldReturn200AndTheItemGroup() {
             ItemGroupDetailResponse response = givenNormalUserRequest()
-                    .pathParam("id", TestConstants.USER_DEFAULT_GROUP_ID)
+                    .pathParam("id", TestConstants.Groups.UNGROUPED_ID)
                     .when()
                     .get(ENDPOINT)
                     .then()
@@ -81,7 +81,7 @@ public class ItemGroupRetrievalIT extends BaseIntegrationTest {
         @Sql({"/sql/data/users.sql", "/sql/data/item-groups.sql"})
         void shouldReturn404WhenItemGroupBelongsToAnotherUser() {
             givenNormalUserRequest()
-                    .pathParam("id", TestConstants.ADMIN_USER_DEFAULT_GROUP_ID)
+                    .pathParam("id", TestConstants.Groups.ADMIN_UNGROUPED_ID)
                     .when()
                     .get(ENDPOINT)
                     .then()

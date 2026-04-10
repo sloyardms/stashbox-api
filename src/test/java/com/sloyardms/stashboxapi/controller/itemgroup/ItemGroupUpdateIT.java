@@ -39,7 +39,7 @@ public class ItemGroupUpdateIT extends BaseIntegrationTest {
         @DisplayName("Should return 200 and update the item group")
         @Sql({"/sql/data/users.sql", "/sql/data/item-groups.sql"})
         void shouldReturn200AndUpdateTheItemGroup() {
-            ItemGroup itemGroup1 = itemGroupRepository.findById(TestConstants.USER_GROUP_1_ID).orElse(null);
+            ItemGroup itemGroup1 = itemGroupRepository.findById(TestConstants.Groups.DEV_RESOURCES_ID).orElse(null);
             assertThat(itemGroup1).isNotNull();
 
             String request = """
@@ -55,7 +55,7 @@ public class ItemGroupUpdateIT extends BaseIntegrationTest {
 
             ItemGroupDetailResponse response = givenNormalUserRequest()
                     .body(request)
-                    .pathParam("id", TestConstants.USER_GROUP_1_ID)
+                    .pathParam("id", TestConstants.Groups.DEV_RESOURCES_ID)
                     .when()
                     .patch(ENDPOINT)
                     .then()
@@ -90,7 +90,7 @@ public class ItemGroupUpdateIT extends BaseIntegrationTest {
         @Test
         @DisplayName("Should return 400 when body is missing")
         void shouldReturn400WhenBodyIsMissing() {
-            UUID groupId = TestConstants.USER_GROUP_1_ID;
+            UUID groupId = TestConstants.Groups.DEV_RESOURCES_ID;
 
             givenNormalUserRequest()
                     .pathParam("id", groupId)
@@ -106,7 +106,7 @@ public class ItemGroupUpdateIT extends BaseIntegrationTest {
         @DisplayName("Should return 400 when body is empty")
         @Sql({"/sql/data/users.sql", "/sql/data/item-groups.sql"})
         void shouldReturn400WhenBodyIsEmpty() {
-            UUID groupId = TestConstants.USER_GROUP_1_ID;
+            UUID groupId = TestConstants.Groups.DEV_RESOURCES_ID;
 
             givenNormalUserRequest()
                     .pathParam("id", groupId)
@@ -123,7 +123,7 @@ public class ItemGroupUpdateIT extends BaseIntegrationTest {
         @DisplayName("Should return 400 when name is set to null")
         @Sql({"/sql/data/users.sql", "/sql/data/item-groups.sql"})
         void shouldReturn400WhenNameIsSetToNull() {
-            UUID groupId = TestConstants.USER_GROUP_1_ID;
+            UUID groupId = TestConstants.Groups.DEV_RESOURCES_ID;
 
             String request = """
                     {
@@ -146,7 +146,7 @@ public class ItemGroupUpdateIT extends BaseIntegrationTest {
         @DisplayName("Should return 400 when name exceeds max length")
         @Sql({"/sql/data/users.sql", "/sql/data/item-groups.sql"})
         void shouldReturn400WhenNameExceedsMaxLength() {
-            UUID groupId = TestConstants.USER_GROUP_1_ID;
+            UUID groupId = TestConstants.Groups.DEV_RESOURCES_ID;
 
             String name = "N".repeat(100);
             String request = String.format("{ \"name\": \"%s\" }", name);

@@ -95,7 +95,7 @@ public class ItemGroupController {
 
     @PostMapping("/{groupId}/tags")
     public ResponseEntity<TagDetailResponse> createTag(@PathVariable UUID groupId,
-                                                       @RequestBody CreateTagRequest createTagRequest,
+                                                       @RequestBody @Valid CreateTagRequest createTagRequest,
                                                        @AuthenticationPrincipal AuthenticatedUser authenticatedUser) {
         TagDetailResponse response = tagService.create(authenticatedUser.id(), groupId, createTagRequest);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);

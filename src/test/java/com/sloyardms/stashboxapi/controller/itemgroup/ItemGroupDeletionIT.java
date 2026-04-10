@@ -31,7 +31,7 @@ public class ItemGroupDeletionIT extends BaseIntegrationTest {
         @DisplayName("Should delete the item group and return 204")
         @Sql(scripts = {"/sql/data/users.sql", "/sql/data/item-groups.sql"})
         void shouldDeleteTheItemGroup() {
-            UUID groupId = TestConstants.USER_GROUP_1_ID;
+            UUID groupId = TestConstants.Groups.DEV_RESOURCES_ID;
 
             givenNormalUserRequest()
                     .when()
