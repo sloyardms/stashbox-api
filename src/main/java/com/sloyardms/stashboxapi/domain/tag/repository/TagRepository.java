@@ -16,9 +16,9 @@ public interface TagRepository extends JpaRepository<Tag, UUID> {
 
     @Query(value = """
                 SELECT t.id, t.name, t.slug, t.created_at, t.updated_at,
-                    tu.item_count, tu.last_used
+                    COALESCE(tu.item_count, 0) AS item_count, tu.last_used
                 FROM tags t
-                INNER JOIN tag_usage tu ON tu.tag_id = t.id
+                LEFT JOIN tag_usage tu ON tu.tag_id = t.id
                 WHERE t.id = :tagId
                     AND t.group_id = :groupId
                     AND t.user_id = :userId
@@ -28,9 +28,9 @@ public interface TagRepository extends JpaRepository<Tag, UUID> {
 
     @Query(value = """
                 SELECT t.id, t.name, t.slug,
-                    tu.item_count
+                    COALESCE(tu.item_count, 0) AS item_count
                 FROM tags t
-                INNER JOIN tag_usage tu ON tu.tag_id = t.id
+                LEFT JOIN tag_usage tu ON tu.tag_id = t.id
                 WHERE t.group_id = :groupId
                     AND t.user_id = :userId
                     AND lower(t.name) ILIKE lower(CONCAT('%', :searchQuery, '%'))
