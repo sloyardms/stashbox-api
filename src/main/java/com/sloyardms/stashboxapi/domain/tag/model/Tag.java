@@ -1,7 +1,8 @@
 package com.sloyardms.stashboxapi.domain.tag.model;
 
-import com.sloyardms.stashboxapi.shared.persistence.AuditableEntity;
+import com.sloyardms.stashboxapi.domain.stash.model.ItemGroup;
 import com.sloyardms.stashboxapi.domain.user.model.User;
+import com.sloyardms.stashboxapi.shared.persistence.AuditableEntity;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
@@ -29,7 +30,7 @@ import java.util.UUID;
 @Entity
 @Table(name = "tags",
         uniqueConstraints = {
-                @UniqueConstraint(name = "tags_slug_unique", columnNames = {"user_id", "slug"})
+                @UniqueConstraint(name = "tags_slug_unique", columnNames = {"user_id", "group_id", "slug"})
         })
 public class Tag extends AuditableEntity {
 
@@ -44,6 +45,12 @@ public class Tag extends AuditableEntity {
     @JoinColumn(name = "user_id", nullable = false, updatable = false,
             foreignKey = @ForeignKey(name = "tags_user_id_fk"))
     private User user;
+
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @OnDelete(action = OnDeleteAction.CASCADE)
+    @JoinColumn(name = "group_id", nullable = false, updatable = false,
+            foreignKey = @ForeignKey(name = "tags_group_id_fk"))
+    private ItemGroup group;
 
     @Column(name = "name", nullable = false)
     @ToString.Include

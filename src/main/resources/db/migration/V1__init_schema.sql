@@ -74,13 +74,15 @@ CREATE INDEX stash_items_user_group_url_normalized_idx ON stash_items(user_id, g
 CREATE TABLE tags (
     id UUID PRIMARY KEY,
     user_id UUID NOT NULL,
+    group_id UUID NOT NULL,
     name TEXT NOT NULL,
     slug TEXT NOT NULL,
     created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
 
     CONSTRAINT tags_user_id_fk FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE,
-    CONSTRAINT tags_slug_unique UNIQUE (user_id, slug)
+    CONSTRAINT tags_group_id_fk FOREIGN KEY(group_id) REFERENCES item_groups(id) ON DELETE CASCADE,
+    CONSTRAINT tags_slug_unique UNIQUE (user_id, group_id, slug)
 );
 
 CREATE TABLE item_tags (
@@ -94,16 +96,12 @@ CREATE TABLE item_tags (
 );
 
 CREATE TABLE tag_usage (
-    tag_id UUID NOT NULL,
-    group_id UUID NOT NULL,
+    tag_id UUID PRIMARY KEY,
     item_count INTEGER NOT NULL DEFAULT 0,
     last_used TIMESTAMPTZ NOT NULL DEFAULT now(),
 
     CONSTRAINT tag_usage_tag_id_fk FOREIGN KEY(tag_id) REFERENCES tags(id) ON DELETE CASCADE,
-    CONSTRAINT tag_usage_group_id_fk FOREIGN KEY(group_id) REFERENCES item_groups(id) ON DELETE CASCADE,
-    CONSTRAINT tag_usage_item_count_positive CHECK (item_count >= 0),
-
-    PRIMARY KEY (group_id, tag_id)
+    CONSTRAINT tag_usage_item_count_positive CHECK (item_count >= 0)
 );
 
 CREATE TYPE upload_status_enum AS ENUM (
