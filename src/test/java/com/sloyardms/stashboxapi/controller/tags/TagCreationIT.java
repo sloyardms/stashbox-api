@@ -143,6 +143,7 @@ public class TagCreationIT extends BaseIntegrationTest {
                     .when()
                     .post(ENDPOINT)
                     .then()
+                    .log().body()
                     .statusCode(ErrorCatalog.RESOURCE_NOT_FOUND.getStatus().value())
                     .body("type", equalTo(ErrorCatalog.RESOURCE_NOT_FOUND.getType().toString()));
         }
@@ -160,6 +161,7 @@ public class TagCreationIT extends BaseIntegrationTest {
                     .when()
                     .post(ENDPOINT)
                     .then()
+                    .log().body()
                     .statusCode(ErrorCatalog.DUPLICATE_RESOURCE.getStatus().value())
                     .body("type", equalTo(ErrorCatalog.DUPLICATE_RESOURCE.getType().toString()));
         }
@@ -196,6 +198,7 @@ public class TagCreationIT extends BaseIntegrationTest {
                     .when()
                     .post(ENDPOINT)
                     .then()
+                    .log().body()
                     .statusCode(ErrorCatalog.RESOURCE_NOT_FOUND.getStatus().value())
                     .body("type", equalTo(ErrorCatalog.RESOURCE_NOT_FOUND.getType().toString()));
         }
