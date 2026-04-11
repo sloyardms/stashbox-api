@@ -5,7 +5,6 @@ import com.sloyardms.stashboxapi.config.TestConstants;
 import com.sloyardms.stashboxapi.domain.stash.model.ItemGroup;
 import com.sloyardms.stashboxapi.domain.stash.repository.ItemGroupRepository;
 import com.sloyardms.stashboxapi.domain.user.dto.UserProfileResponse;
-import com.sloyardms.stashboxapi.domain.user.repository.UserRepository;
 import com.sloyardms.stashboxapi.shared.exception.ErrorCatalog;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -14,18 +13,20 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.jdbc.Sql;
+import org.springframework.test.context.jdbc.SqlMergeMode;
 
 import static io.restassured.RestAssured.given;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 
 @ActiveProfiles("test")
+@Sql(scripts = "/sql/cleanup.sql", executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD)
+@SqlMergeMode(SqlMergeMode.MergeMode.MERGE)
 public class UserProfileRetrievalIT extends BaseIntegrationTest {
 
     private final String ENDPOINT = "/api/v1/users/me";
 
-    @Autowired
-    private UserRepository userRepository;
     @Autowired
     private ItemGroupRepository itemGroupRepository;
 
@@ -36,8 +37,6 @@ public class UserProfileRetrievalIT extends BaseIntegrationTest {
         @Test
         @DisplayName("Should return the user profile and return 200")
         void shouldReturnUserProfile() {
-            userRepository.deleteAll();
-
             UserProfileResponse body = givenNormalUserRequest()
                     .given()
                     .when()
