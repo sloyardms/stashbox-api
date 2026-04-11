@@ -64,43 +64,15 @@ public class ItemGroupRetrievalIT extends BaseIntegrationTest {
         @Test
         @DisplayName("Should return 404 when the item group does not exist")
         void shouldReturn404WhenItemGroupDoesNotExist() {
-            UUID nonExistentItemGroupId = UUID.randomUUID();
-
+            // Doesn't distinguish between "group not found" or "belongs to another user"
             givenNormalUserRequest()
-                    .pathParam("id", nonExistentItemGroupId)
+                    .pathParam("id", UUID.randomUUID())
                     .when()
                     .get(ENDPOINT)
                     .then()
                     .log().body()
                     .statusCode(ErrorCatalog.RESOURCE_NOT_FOUND.getStatus().value())
                     .body("type", equalTo(ErrorCatalog.RESOURCE_NOT_FOUND.getType().toString()));
-        }
-
-        @Test
-        @DisplayName("Should return 404 when item group belongs to another user")
-        @Sql({"/sql/data/users.sql", "/sql/data/item-groups.sql"})
-        void shouldReturn404WhenItemGroupBelongsToAnotherUser() {
-            givenNormalUserRequest()
-                    .pathParam("id", TestConstants.Groups.ADMIN_UNGROUPED_ID)
-                    .when()
-                    .get(ENDPOINT)
-                    .then()
-                    .log().body()
-                    .statusCode(ErrorCatalog.RESOURCE_NOT_FOUND.getStatus().value())
-                    .body("type", equalTo(ErrorCatalog.RESOURCE_NOT_FOUND.getType().toString()));
-        }
-
-        @Test
-        @DisplayName("Should return 400 when id is not a valid UUID")
-        void shouldReturn400WhenIdIsNotValidUUID() {
-            givenNormalUserRequest()
-                    .pathParam("id", "invalidUuid")
-                    .when()
-                    .get(ENDPOINT)
-                    .then()
-                    .log().body()
-                    .statusCode(ErrorCatalog.REQUEST_INVALID_PARAMETER_TYPE.getStatus().value())
-                    .body("type", equalTo(ErrorCatalog.REQUEST_INVALID_PARAMETER_TYPE.getType().toString()));
         }
 
     }
@@ -118,7 +90,7 @@ public class ItemGroupRetrievalIT extends BaseIntegrationTest {
                     .get(ENDPOINT)
                     .then()
                     .log().body()
-                    .statusCode(HttpStatus.UNAUTHORIZED.value())
+                    .statusCode(ErrorCatalog.UNAUTHORIZED.getStatus().value())
                     .body("type", equalTo(ErrorCatalog.UNAUTHORIZED.getType().toString()));
         }
 

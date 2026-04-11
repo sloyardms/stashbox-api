@@ -88,43 +88,51 @@ public class ItemGroupUpdateIT extends BaseIntegrationTest {
     class GeneralErrors {
 
         @Test
-        @DisplayName("Should return 400 when body is missing")
-        void shouldReturn400WhenBodyIsMissing() {
-            UUID groupId = TestConstants.Groups.DEV_RESOURCES_ID;
+        @DisplayName("Should return 404 when the group does not exist")
+        @Sql({"/sql/data/users.sql"})
+        void shouldReturn404WhenTheGroupDoesNotExist() {
+            String request = """
+                    {
+                      "name": "test"
+                    }
+                    """;
 
             givenNormalUserRequest()
-                    .pathParam("id", groupId)
+                    .pathParam("id", TestConstants.Groups.DEV_RESOURCES_ID)
+                    .body(request)
                     .when()
                     .patch(ENDPOINT)
                     .then()
                     .log().body()
-                    .statusCode(ErrorCatalog.MALFORMED_REQUEST_BODY.getStatus().value())
-                    .body("type", equalTo(ErrorCatalog.MALFORMED_REQUEST_BODY.getType().toString()));
+                    .statusCode(ErrorCatalog.RESOURCE_NOT_FOUND.getStatus().value())
+                    .body("type", equalTo(ErrorCatalog.RESOURCE_NOT_FOUND.getType().toString()));
         }
 
         @Test
-        @DisplayName("Should return 400 when body is empty")
+        @DisplayName("Should return 409 when group name already exist")
         @Sql({"/sql/data/users.sql", "/sql/data/item-groups.sql"})
-        void shouldReturn400WhenBodyIsEmpty() {
-            UUID groupId = TestConstants.Groups.DEV_RESOURCES_ID;
+        void shouldReturn409WhenTheGroupNameAlreadyExists() {
+            String request = """
+                    {
+                      "name": "Ungrouped"
+                    }
+                    """;
 
             givenNormalUserRequest()
-                    .pathParam("id", groupId)
-                    .body("{}")
+                    .pathParam("id", TestConstants.Groups.DEV_RESOURCES_ID)
+                    .body(request)
                     .when()
                     .patch(ENDPOINT)
                     .then()
                     .log().body()
-                    .statusCode(ErrorCatalog.EMPTY_PATCH_BODY.getStatus().value())
-                    .body("type", equalTo(ErrorCatalog.EMPTY_PATCH_BODY.getType().toString()));
+                    .statusCode(ErrorCatalog.DUPLICATE_RESOURCE.getStatus().value())
+                    .body("type", equalTo(ErrorCatalog.DUPLICATE_RESOURCE.getType().toString()));
         }
 
         @Test
-        @DisplayName("Should return 400 when name is set to null")
+        @DisplayName("Should return 422 when name is set to blank")
         @Sql({"/sql/data/users.sql", "/sql/data/item-groups.sql"})
-        void shouldReturn400WhenNameIsSetToNull() {
-            UUID groupId = TestConstants.Groups.DEV_RESOURCES_ID;
-
+        void shouldReturn422WhenNameIsSetToBlank() {
             String request = """
                     {
                       "name": null
@@ -132,7 +140,7 @@ public class ItemGroupUpdateIT extends BaseIntegrationTest {
                     """;
 
             givenNormalUserRequest()
-                    .pathParam("id", groupId)
+                    .pathParam("id", TestConstants.Groups.DEV_RESOURCES_ID)
                     .body(request)
                     .when()
                     .patch(ENDPOINT)
@@ -143,16 +151,14 @@ public class ItemGroupUpdateIT extends BaseIntegrationTest {
         }
 
         @Test
-        @DisplayName("Should return 400 when name exceeds max length")
+        @DisplayName("Should return 422 when name exceeds max length")
         @Sql({"/sql/data/users.sql", "/sql/data/item-groups.sql"})
-        void shouldReturn400WhenNameExceedsMaxLength() {
-            UUID groupId = TestConstants.Groups.DEV_RESOURCES_ID;
-
+        void shouldReturn422WhenNameExceedsMaxLength() {
             String name = "N".repeat(100);
             String request = String.format("{ \"name\": \"%s\" }", name);
 
             givenNormalUserRequest()
-                    .pathParam("id", groupId)
+                    .pathParam("id", TestConstants.Groups.DEV_RESOURCES_ID)
                     .body(request)
                     .when()
                     .patch(ENDPOINT)

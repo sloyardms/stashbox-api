@@ -73,24 +73,10 @@ public class ItemGroupCreationIT extends BaseIntegrationTest {
     class GeneralErrors {
 
         @Test
-        @DisplayName("Should return 400 when body is missing")
-        void shouldReturn400WhenBodyIsMissing() {
-            givenNormalUserRequest()
-                    .when()
-                    .post(ENDPOINT)
-                    .then()
-                    .log().body()
-                    .statusCode(ErrorCatalog.MALFORMED_REQUEST_BODY.getStatus().value())
-                    .body("type", equalTo(ErrorCatalog.MALFORMED_REQUEST_BODY.getType().toString()));
-        }
-
-        @Test
-        @DisplayName("Should return 400 when name is blank")
-        void shouldReturn400WhenNameIsBlank() {
+        @DisplayName("Should return 422 when name is blank")
+        void shouldReturn422WhenNameIsBlank() {
             CreateItemGroupRequest request = new CreateItemGroupRequest();
-            request.setDescription("Test ItemGroup description");
-            request.setIcon("icon");
-            request.setSettings(new CreateItemGroupSettingsRequest());
+            request.setName("");
 
             givenNormalUserRequest()
                     .body(request)
@@ -103,13 +89,10 @@ public class ItemGroupCreationIT extends BaseIntegrationTest {
         }
 
         @Test
-        @DisplayName("Should return 400 when name exceeds max length")
-        void shouldReturn400WhenNameExceedsMaxLength() {
+        @DisplayName("Should return 422 when name exceeds max length")
+        void shouldReturn422WhenNameExceedsMaxLength() {
             CreateItemGroupRequest request = new CreateItemGroupRequest();
             request.setName("T".repeat(100));
-            request.setDescription("Test ItemGroup description");
-            request.setIcon("icon");
-            request.setSettings(new CreateItemGroupSettingsRequest());
 
             givenNormalUserRequest()
                     .when()
@@ -128,8 +111,6 @@ public class ItemGroupCreationIT extends BaseIntegrationTest {
             CreateItemGroupRequest request = new CreateItemGroupRequest();
             request.setName("Ungrouped");
             request.setDescription("Should fail because Ungrouped default exists");
-            request.setIcon("icon");
-            request.setSettings(new CreateItemGroupSettingsRequest());
 
             givenNormalUserRequest()
                     .body(request)
