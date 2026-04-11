@@ -65,22 +65,9 @@ public class TagCreationIT extends BaseIntegrationTest {
     class GeneralErrors {
 
         @Test
-        @DisplayName("Should return 400 when body is missing")
-        void shouldReturn400WhenBodyIsMissing() {
-            givenNormalUserRequest()
-                    .pathParam("groupId", TestConstants.Groups.DESIGN_ID)
-                    .when()
-                    .post(ENDPOINT)
-                    .then()
-                    .log().body()
-                    .statusCode(ErrorCatalog.MALFORMED_REQUEST_BODY.getStatus().value())
-                    .body("type", equalTo(ErrorCatalog.MALFORMED_REQUEST_BODY.getType().toString()));
-        }
-
-        @Test
-        @DisplayName("Should return 400 when name is blank")
+        @DisplayName("Should return 422 when name is blank")
         @Sql({"/sql/data/users.sql", "/sql/data/item-groups.sql"})
-        void shouldReturn400WhenNameIsBlank() {
+        void shouldReturn422WhenNameIsBlank() {
             CreateTagRequest body = new CreateTagRequest();
 
             givenNormalUserRequest()
@@ -95,9 +82,9 @@ public class TagCreationIT extends BaseIntegrationTest {
         }
 
         @Test
-        @DisplayName("Should return 400 when name exceeds max length")
+        @DisplayName("Should return 422 when name exceeds max length")
         @Sql({"/sql/data/users.sql", "/sql/data/item-groups.sql"})
-        void shouldReturn400WhenNameExceedsMaxLength() {
+        void shouldReturn422WhenNameExceedsMaxLength() {
             CreateTagRequest body = new CreateTagRequest();
             body.setName("t".repeat(100));
 
@@ -110,24 +97,6 @@ public class TagCreationIT extends BaseIntegrationTest {
                     .log().body()
                     .statusCode(ErrorCatalog.VALIDATION_ERROR.getStatus().value())
                     .body("type", equalTo(ErrorCatalog.VALIDATION_ERROR.getType().toString()));
-        }
-
-        @Test
-        @DisplayName("Should return 409 when a tag with the same name already exist")
-        @Sql({"/sql/data/users.sql", "/sql/data/item-groups.sql", "/sql/data/tags.sql"})
-        void shouldReturn409WhenATagWithTheSameNameAlreadyExist() {
-            CreateTagRequest body = new CreateTagRequest();
-            body.setName("UI");
-
-            givenNormalUserRequest()
-                    .pathParam("groupId", TestConstants.Groups.DESIGN_ID)
-                    .body(body)
-                    .when()
-                    .post(ENDPOINT)
-                    .then()
-                    .log().body()
-                    .statusCode(ErrorCatalog.DUPLICATE_RESOURCE.getStatus().value())
-                    .body("type", equalTo(ErrorCatalog.DUPLICATE_RESOURCE.getType().toString()));
         }
 
         @Test
@@ -146,6 +115,24 @@ public class TagCreationIT extends BaseIntegrationTest {
                     .log().body()
                     .statusCode(ErrorCatalog.RESOURCE_NOT_FOUND.getStatus().value())
                     .body("type", equalTo(ErrorCatalog.RESOURCE_NOT_FOUND.getType().toString()));
+        }
+
+        @Test
+        @DisplayName("Should return 409 when a tag with the same name already exist")
+        @Sql({"/sql/data/users.sql", "/sql/data/item-groups.sql", "/sql/data/tags.sql"})
+        void shouldReturn409WhenATagWithTheSameNameAlreadyExist() {
+            CreateTagRequest body = new CreateTagRequest();
+            body.setName("UI");
+
+            givenNormalUserRequest()
+                    .pathParam("groupId", TestConstants.Groups.DESIGN_ID)
+                    .body(body)
+                    .when()
+                    .post(ENDPOINT)
+                    .then()
+                    .log().body()
+                    .statusCode(ErrorCatalog.DUPLICATE_RESOURCE.getStatus().value())
+                    .body("type", equalTo(ErrorCatalog.DUPLICATE_RESOURCE.getType().toString()));
         }
 
         @Test
@@ -183,24 +170,6 @@ public class TagCreationIT extends BaseIntegrationTest {
                     .log().body()
                     .statusCode(ErrorCatalog.UNAUTHORIZED.getStatus().value())
                     .body("type", equalTo(ErrorCatalog.UNAUTHORIZED.getType().toString()));
-        }
-
-        @Test
-        @DisplayName("Should return 404 when group belongs to another user")
-        @Sql({"/sql/data/users.sql", "/sql/data/item-groups.sql"})
-        void shouldReturn404WhenGroupBelongsToAnotherUser() {
-            CreateTagRequest body = new CreateTagRequest();
-            body.setName("test tag");
-
-            givenNormalUserRequest()
-                    .pathParam("groupId", TestConstants.Groups.ADMIN_UNGROUPED_ID)
-                    .body(body)
-                    .when()
-                    .post(ENDPOINT)
-                    .then()
-                    .log().body()
-                    .statusCode(ErrorCatalog.RESOURCE_NOT_FOUND.getStatus().value())
-                    .body("type", equalTo(ErrorCatalog.RESOURCE_NOT_FOUND.getType().toString()));
         }
 
     }

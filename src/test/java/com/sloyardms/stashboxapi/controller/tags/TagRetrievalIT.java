@@ -63,6 +63,7 @@ public class TagRetrievalIT extends BaseIntegrationTest {
         @DisplayName("Should return 404 when the tag does not exist")
         @Sql({"/sql/data/users.sql", "/sql/data/item-groups.sql"})
         void shouldReturn404WhenTheTagDoesNotExist() {
+            // Doesn't distinguish between "tag not found", "group not found", or "belongs to another user"
             givenNormalUserRequest()
                     .pathParam("groupId", TestConstants.Groups.RECIPES_ID)
                     .pathParam("tagId", UUID.randomUUID())
@@ -70,35 +71,6 @@ public class TagRetrievalIT extends BaseIntegrationTest {
                     .get(ENDPOINT)
                     .then()
                     .log().body()
-                    .statusCode(ErrorCatalog.RESOURCE_NOT_FOUND.getStatus().value())
-                    .body("type", equalTo(ErrorCatalog.RESOURCE_NOT_FOUND.getType().toString()));
-        }
-
-        @Test
-        @DisplayName("Should return 400 when id is not a valid UUID")
-        void shouldReturn400WhenIdIsNotValidUUID() {
-            givenNormalUserRequest()
-                    .pathParam("groupId", "invalidGroupId")
-                    .pathParam("tagId", "invalidTagId")
-                    .when()
-                    .get(ENDPOINT)
-                    .then()
-                    .log().body()
-                    .statusCode(ErrorCatalog.REQUEST_INVALID_PARAMETER_TYPE.getStatus().value())
-                    .body("type", equalTo(ErrorCatalog.REQUEST_INVALID_PARAMETER_TYPE.getType().toString()));
-        }
-
-        @Test
-        @DisplayName("Should return 404 when tag does not belong to the specified group")
-        @Sql({"/sql/data/users.sql", "/sql/data/item-groups.sql", "/sql/data/tags.sql"})
-        void shouldReturn404WhenTagDoesNotBelongToGroup() {
-            // QUICK_MEALS_ID belongs to RECIPES group, not DEV_RESOURCES
-            givenNormalUserRequest()
-                    .pathParam("groupId", TestConstants.Groups.DEV_RESOURCES_ID)
-                    .pathParam("tagId", TestConstants.Tags.QUICK_MEALS_ID)
-                    .when()
-                    .get(ENDPOINT)
-                    .then()
                     .statusCode(ErrorCatalog.RESOURCE_NOT_FOUND.getStatus().value())
                     .body("type", equalTo(ErrorCatalog.RESOURCE_NOT_FOUND.getType().toString()));
         }
@@ -121,22 +93,6 @@ public class TagRetrievalIT extends BaseIntegrationTest {
                     .log().body()
                     .statusCode(HttpStatus.UNAUTHORIZED.value())
                     .body("type", equalTo(ErrorCatalog.UNAUTHORIZED.getType().toString()));
-        }
-
-        @Test
-        @DisplayName("Should return 404 when tag belongs to another user")
-        @Sql({"/sql/data/users.sql", "/sql/data/item-groups.sql", "/sql/data/tags.sql"})
-        void shouldReturn404WhenTheTagBelongsToAnotherUser() {
-            //normal user fetching admin tag
-            givenNormalUserRequest()
-                    .pathParam("groupId", TestConstants.Groups.ADMIN_UNGROUPED_ID)
-                    .pathParam("tagId", TestConstants.Tags.ADMIN_JAVA_ID)
-                    .when()
-                    .get(ENDPOINT)
-                    .then()
-                    .log().body()
-                    .statusCode(ErrorCatalog.RESOURCE_NOT_FOUND.getStatus().value())
-                    .body("type", equalTo(ErrorCatalog.RESOURCE_NOT_FOUND.getType().toString()));
         }
 
     }

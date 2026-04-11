@@ -111,9 +111,9 @@ public class TagUpdateIT extends BaseIntegrationTest {
         }
 
         @Test
-        @DisplayName("Should return 400 when name is blank")
+        @DisplayName("Should return 422 when name is blank")
         @Sql({"/sql/data/users.sql", "/sql/data/item-groups.sql", "/sql/data/tags.sql"})
-        void shouldReturn400WhenNameIsBlank() {
+        void shouldReturn422WhenNameIsBlank() {
             String request = """
                     {
                         "name": ""
@@ -133,9 +133,9 @@ public class TagUpdateIT extends BaseIntegrationTest {
         }
 
         @Test
-        @DisplayName("Should return 400 when name exceeds max length")
+        @DisplayName("Should return 422 when name exceeds max length")
         @Sql({"/sql/data/users.sql", "/sql/data/item-groups.sql", "/sql/data/tags.sql"})
-        void shouldReturn400WhenNameExceedsMaxLength() {
+        void shouldReturn422WhenNameExceedsMaxLength() {
             String name = "N".repeat(100);
             String request = String.format("{ \"name\": \"%s\" }", name);
 
