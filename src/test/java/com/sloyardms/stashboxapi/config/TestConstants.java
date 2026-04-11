@@ -27,6 +27,11 @@ public final class TestConstants {
 
         // Admin user
         public static final UUID ADMIN_UNGROUPED_ID = UUID.fromString("a1b2c3d4-0005-4000-8000-000000000005");
+
+        // Counts
+        public static final int NORMAL_USER_COUNT = 4;
+        public static final int ADMIN_USER_COUNT = 1;
+
     }
 
     public static final class Tags {
