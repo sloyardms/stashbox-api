@@ -1,11 +1,13 @@
 package com.sloyardms.stashboxapi.domain.stash.model;
 
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @Getter
 @Setter
+@EqualsAndHashCode
 @NoArgsConstructor
 public class ItemGroupSettings {
 
