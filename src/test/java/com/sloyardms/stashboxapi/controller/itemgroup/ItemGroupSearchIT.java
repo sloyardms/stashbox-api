@@ -2,12 +2,10 @@ package com.sloyardms.stashboxapi.controller.itemgroup;
 
 import com.sloyardms.stashboxapi.config.BaseIntegrationTest;
 import com.sloyardms.stashboxapi.config.TestConstants;
-import com.sloyardms.stashboxapi.domain.stash.repository.ItemGroupRepository;
 import com.sloyardms.stashboxapi.shared.exception.ErrorCatalog;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.jdbc.Sql;
@@ -67,7 +65,8 @@ public class ItemGroupSearchIT extends BaseIntegrationTest {
                     .get(ENDPOINT)
                     .then()
                     .log().body()
-                    .statusCode(HttpStatus.UNPROCESSABLE_CONTENT.value());
+                    .statusCode(ErrorCatalog.PAGEABLE_INVALID_SORT_FIELD.getStatus().value())
+                    .body("type", equalTo(ErrorCatalog.PAGEABLE_INVALID_SORT_FIELD.getType().toString()));
         }
 
     }
