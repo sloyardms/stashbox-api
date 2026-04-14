@@ -28,13 +28,13 @@ import java.util.UUID;
 @NoArgsConstructor
 @ToString(onlyExplicitlyIncluded = true)
 @Entity
-@Table(name = "user_filters",
+@Table(name = "url_rules",
         uniqueConstraints = {
-                @UniqueConstraint(name = "user_filters_user_name_unique", columnNames = {"user_id", "name"}),
-                @UniqueConstraint(name = "user_filters_user_url_pattern_unique", columnNames = {"user_id",
+                @UniqueConstraint(name = "url_rules_user_name_unique", columnNames = {"user_id", "name"}),
+                @UniqueConstraint(name = "url_rules_user_url_pattern_unique", columnNames = {"user_id",
                         "url_pattern"})
         })
-public class UserFilter extends AuditableEntity {
+public class UrlRule extends AuditableEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
@@ -45,7 +45,7 @@ public class UserFilter extends AuditableEntity {
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @OnDelete(action = OnDeleteAction.CASCADE)
     @JoinColumn(name = "user_id", nullable = false, updatable = false,
-            foreignKey = @ForeignKey(name = "user_filters_user_id_fk"))
+            foreignKey = @ForeignKey(name = "url_rules_user_id_fk"))
     private User user;
 
     @Column(name = "name", nullable = false)
