@@ -5,7 +5,7 @@ CREATE TABLE users (
     updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
-CREATE TABLE user_filters (
+CREATE TABLE url_rules (
     id UUID PRIMARY KEY,
     user_id UUID NOT NULL,
     name TEXT NOT NULL,
@@ -20,12 +20,12 @@ CREATE TABLE user_filters (
     created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
 
-    CONSTRAINT user_filters_user_id_fk FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    CONSTRAINT url_rules_user_id_fk FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
 
-    CONSTRAINT user_filters_user_name_unique UNIQUE (user_id, name),
-    CONSTRAINT user_filters_user_url_pattern_unique UNIQUE (user_id, url_pattern),
-    CONSTRAINT user_filters_priority_positive CHECK (priority >= 0),
-    CONSTRAINT user_filters_extraction_group_positive CHECK (extraction_group >= 0)
+    CONSTRAINT url_rules_user_name_unique UNIQUE (user_id, name),
+    CONSTRAINT url_rules_user_url_pattern_unique UNIQUE (user_id, url_pattern),
+    CONSTRAINT url_rules_priority_positive CHECK (priority >= 0),
+    CONSTRAINT url_rules_extraction_group_positive CHECK (extraction_group >= 0)
 );
 
 CREATE TABLE item_groups (
