@@ -33,13 +33,19 @@ public interface TagRepository extends JpaRepository<Tag, UUID> {
                 LEFT JOIN tag_usage tu ON tu.tag_id = t.id
                 WHERE t.group_id = :groupId
                     AND t.user_id = :userId
-                    AND lower(t.name) ILIKE lower(CONCAT('%', :searchQuery, '%'))
+                    AND (
+                            :searchQuery IS NULL
+                            OR lower(t.name) ILIKE lower(CONCAT('%', :searchQuery, '%'))
+                        )
             """, countQuery = """
                 SELECT COUNT(t.id)
                 FROM tags t
                 WHERE t.group_id = :groupId
                     AND t.user_id = :userId
-                    AND lower(t.name) ILIKE lower(CONCAT('%', :searchQuery, '%'))
+                    AND (
+                            :searchQuery IS NULL
+                            OR lower(t.name) ILIKE lower(CONCAT('%', :searchQuery, '%'))
+                        )
             """, nativeQuery = true)
     Page<TagCountProjection> findAllTagCount(@Param("userId") UUID userId, @Param("groupId") UUID groupId, @Param(
             "searchQuery") String searchQuery, Pageable pageable);
