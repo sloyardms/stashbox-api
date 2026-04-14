@@ -91,13 +91,4 @@ public abstract class BaseIntegrationTest extends TestContainersConfig {
                 .path("access_token");
     }
 
-    public void ensureNormalUserExists() {
-        String USER_ENDPOINT = "/api/v1/users/me";
-        givenNormalUserRequest()
-                .when()
-                .post(USER_ENDPOINT)
-                .then()
-                .statusCode(HttpStatus.OK.value());
-    }
-
 }

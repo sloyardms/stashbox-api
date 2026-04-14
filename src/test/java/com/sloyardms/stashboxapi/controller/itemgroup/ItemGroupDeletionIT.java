@@ -31,11 +31,9 @@ public class ItemGroupDeletionIT extends BaseIntegrationTest {
         @DisplayName("Should delete the item group and return 204")
         @Sql(scripts = {"/sql/data/users.sql", "/sql/data/item-groups.sql"})
         void shouldDeleteTheItemGroup() {
-            UUID groupId = TestConstants.USER_GROUP_1_ID;
-
             givenNormalUserRequest()
                     .when()
-                    .pathParam("id", groupId)
+                    .pathParam("id", TestConstants.Groups.DEV_RESOURCES_ID)
                     .delete(ENDPOINT)
                     .then()
                     .statusCode(HttpStatus.NO_CONTENT.value());
@@ -50,10 +48,8 @@ public class ItemGroupDeletionIT extends BaseIntegrationTest {
         @Test
         @DisplayName("Should return 404 when the item group does not exist")
         void shouldReturn404WhenItemGroupDoesNotExist() {
-            UUID nonExistentGroupId = UUID.randomUUID();
-
             givenNormalUserRequest()
-                    .pathParam("id", nonExistentGroupId)
+                    .pathParam("id", UUID.randomUUID())
                     .when()
                     .delete(ENDPOINT)
                     .then()

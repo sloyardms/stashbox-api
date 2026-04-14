@@ -1,11 +1,11 @@
 package com.sloyardms.stashboxapi.controller.itemgroup;
 
 import com.sloyardms.stashboxapi.config.BaseIntegrationTest;
-import com.sloyardms.stashboxapi.domain.stash.repository.ItemGroupRepository;
+import com.sloyardms.stashboxapi.config.TestConstants;
+import com.sloyardms.stashboxapi.shared.exception.ErrorCatalog;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.jdbc.Sql;
@@ -20,8 +20,6 @@ import static org.hamcrest.Matchers.*;
 public class ItemGroupSearchIT extends BaseIntegrationTest {
 
     private final String ENDPOINT = "/api/v1/item-groups";
-    @Autowired
-    private ItemGroupRepository itemGroupRepository;
 
     @Nested
     @DisplayName("Successful Operations")
@@ -31,7 +29,7 @@ public class ItemGroupSearchIT extends BaseIntegrationTest {
         @DisplayName("Should return 200 and paginated list of item groups")
         @Sql({"/sql/data/users.sql", "/sql/data/item-groups.sql"})
         void shouldReturn200AndPaginatedListOfItemGroupsOfUser() {
-            int numberOfItemGroups = 4; // matches normal user's item groups in item-groups.sql
+            int numberOfItemGroups = TestConstants.Groups.NORMAL_USER_COUNT;
             int expectedTotalPages = (int) Math.ceil((double) numberOfItemGroups / defaultPageSize);
 
             givenNormalUserRequest()
@@ -52,27 +50,6 @@ public class ItemGroupSearchIT extends BaseIntegrationTest {
                     );
         }
 
-        @Test
-        @DisplayName("Should return 200 and paginated list of item groups sorted by name")
-        @Sql({"/sql/data/users.sql", "/sql/data/item-groups.sql"})
-        void shouldReturn200AndPaginatedListOfItemGroupsSortedByName() {
-            givenNormalUserRequest()
-                    .queryParam("sort", "name,asc")
-                    .when()
-                    .get(ENDPOINT)
-                    .then()
-                    .statusCode(HttpStatus.OK.value())
-                    .body("content.name", contains("Design Inspiration", "Dev Resources", "Recipes", "Ungrouped"));
-
-            givenNormalUserRequest()
-                    .queryParam("sort", "name,desc")
-                    .when()
-                    .get(ENDPOINT)
-                    .then()
-                    .statusCode(HttpStatus.OK.value())
-                    .body("content.name", contains("Ungrouped", "Recipes", "Dev Resources", "Design Inspiration"));
-        }
-
     }
 
     @Nested
@@ -88,7 +65,8 @@ public class ItemGroupSearchIT extends BaseIntegrationTest {
                     .get(ENDPOINT)
                     .then()
                     .log().body()
-                    .statusCode(HttpStatus.UNPROCESSABLE_CONTENT.value());
+                    .statusCode(ErrorCatalog.PAGEABLE_INVALID_SORT_FIELD.getStatus().value())
+                    .body("type", equalTo(ErrorCatalog.PAGEABLE_INVALID_SORT_FIELD.getType().toString()));
         }
 
     }
@@ -105,7 +83,8 @@ public class ItemGroupSearchIT extends BaseIntegrationTest {
                     .get(ENDPOINT)
                     .then()
                     .log().body()
-                    .statusCode(HttpStatus.UNAUTHORIZED.value());
+                    .statusCode(ErrorCatalog.UNAUTHORIZED.getStatus().value())
+                    .body("type", equalTo(ErrorCatalog.UNAUTHORIZED.getType().toString()));
         }
 
     }

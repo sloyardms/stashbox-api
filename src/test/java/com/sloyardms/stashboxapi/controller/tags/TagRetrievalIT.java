@@ -1,8 +1,8 @@
-package com.sloyardms.stashboxapi.controller.itemgroup;
+package com.sloyardms.stashboxapi.controller.tags;
 
 import com.sloyardms.stashboxapi.config.BaseIntegrationTest;
 import com.sloyardms.stashboxapi.config.TestConstants;
-import com.sloyardms.stashboxapi.domain.stash.dto.response.ItemGroupDetailResponse;
+import com.sloyardms.stashboxapi.domain.tag.dto.response.TagDetailResponse;
 import com.sloyardms.stashboxapi.shared.exception.ErrorCatalog;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -10,6 +10,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpStatus;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.jdbc.Sql;
+import org.springframework.test.context.jdbc.SqlMergeMode;
 
 import java.util.UUID;
 
@@ -19,40 +20,37 @@ import static org.hamcrest.Matchers.equalTo;
 
 @ActiveProfiles("test")
 @Sql(scripts = "/sql/cleanup.sql", executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD)
-public class ItemGroupRetrievalIT extends BaseIntegrationTest {
+@SqlMergeMode(SqlMergeMode.MergeMode.MERGE)
+public class TagRetrievalIT extends BaseIntegrationTest {
 
-    private final String ENDPOINT = "/api/v1/item-groups/{id}";
+    private final String ENDPOINT = "/api/v1/item-groups/{groupId}/tags/{tagId}";
 
     @Nested
     @DisplayName("Successful Operations")
     class SuccessfulOperations {
 
         @Test
-        @DisplayName("Should return the item group detail and 200")
-        @Sql({"/sql/data/users.sql", "/sql/data/item-groups.sql"})
-        void shouldReturn200AndTheItemGroup() {
-            ItemGroupDetailResponse response = givenNormalUserRequest()
-                    .pathParam("id", TestConstants.Groups.UNGROUPED_ID)
+        @DisplayName("Should return the tag detail and 200")
+        @Sql({"/sql/data/users.sql", "/sql/data/item-groups.sql", "/sql/data/tags.sql"})
+        void shouldReturnTheTagDetailAnd200() {
+            TagDetailResponse response = givenNormalUserRequest()
+                    .pathParam("groupId", TestConstants.Groups.RECIPES_ID)
+                    .pathParam("tagId", TestConstants.Tags.QUICK_MEALS_ID)
                     .when()
                     .get(ENDPOINT)
                     .then()
+                    .log().body()
                     .statusCode(HttpStatus.OK.value())
-                    .extract().as(ItemGroupDetailResponse.class);
+                    .extract().body().as(TagDetailResponse.class);
 
             assertThat(response).isNotNull();
-            assertThat(response.getId()).isNotNull();
-            assertThat(response.getName()).isNotNull().isEqualTo("Ungrouped");
-            assertThat(response.getSlug()).isNotNull().isEqualTo("ungrouped");
-            assertThat(response.getDescription()).isNull();
-            assertThat(response.getIcon()).isNull();
-            assertThat(response.getDefaultGroup()).isTrue();
-            assertThat(response.getPosition()).isEqualTo(0);
-            assertThat(response.getSettings()).isNotNull();
-            assertThat(response.getSettings().isRequiredTitle()).isFalse();
-            assertThat(response.getSettings().isUniqueTitle()).isFalse();
-            assertThat(response.getSettings().isRequiredUrl()).isFalse();
-            assertThat(response.getSettings().isUniqueUrl()).isFalse();
-            assertThat(response.getSettings().isRequiredImage()).isFalse();
+            assertThat(response.getId()).isEqualTo(TestConstants.Tags.QUICK_MEALS_ID);
+            assertThat(response.getName()).isEqualTo("Quick Meals");
+            assertThat(response.getSlug()).isEqualTo("quick-meals");
+            assertThat(response.getCreatedAt()).isNotNull();
+            assertThat(response.getUpdatedAt()).isNotNull();
+            assertThat(response.getItemCount()).isEqualTo(0);
+            assertThat(response.getLastUsed()).isNull();
         }
 
     }
@@ -62,11 +60,13 @@ public class ItemGroupRetrievalIT extends BaseIntegrationTest {
     class GeneralErrors {
 
         @Test
-        @DisplayName("Should return 404 when the item group does not exist")
-        void shouldReturn404WhenItemGroupDoesNotExist() {
-            // Doesn't distinguish between "group not found" or "belongs to another user"
+        @DisplayName("Should return 404 when the tag does not exist")
+        @Sql({"/sql/data/users.sql", "/sql/data/item-groups.sql"})
+        void shouldReturn404WhenTheTagDoesNotExist() {
+            // Doesn't distinguish between "tag not found", "group not found", or "belongs to another user"
             givenNormalUserRequest()
-                    .pathParam("id", UUID.randomUUID())
+                    .pathParam("groupId", TestConstants.Groups.RECIPES_ID)
+                    .pathParam("tagId", UUID.randomUUID())
                     .when()
                     .get(ENDPOINT)
                     .then()
@@ -85,12 +85,13 @@ public class ItemGroupRetrievalIT extends BaseIntegrationTest {
         @DisplayName("Should return 401 when the user is not authenticated")
         void shouldReturn401WhenUserIsNotAuthenticated() {
             given()
-                    .pathParam("id", UUID.randomUUID())
+                    .pathParam("groupId", UUID.randomUUID())
+                    .pathParam("tagId", UUID.randomUUID())
                     .when()
                     .get(ENDPOINT)
                     .then()
                     .log().body()
-                    .statusCode(ErrorCatalog.UNAUTHORIZED.getStatus().value())
+                    .statusCode(HttpStatus.UNAUTHORIZED.value())
                     .body("type", equalTo(ErrorCatalog.UNAUTHORIZED.getType().toString()));
         }
 

@@ -1,15 +1,12 @@
-package com.sloyardms.stashboxapi.controller.itemgroup;
+package com.sloyardms.stashboxapi.controller.tags;
 
 import com.sloyardms.stashboxapi.config.BaseIntegrationTest;
 import com.sloyardms.stashboxapi.config.TestConstants;
-import com.sloyardms.stashboxapi.domain.stash.dto.response.ItemGroupDetailResponse;
-import com.sloyardms.stashboxapi.domain.stash.model.ItemGroup;
-import com.sloyardms.stashboxapi.domain.stash.repository.ItemGroupRepository;
+import com.sloyardms.stashboxapi.domain.tag.dto.response.TagDetailResponse;
 import com.sloyardms.stashboxapi.shared.exception.ErrorCatalog;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.jdbc.Sql;
@@ -24,61 +21,42 @@ import static org.hamcrest.Matchers.equalTo;
 @ActiveProfiles("test")
 @Sql(scripts = "/sql/cleanup.sql", executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD)
 @SqlMergeMode(SqlMergeMode.MergeMode.MERGE)
-public class ItemGroupUpdateIT extends BaseIntegrationTest {
+public class TagUpdateIT extends BaseIntegrationTest {
 
-    private final String ENDPOINT = "/api/v1/item-groups/{id}";
-
-    @Autowired
-    private ItemGroupRepository itemGroupRepository;
+    private final String ENDPOINT = "/api/v1/item-groups/{groupId}/tags/{tagId}";
 
     @Nested
     @DisplayName("Successful Operations")
     class SuccessfulOperations {
 
         @Test
-        @DisplayName("Should return 200 and update the item group")
-        @Sql({"/sql/data/users.sql", "/sql/data/item-groups.sql"})
-        void shouldReturn200AndUpdateTheItemGroup() {
-            ItemGroup itemGroup1 = itemGroupRepository.findById(TestConstants.Groups.DEV_RESOURCES_ID).orElse(null);
-            assertThat(itemGroup1).isNotNull();
-
+        @DisplayName("Should return 200 and update the tag")
+        @Sql({"/sql/data/users.sql", "/sql/data/item-groups.sql", "/sql/data/tags.sql"})
+        void shouldReturn200AndUpdateTheTag() {
             String request = """
                     {
-                      "name": "new name",
-                      "icon": "new icon",
-                      "settings": {
-                        "requiredTitle": false,
-                        "uniqueTitle": false
-                      }
+                        "name": "new name"
                     }
                     """;
 
-            ItemGroupDetailResponse response = givenNormalUserRequest()
+            TagDetailResponse response = givenNormalUserRequest()
+                    .pathParam("groupId", TestConstants.Groups.DESIGN_ID)
+                    .pathParam("tagId", TestConstants.Tags.UX_ID)
                     .body(request)
-                    .pathParam("id", TestConstants.Groups.DEV_RESOURCES_ID)
                     .when()
                     .patch(ENDPOINT)
                     .then()
                     .statusCode(HttpStatus.OK.value())
-                    .extract().as(ItemGroupDetailResponse.class);
+                    .extract().as(TagDetailResponse.class);
 
-            //ItemGroup
             assertThat(response).isNotNull();
-            assertThat(response.getId()).isEqualTo(itemGroup1.getId());
+            assertThat(response.getId()).isEqualTo(TestConstants.Tags.UX_ID);
             assertThat(response.getName()).isEqualTo("new name");
             assertThat(response.getSlug()).isEqualTo("new-name");
-            assertThat(response.getIcon()).isEqualTo("new icon");
-            assertThat(response.getDefaultGroup()).isEqualTo(itemGroup1.isDefaultGroup());
-            assertThat(response.getPosition()).isEqualTo(itemGroup1.getPosition());
             assertThat(response.getCreatedAt()).isNotNull();
             assertThat(response.getUpdatedAt()).isNotNull();
-            //ItemGroup Settings
-            assertThat(response.getSettings()).isNotNull();
-            assertThat(response.getSettings().isRequiredTitle()).isFalse();
-            assertThat(response.getSettings().isUniqueTitle()).isFalse();
-            assertThat(response.getSettings().isRequiredUrl()).isTrue();
-            assertThat(response.getSettings().isUniqueUrl()).isTrue();
-            assertThat(response.getSettings().isRequiredImage()).isFalse();
+            assertThat(response.getItemCount()).isEqualTo(0);
+            assertThat(response.getLastUsed()).isNull();
         }
 
     }
@@ -88,17 +66,19 @@ public class ItemGroupUpdateIT extends BaseIntegrationTest {
     class GeneralErrors {
 
         @Test
-        @DisplayName("Should return 404 when the group does not exist")
-        @Sql({"/sql/data/users.sql"})
-        void shouldReturn404WhenTheGroupDoesNotExist() {
+        @DisplayName("Should return 404 when the tag does not exist")
+        @Sql({"/sql/data/users.sql", "/sql/data/item-groups.sql", "/sql/data/tags.sql"})
+        void shouldReturn404WhenTheTagDoesNotExist() {
             String request = """
                     {
-                      "name": "test"
+                        "name": "new name"
                     }
                     """;
 
+            // Doesn't distinguish between "tag not found", "group not found", or "belongs to another user"
             givenNormalUserRequest()
-                    .pathParam("id", TestConstants.Groups.DEV_RESOURCES_ID)
+                    .pathParam("groupId", TestConstants.Groups.DESIGN_ID)
+                    .pathParam("tagId", UUID.randomUUID())
                     .body(request)
                     .when()
                     .patch(ENDPOINT)
@@ -109,17 +89,18 @@ public class ItemGroupUpdateIT extends BaseIntegrationTest {
         }
 
         @Test
-        @DisplayName("Should return 409 when group name already exist")
-        @Sql({"/sql/data/users.sql", "/sql/data/item-groups.sql"})
-        void shouldReturn409WhenTheGroupNameAlreadyExists() {
+        @DisplayName("Should return 409 when tag name already exist")
+        @Sql({"/sql/data/users.sql", "/sql/data/item-groups.sql", "/sql/data/tags.sql"})
+        void shouldReturn409WhenTheTagNameAlreadyExists() {
             String request = """
                     {
-                      "name": "Ungrouped"
+                        "name": "UX"
                     }
                     """;
 
             givenNormalUserRequest()
-                    .pathParam("id", TestConstants.Groups.DEV_RESOURCES_ID)
+                    .pathParam("groupId", TestConstants.Groups.DESIGN_ID)
+                    .pathParam("tagId", TestConstants.Tags.UI_ID)
                     .body(request)
                     .when()
                     .patch(ENDPOINT)
@@ -130,17 +111,18 @@ public class ItemGroupUpdateIT extends BaseIntegrationTest {
         }
 
         @Test
-        @DisplayName("Should return 422 when name is set to blank")
-        @Sql({"/sql/data/users.sql", "/sql/data/item-groups.sql"})
-        void shouldReturn422WhenNameIsSetToBlank() {
+        @DisplayName("Should return 422 when name is blank")
+        @Sql({"/sql/data/users.sql", "/sql/data/item-groups.sql", "/sql/data/tags.sql"})
+        void shouldReturn422WhenNameIsBlank() {
             String request = """
                     {
-                      "name": null
+                        "name": ""
                     }
                     """;
 
             givenNormalUserRequest()
-                    .pathParam("id", TestConstants.Groups.DEV_RESOURCES_ID)
+                    .pathParam("groupId", TestConstants.Groups.DESIGN_ID)
+                    .pathParam("tagId", TestConstants.Tags.UI_ID)
                     .body(request)
                     .when()
                     .patch(ENDPOINT)
@@ -152,13 +134,14 @@ public class ItemGroupUpdateIT extends BaseIntegrationTest {
 
         @Test
         @DisplayName("Should return 422 when name exceeds max length")
-        @Sql({"/sql/data/users.sql", "/sql/data/item-groups.sql"})
+        @Sql({"/sql/data/users.sql", "/sql/data/item-groups.sql", "/sql/data/tags.sql"})
         void shouldReturn422WhenNameExceedsMaxLength() {
             String name = "N".repeat(100);
             String request = String.format("{ \"name\": \"%s\" }", name);
 
             givenNormalUserRequest()
-                    .pathParam("id", TestConstants.Groups.DEV_RESOURCES_ID)
+                    .pathParam("groupId", TestConstants.Groups.DESIGN_ID)
+                    .pathParam("tagId", TestConstants.Tags.UI_ID)
                     .body(request)
                     .when()
                     .patch(ENDPOINT)
@@ -178,7 +161,8 @@ public class ItemGroupUpdateIT extends BaseIntegrationTest {
         @DisplayName("Should return 401 when the user is not authenticated")
         void shouldReturn401WhenUserIsNotAuthenticated() {
             given()
-                    .pathParam("id", UUID.randomUUID())
+                    .pathParam("groupId", TestConstants.Groups.DESIGN_ID)
+                    .pathParam("tagId", TestConstants.Tags.UI_ID)
                     .when()
                     .patch(ENDPOINT)
                     .then()
