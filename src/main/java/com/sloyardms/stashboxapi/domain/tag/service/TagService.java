@@ -14,6 +14,7 @@ import com.sloyardms.stashboxapi.domain.user.repository.UserRepository;
 import com.sloyardms.stashboxapi.shared.exception.types.DuplicateResourceException;
 import com.sloyardms.stashboxapi.shared.exception.types.ResourceNotFoundException;
 import com.sloyardms.stashboxapi.shared.service.JsonPatchService;
+import com.sloyardms.stashboxapi.shared.utils.PageableUtils;
 import com.sloyardms.stashboxapi.shared.utils.SlugUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -24,6 +25,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import tools.jackson.databind.JsonNode;
 
+import java.util.Map;
 import java.util.UUID;
 
 @Slf4j
@@ -47,7 +49,14 @@ public class TagService {
 
     @Transactional(readOnly = true)
     public Page<TagCountResponse> search(UUID userId, UUID groupId, String searchQuery, Pageable pageable) {
-        Page<TagCountProjection> tags = tagRepository.findAllTagCount(userId, groupId, searchQuery, pageable);
+        Map<String, String> sortFieldMappings = Map.of(
+                "itemCount", "tu.item_count",
+                "lastUsed", "tu.last_used"
+        );
+        Pageable mappedPageable = PageableUtils.remapSort(pageable, sortFieldMappings);
+        String query = (searchQuery == null || searchQuery.isBlank()) ? null : searchQuery;
+
+        Page<TagCountProjection> tags = tagRepository.findAllTagCount(userId, groupId, query, mappedPageable);
         return tags.map(tagMapper::toCountResponse);
     }
 
