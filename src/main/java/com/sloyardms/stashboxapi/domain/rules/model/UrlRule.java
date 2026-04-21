@@ -1,5 +1,7 @@
-package com.sloyardms.stashboxapi.domain.user.model;
+package com.sloyardms.stashboxapi.domain.rules.model;
 
+import com.sloyardms.stashboxapi.domain.stash.model.ItemGroup;
+import com.sloyardms.stashboxapi.domain.user.model.User;
 import com.sloyardms.stashboxapi.shared.persistence.AuditableEntity;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -17,10 +19,14 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
+import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.annotations.OnDelete;
 import org.hibernate.annotations.OnDeleteAction;
+import org.hibernate.type.SqlTypes;
 
 import java.time.Instant;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 @Getter
@@ -30,15 +36,15 @@ import java.util.UUID;
 @Entity
 @Table(name = "url_rules",
         uniqueConstraints = {
-                @UniqueConstraint(name = "url_rules_user_name_unique", columnNames = {"user_id", "name"}),
-                @UniqueConstraint(name = "url_rules_user_url_pattern_unique", columnNames = {"user_id",
+                @UniqueConstraint(name = "url_rules_user_name_unique", columnNames = {"user_id", "group_id", "name"}),
+                @UniqueConstraint(name = "url_rules_user_url_pattern_unique", columnNames = {"user_id", "group_id",
                         "url_pattern"})
         })
 public class UrlRule extends AuditableEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
-    @Column(name = "id", nullable = false, updatable = false)
+    @Column(name = "id")
     @ToString.Include
     private UUID id;
 
@@ -48,30 +54,34 @@ public class UrlRule extends AuditableEntity {
             foreignKey = @ForeignKey(name = "url_rules_user_id_fk"))
     private User user;
 
-    @Column(name = "name", nullable = false)
+    @ManyToOne(fetch = FetchType.LAZY, optional = true)
+    @OnDelete(action = OnDeleteAction.CASCADE)
+    @JoinColumn(name = "group_id", foreignKey = @ForeignKey(name = "url_rules_group_id_fk"))
+    private ItemGroup group;
+
+    @Column(name = "name", nullable = false, length = 50)
     @ToString.Include
     private String name;
 
-    @Column(name = "domain", nullable = false)
+    @Column(name = "description", nullable = true, length = 255)
+    @ToString.Include
+    private String description;
+
+    @Column(name = "domain", nullable = false, length = 100)
     @ToString.Include
     private String domain;
 
-    @Column(name = "url_pattern", nullable = false)
+    @Column(name = "url_pattern", nullable = false, length = 2048)
     @ToString.Include
     private String urlPattern;
 
-    @Column(name = "extraction_pattern", nullable = false)
-    @ToString.Include
-    private String extractionPattern;
-
-    @Column(name = "extraction_group", nullable = false)
-    @PositiveOrZero
-    @ToString.Include
-    private Integer extractionGroup = 1;
-
-    @Column(name = "title_template")
+    @Column(name = "title_template", nullable = false, length = 150)
     @ToString.Include
     private String titleTemplate;
+
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(name = "transforms", columnDefinition = "jsonb", nullable = false)
+    private List<Transform> transforms = new ArrayList<>();
 
     @Column(name = "is_active", nullable = false)
     @ToString.Include
@@ -79,7 +89,6 @@ public class UrlRule extends AuditableEntity {
 
     @Column(name = "priority", nullable = false)
     @ToString.Include
-    @PositiveOrZero
     private Integer priority = 100;
 
     @Column(name = "last_matched_at")
