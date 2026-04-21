@@ -75,10 +75,6 @@ public class UrlRule extends AuditableEntity {
     @ToString.Include
     private String urlPattern;
 
-    @Column(name = "title_template", nullable = false, length = 150)
-    @ToString.Include
-    private String titleTemplate;
-
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "transforms", columnDefinition = "jsonb", nullable = false)
     private List<Transform> transforms = new ArrayList<>();

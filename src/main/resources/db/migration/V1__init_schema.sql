@@ -32,7 +32,6 @@ CREATE TABLE url_rules (
     description TEXT,
     domain TEXT NOT NULL,
     url_pattern TEXT NOT NULL,
-    title_template TEXT NOT NULL,
     transforms JSONB NOT NULL DEFAULT '[]'::jsonb,
     is_active BOOLEAN NOT NULL DEFAULT true,
     priority INTEGER NOT NULL DEFAULT 100,
