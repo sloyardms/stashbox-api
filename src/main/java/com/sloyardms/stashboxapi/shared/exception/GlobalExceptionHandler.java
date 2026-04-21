@@ -36,6 +36,7 @@ import org.springframework.web.multipart.MultipartException;
 import org.springframework.web.servlet.NoHandlerFoundException;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -208,9 +209,10 @@ public class GlobalExceptionHandler {
         ProblemDetail problemDetail = problemDetailFactory.create(ErrorCatalog.VALIDATION_ERROR, request);
 
         List<FieldErrorDetail> fieldErrors = ex.getConstraintViolations().stream()
-                .collect(Collectors.groupingBy(
+                .collect(Collectors.toMap(
                         v -> extractFieldName(v.getPropertyPath()),
-                        Collectors.mapping(ConstraintViolation::getMessage, Collectors.toList())
+                        ConstraintViolation::getMessage,
+                        (existing, duplicate) -> existing
                 ))
                 .entrySet().stream()
                 .map(e -> new FieldErrorDetail(e.getKey(), e.getValue()))
@@ -294,9 +296,10 @@ public class GlobalExceptionHandler {
         ProblemDetail problemDetail = problemDetailFactory.create(ErrorCatalog.VALIDATION_ERROR, request);
 
         List<FieldErrorDetail> fieldErrors = bindingResult.getFieldErrors().stream()
-                .collect(Collectors.groupingBy(
+                .collect(Collectors.toMap(
                         FieldError::getField,
-                        Collectors.mapping(FieldError::getDefaultMessage, Collectors.toList())
+                        e -> Objects.requireNonNullElse(e.getDefaultMessage(), "validation.unknown"),
+                        (existing, duplicate) -> existing
                 ))
                 .entrySet().stream()
                 .map(e -> new FieldErrorDetail(e.getKey(), e.getValue()))
