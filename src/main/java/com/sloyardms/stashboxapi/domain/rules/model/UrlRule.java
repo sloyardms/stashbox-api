@@ -14,7 +14,6 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
-import jakarta.validation.constraints.PositiveOrZero;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -54,9 +53,10 @@ public class UrlRule extends AuditableEntity {
             foreignKey = @ForeignKey(name = "url_rules_user_id_fk"))
     private User user;
 
-    @ManyToOne(fetch = FetchType.LAZY, optional = true)
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @OnDelete(action = OnDeleteAction.CASCADE)
-    @JoinColumn(name = "group_id", foreignKey = @ForeignKey(name = "url_rules_group_id_fk"))
+    @JoinColumn(name = "group_id", nullable = false,
+            foreignKey = @ForeignKey(name = "url_rules_group_id_fk"))
     private ItemGroup group;
 
     @Column(name = "name", nullable = false, length = 50)

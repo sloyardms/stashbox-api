@@ -27,7 +27,7 @@ CREATE UNIQUE INDEX item_groups_one_default_group ON item_groups(default_group) 
 CREATE TABLE url_rules (
     id UUID PRIMARY KEY,
     user_id UUID NOT NULL,
-    group_id UUID,
+    group_id UUID NOT NULL,
     name TEXT NOT NULL,
     description TEXT,
     domain TEXT NOT NULL,
