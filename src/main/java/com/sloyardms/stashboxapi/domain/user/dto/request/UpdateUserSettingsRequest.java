@@ -1,4 +1,4 @@
-package com.sloyardms.stashboxapi.domain.user.dto;
+package com.sloyardms.stashboxapi.domain.user.dto.request;
 
 import jakarta.validation.constraints.NotNull;
 import lombok.Getter;

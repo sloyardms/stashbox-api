@@ -1,9 +1,9 @@
 package com.sloyardms.stashboxapi.domain.user.service;
 
 import com.sloyardms.stashboxapi.domain.stash.service.ItemGroupService;
-import com.sloyardms.stashboxapi.domain.user.dto.UpdateUserSettingsRequest;
-import com.sloyardms.stashboxapi.domain.user.dto.UserProfileResponse;
-import com.sloyardms.stashboxapi.domain.user.dto.UserSettingsResponse;
+import com.sloyardms.stashboxapi.domain.user.dto.request.UpdateUserSettingsRequest;
+import com.sloyardms.stashboxapi.domain.user.dto.response.UserProfileResponse;
+import com.sloyardms.stashboxapi.domain.user.dto.response.UserSettingsResponse;
 import com.sloyardms.stashboxapi.domain.user.mapper.UserMapper;
 import com.sloyardms.stashboxapi.domain.user.mapper.UserSettingsMapper;
 import com.sloyardms.stashboxapi.domain.user.model.User;

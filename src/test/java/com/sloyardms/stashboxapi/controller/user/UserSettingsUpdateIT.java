@@ -1,7 +1,7 @@
 package com.sloyardms.stashboxapi.controller.user;
 
 import com.sloyardms.stashboxapi.config.BaseIntegrationTest;
-import com.sloyardms.stashboxapi.domain.user.dto.UserSettingsResponse;
+import com.sloyardms.stashboxapi.domain.user.dto.response.UserSettingsResponse;
 import com.sloyardms.stashboxapi.shared.exception.ErrorCatalog;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;

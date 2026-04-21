@@ -1,7 +1,7 @@
 package com.sloyardms.stashboxapi.domain.user.controller;
 
-import com.sloyardms.stashboxapi.domain.user.dto.UserProfileResponse;
-import com.sloyardms.stashboxapi.domain.user.dto.UserSettingsResponse;
+import com.sloyardms.stashboxapi.domain.user.dto.response.UserProfileResponse;
+import com.sloyardms.stashboxapi.domain.user.dto.response.UserSettingsResponse;
 import com.sloyardms.stashboxapi.domain.user.service.UserService;
 import com.sloyardms.stashboxapi.infrastructure.security.dto.AuthenticatedUser;
 import lombok.RequiredArgsConstructor;

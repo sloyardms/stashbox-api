@@ -4,7 +4,7 @@ import com.sloyardms.stashboxapi.config.BaseIntegrationTest;
 import com.sloyardms.stashboxapi.config.TestConstants;
 import com.sloyardms.stashboxapi.domain.stash.model.ItemGroup;
 import com.sloyardms.stashboxapi.domain.stash.repository.ItemGroupRepository;
-import com.sloyardms.stashboxapi.domain.user.dto.UserProfileResponse;
+import com.sloyardms.stashboxapi.domain.user.dto.response.UserProfileResponse;
 import com.sloyardms.stashboxapi.shared.exception.ErrorCatalog;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
