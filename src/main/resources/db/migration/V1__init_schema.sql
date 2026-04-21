@@ -5,29 +5,6 @@ CREATE TABLE users (
     updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
-CREATE TABLE url_rules (
-    id UUID PRIMARY KEY,
-    user_id UUID NOT NULL,
-    name TEXT NOT NULL,
-    domain TEXT NOT NULL,
-    url_pattern TEXT NOT NULL,
-    extraction_pattern TEXT NOT NULL,
-    extraction_group INTEGER NOT NULL DEFAULT 1,
-    title_template TEXT,
-    is_active BOOLEAN NOT NULL DEFAULT true,
-    priority INTEGER NOT NULL DEFAULT 100,
-    last_matched_at TIMESTAMPTZ,
-    created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-    updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-
-    CONSTRAINT url_rules_user_id_fk FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
-
-    CONSTRAINT url_rules_user_name_unique UNIQUE (user_id, name),
-    CONSTRAINT url_rules_user_url_pattern_unique UNIQUE (user_id, url_pattern),
-    CONSTRAINT url_rules_priority_positive CHECK (priority >= 0),
-    CONSTRAINT url_rules_extraction_group_positive CHECK (extraction_group >= 0)
-);
-
 CREATE TABLE item_groups (
     id UUID PRIMARY KEY,
     user_id UUID NOT NULL,
@@ -46,6 +23,31 @@ CREATE TABLE item_groups (
     CONSTRAINT item_groups_position_positive_check CHECK (position >= 0)
 );
 CREATE UNIQUE INDEX item_groups_one_default_group ON item_groups(default_group) WHERE default_group = true;
+
+CREATE TABLE url_rules (
+    id UUID PRIMARY KEY,
+    user_id UUID NOT NULL,
+    group_id UUID,
+    name TEXT NOT NULL,
+    description TEXT,
+    domain TEXT NOT NULL,
+    url_pattern TEXT NOT NULL,
+    title_template TEXT NOT NULL,
+    transforms JSONB NOT NULL DEFAULT '[]'::jsonb,
+    is_active BOOLEAN NOT NULL DEFAULT true,
+    priority INTEGER NOT NULL DEFAULT 100,
+    last_matched_at TIMESTAMPTZ,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+
+    CONSTRAINT url_rules_user_id_fk FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    CONSTRAINT url_rules_group_id_fk FOREIGN KEY (group_id) REFERENCES item_groups(id) ON DELETE CASCADE,
+
+    CONSTRAINT url_rules_user_name_unique UNIQUE (user_id, group_id, name),
+    CONSTRAINT url_rules_user_url_pattern_unique UNIQUE (user_id, group_id, url_pattern),
+    CONSTRAINT url_rules_priority_positive CHECK (priority >= 0)
+);
+CREATE INDEX url_rules_rules_lookup ON url_rules (user_id, domain, is_active) WHERE is_active = true;
 
 CREATE TABLE stash_items (
     id UUID PRIMARY KEY,
