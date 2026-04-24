@@ -106,8 +106,8 @@ public class TagUpdateIT extends BaseIntegrationTest {
                     .patch(ENDPOINT)
                     .then()
                     .log().body()
-                    .statusCode(ErrorCatalog.DUPLICATE_RESOURCE.getStatus().value())
-                    .body("type", equalTo(ErrorCatalog.DUPLICATE_RESOURCE.getType().toString()));
+                    .statusCode(ErrorCatalog.DATA_INTEGRITY_VIOLATION.getStatus().value())
+                    .body("type", equalTo(ErrorCatalog.DATA_INTEGRITY_VIOLATION.getType().toString()));
         }
 
         @Test

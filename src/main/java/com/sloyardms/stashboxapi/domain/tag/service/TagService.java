@@ -11,14 +11,12 @@ import com.sloyardms.stashboxapi.domain.tag.projection.TagCountProjection;
 import com.sloyardms.stashboxapi.domain.tag.projection.TagDetailProjection;
 import com.sloyardms.stashboxapi.domain.tag.repository.TagRepository;
 import com.sloyardms.stashboxapi.domain.user.repository.UserRepository;
-import com.sloyardms.stashboxapi.shared.exception.types.DuplicateResourceException;
 import com.sloyardms.stashboxapi.shared.exception.types.ResourceNotFoundException;
 import com.sloyardms.stashboxapi.shared.service.JsonPatchService;
 import com.sloyardms.stashboxapi.shared.utils.PageableUtils;
 import com.sloyardms.stashboxapi.shared.utils.SlugUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -71,7 +69,7 @@ public class TagService {
         newTag.setGroup(itemGroupRepository.getReferenceById(groupId));
         newTag.setSlug(SlugUtils.slugify(newTag.getName()));
 
-        saveTag(newTag);
+        newTag = tagRepository.save(newTag);
         return tagMapper.toDetailResponse(newTag);
     }
 
@@ -91,20 +89,8 @@ public class TagService {
             targetTag.setSlug(SlugUtils.slugify(targetTag.getName()));
         }
 
-        saveTag(targetTag);
+        targetTag = tagRepository.save(targetTag);
         return findDetail(userId, groupId, targetTag.getId());
-    }
-
-    private void saveTag(Tag tag) {
-        try {
-            tagRepository.saveAndFlush(tag);
-        } catch (DataIntegrityViolationException e) {
-            String message = e.getMessage();
-            if (message != null && message.contains("tags_slug_unique")) {
-                throw new DuplicateResourceException("name", tag.getName());
-            }
-            throw e;
-        }
     }
 
     @Transactional(rollbackFor = Exception.class)

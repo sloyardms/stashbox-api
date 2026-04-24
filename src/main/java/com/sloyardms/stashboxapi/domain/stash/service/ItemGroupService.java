@@ -11,13 +11,11 @@ import com.sloyardms.stashboxapi.domain.stash.repository.ItemGroupRepository;
 import com.sloyardms.stashboxapi.domain.user.model.User;
 import com.sloyardms.stashboxapi.domain.user.repository.UserRepository;
 import com.sloyardms.stashboxapi.shared.exception.types.DefaultGroupDeletionNotAllowedException;
-import com.sloyardms.stashboxapi.shared.exception.types.DuplicateResourceException;
 import com.sloyardms.stashboxapi.shared.exception.types.ResourceNotFoundException;
 import com.sloyardms.stashboxapi.shared.service.JsonPatchService;
 import com.sloyardms.stashboxapi.shared.utils.SlugUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -60,14 +58,14 @@ public class ItemGroupService {
         ItemGroup itemGroup = itemGroupMapper.toEntity(createItemGroupRequest);
         itemGroup.setUser(user);
         itemGroup.setSlug(SlugUtils.slugify(itemGroup.getName()));
-        itemGroup.setPosition(maxPosition+1);
+        itemGroup.setPosition(maxPosition + 1);
         itemGroup.setDefaultGroup(false);
 
         if (itemGroup.getSettings() == null) {
             itemGroup.setSettings(new ItemGroupSettings());
         }
 
-        saveItemGroup(itemGroup);
+        itemGroup = itemGroupRepository.save(itemGroup);
         return itemGroupMapper.toDetailResponse(itemGroup);
     }
 
@@ -87,20 +85,8 @@ public class ItemGroupService {
             targetGroup.setSlug(SlugUtils.slugify(targetGroup.getName()));
         }
 
-        saveItemGroup(targetGroup);
+        targetGroup = itemGroupRepository.save(targetGroup);
         return itemGroupMapper.toDetailResponse(targetGroup);
-    }
-
-    private void saveItemGroup(ItemGroup itemGroup) {
-        try {
-            itemGroupRepository.saveAndFlush(itemGroup);
-        } catch (DataIntegrityViolationException ex) {
-            String message = ex.getMessage();
-            if (message != null && message.contains("item_groups_slug_unique")) {
-                throw new DuplicateResourceException("name", itemGroup.getName());
-            }
-            throw ex;
-        }
     }
 
     @Transactional(rollbackFor = Exception.class)
