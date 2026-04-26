@@ -12,6 +12,8 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.NamedAttributeNode;
+import jakarta.persistence.NamedEntityGraph;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
 import lombok.Getter;
@@ -33,6 +35,10 @@ import java.util.UUID;
 @NoArgsConstructor
 @ToString(onlyExplicitlyIncluded = true)
 @Entity
+@NamedEntityGraph(
+        name = "UrlRule.withGroup",
+        attributeNodes = @NamedAttributeNode("group")
+)
 @Table(name = "url_rules",
         uniqueConstraints = {
                 @UniqueConstraint(name = "url_rules_user_name_unique", columnNames = {"user_id", "group_id", "name"}),
