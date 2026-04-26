@@ -83,7 +83,7 @@ CREATE TABLE tags (
 
     CONSTRAINT tags_user_id_fk FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE,
     CONSTRAINT tags_group_id_fk FOREIGN KEY(group_id) REFERENCES item_groups(id) ON DELETE CASCADE,
-    CONSTRAINT tags_slug_unique UNIQUE (user_id, group_id, slug)
+    CONSTRAINT tags_user_id_group_id_slug_unique UNIQUE (user_id, group_id, slug)
 );
 
 CREATE TABLE item_tags (
