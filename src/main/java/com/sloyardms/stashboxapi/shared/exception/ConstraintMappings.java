@@ -9,18 +9,12 @@ public class ConstraintMappings {
 
     private static final Map<String, ConstraintInfo> CONSTRAINTS = Map.of(
             // --- item_groups ---
-            "item_groups_slug_unique",
-            new ConstraintInfo("constraint.item_groups_slug_unique", "name"),
-
-            // --- url_rules ---
-            "url_rules_user_name_unique",
-            new ConstraintInfo("constraint.url_rules_user_name_unique", "name"),
-            "url_rules_user_url_pattern_unique",
-            new ConstraintInfo("constraint.url_rules_user_url_pattern_unique", "urlPattern"),
+            "item_groups_user_id_slug_unique",
+            new ConstraintInfo("constraint.item_groups_user_id_slug_unique", "name"),
 
             // --- tags ---
-            "tags_slug_unique",
-            new ConstraintInfo("constraint.tags_slug_unique", "name")
+            "tags_user_id_group_id_slug_unique",
+            new ConstraintInfo("constraint.tags_user_id_group_id_slug_unique", "name")
     );
 
     public ConstraintInfo resolve(String constraintName) {
