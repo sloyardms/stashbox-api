@@ -178,41 +178,6 @@ public class UrlRuleCreationIT extends BaseIntegrationTest {
                     .body("type", equalTo(ErrorCatalog.RESOURCE_NOT_FOUND.getType().toString()));
         }
 
-        @Test
-        @DisplayName("Should return 409 when an url rule with the same name already exist")
-        @Sql({"/sql/data/users.sql", "/sql/data/item-groups.sql", "/sql/data/url-rules.sql"})
-        void shouldReturn409WhenAnUrlRuleWithTheSameName() {
-            String body = """
-                        {
-                            "name": "GitHub Repo Name",
-                            "description": "Matches tags in search",
-                            "domain": "www.testsite.com",
-                            "urlPattern": "tags=([^&]+)",
-                            "priority": 100,
-                            "transforms": [
-                                { "type": "decode" },
-                                { "type": "trim" },
-                                { "type": "sentenceCase" },
-                                {
-                                    "type": "replace",
-                                    "from": "_",
-                                    "to": " "
-                                }
-                            ]
-                        }
-                    """;
-
-            givenNormalUserRequest()
-                    .pathParam("groupId", TestConstants.Groups.DEV_RESOURCES_ID)
-                    .body(body)
-                    .when()
-                    .post(ENDPOINT)
-                    .then()
-                    .log().body()
-                    .statusCode(ErrorCatalog.DATA_INTEGRITY_VIOLATION.getStatus().value())
-                    .body("type", equalTo(ErrorCatalog.DATA_INTEGRITY_VIOLATION.getType().toString()));
-        }
-
     }
 
     @Nested

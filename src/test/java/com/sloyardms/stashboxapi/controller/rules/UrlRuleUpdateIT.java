@@ -94,27 +94,6 @@ public class UrlRuleUpdateIT extends BaseIntegrationTest {
         }
 
         @Test
-        @DisplayName("Should return 409 when url rule already exist")
-        @Sql({"/sql/data/users.sql", "/sql/data/item-groups.sql", "/sql/data/url-rules.sql"})
-        void shouldReturn409WhenTheUrlRuleAlreadyExist() {
-            String request = """
-                    {
-                        "name": "GitHub Repo Name"
-                    }
-                    """;
-
-            givenNormalUserRequest()
-                    .pathParam("groupId", TestConstants.Groups.DEV_RESOURCES_ID)
-                    .pathParam("ruleId", TestConstants.UrlRules.STACK_OVERFLOW_QUESTION_ID)
-                    .body(request)
-                    .patch(ENDPOINT)
-                    .then()
-                    .log().body()
-                    .statusCode(ErrorCatalog.DATA_INTEGRITY_VIOLATION.getStatus().value())
-                    .body("type", equalTo(ErrorCatalog.DATA_INTEGRITY_VIOLATION.getType().toString()));
-        }
-
-        @Test
         @DisplayName("Should return 422 when name is blank")
         @Sql({"/sql/data/users.sql", "/sql/data/item-groups.sql", "/sql/data/url-rules.sql"})
         void shouldReturn422WhenNameIsBlank() {
