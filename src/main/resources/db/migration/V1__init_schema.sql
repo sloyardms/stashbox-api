@@ -19,6 +19,7 @@ CREATE TABLE item_groups (
     updated_at TIMESTAMPTZ NOT NULL,
 
     CONSTRAINT item_groups_user_id_fk FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+
     CONSTRAINT item_groups_user_id_slug_unique UNIQUE (user_id, slug),
     CONSTRAINT item_groups_position_check CHECK (position >= 0)
 );
@@ -42,11 +43,9 @@ CREATE TABLE url_rules (
     CONSTRAINT url_rules_user_id_fk FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
     CONSTRAINT url_rules_group_id_fk FOREIGN KEY (group_id) REFERENCES item_groups(id) ON DELETE CASCADE,
 
-    CONSTRAINT url_rules_user_name_unique UNIQUE (user_id, group_id, name),
-    CONSTRAINT url_rules_user_url_pattern_unique UNIQUE (user_id, group_id, url_pattern),
-    CONSTRAINT url_rules_priority_positive CHECK (priority >= 0)
+    CONSTRAINT url_rules_priority_check CHECK (priority >= 0)
 );
-CREATE INDEX url_rules_rules_lookup ON url_rules (user_id, domain, is_active) WHERE is_active = true;
+CREATE INDEX url_rules_user_id_domain_idx ON url_rules (user_id, domain, is_active) WHERE is_active = true;
 
 CREATE TABLE stash_items (
     id UUID PRIMARY KEY,
@@ -83,6 +82,7 @@ CREATE TABLE tags (
 
     CONSTRAINT tags_user_id_fk FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE,
     CONSTRAINT tags_group_id_fk FOREIGN KEY(group_id) REFERENCES item_groups(id) ON DELETE CASCADE,
+
     CONSTRAINT tags_user_id_group_id_slug_unique UNIQUE (user_id, group_id, slug)
 );
 

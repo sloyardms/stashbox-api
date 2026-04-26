@@ -15,7 +15,6 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.NamedAttributeNode;
 import jakarta.persistence.NamedEntityGraph;
 import jakarta.persistence.Table;
-import jakarta.persistence.UniqueConstraint;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -39,17 +38,12 @@ import java.util.UUID;
         name = "UrlRule.withGroup",
         attributeNodes = @NamedAttributeNode("group")
 )
-@Table(name = "url_rules",
-        uniqueConstraints = {
-                @UniqueConstraint(name = "url_rules_user_name_unique", columnNames = {"user_id", "group_id", "name"}),
-                @UniqueConstraint(name = "url_rules_user_url_pattern_unique", columnNames = {"user_id", "group_id",
-                        "url_pattern"})
-        })
+@Table(name = "url_rules")
 public class UrlRule extends AuditableEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
-    @Column(name = "id")
+    @Column(name = "id", nullable = false, updatable = false)
     @ToString.Include
     private UUID id;
 
@@ -69,7 +63,7 @@ public class UrlRule extends AuditableEntity {
     @ToString.Include
     private String name;
 
-    @Column(name = "description", nullable = true, length = 255)
+    @Column(name = "description", length = 255)
     @ToString.Include
     private String description;
 
