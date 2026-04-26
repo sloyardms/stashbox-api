@@ -1,7 +1,7 @@
 package com.sloyardms.stashboxapi.domain.stash.model;
 
-import com.sloyardms.stashboxapi.shared.persistence.AuditableEntity;
 import com.sloyardms.stashboxapi.domain.user.model.User;
+import com.sloyardms.stashboxapi.shared.persistence.AuditableEntity;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
@@ -13,7 +13,6 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
-import jakarta.validation.constraints.PositiveOrZero;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -32,7 +31,7 @@ import java.util.UUID;
 @Entity
 @Table(name = "item_groups",
         uniqueConstraints = {
-                @UniqueConstraint(name = "item_groups_slug_unique", columnNames = {"user_id", "slug"})
+                @UniqueConstraint(name = "item_groups_user_id_slug_unique", columnNames = {"user_id", "slug"})
         })
 public class ItemGroup extends AuditableEntity {
 
@@ -73,7 +72,6 @@ public class ItemGroup extends AuditableEntity {
     private ItemGroupSettings settings = new ItemGroupSettings();
 
     @Column(name = "position", nullable = false)
-    @PositiveOrZero
     @ToString.Include
     private Integer position = 0;
 

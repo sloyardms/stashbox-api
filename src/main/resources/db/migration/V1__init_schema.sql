@@ -12,17 +12,17 @@ CREATE TABLE item_groups (
     slug TEXT NOT NULL,
     description TEXT,
     icon TEXT,
-    default_group BOOLEAN NOT NULL DEFAULT true,
+    default_group BOOLEAN NOT NULL DEFAULT false,
     settings JSONB NOT NULL DEFAULT '{}'::jsonb,
     position INTEGER NOT NULL DEFAULT 0,
     created_at TIMESTAMPTZ NOT NULL,
     updated_at TIMESTAMPTZ NOT NULL,
 
     CONSTRAINT item_groups_user_id_fk FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
-    CONSTRAINT item_groups_slug_unique UNIQUE (user_id, slug),
-    CONSTRAINT item_groups_position_positive_check CHECK (position >= 0)
+    CONSTRAINT item_groups_user_id_slug_unique UNIQUE (user_id, slug),
+    CONSTRAINT item_groups_position_check CHECK (position >= 0)
 );
-CREATE UNIQUE INDEX item_groups_one_default_group ON item_groups(default_group) WHERE default_group = true;
+CREATE UNIQUE INDEX item_groups_default_group_uidx ON item_groups(default_group) WHERE default_group = true;
 
 CREATE TABLE url_rules (
     id UUID PRIMARY KEY,
