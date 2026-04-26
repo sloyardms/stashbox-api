@@ -4,10 +4,6 @@ import com.sloyardms.stashboxapi.domain.stash.dto.request.CreateItemGroupRequest
 import com.sloyardms.stashboxapi.domain.stash.dto.response.ItemGroupDetailResponse;
 import com.sloyardms.stashboxapi.domain.stash.dto.response.ItemGroupResponse;
 import com.sloyardms.stashboxapi.domain.stash.service.ItemGroupService;
-import com.sloyardms.stashboxapi.domain.tag.dto.request.CreateTagRequest;
-import com.sloyardms.stashboxapi.domain.tag.dto.response.TagCountResponse;
-import com.sloyardms.stashboxapi.domain.tag.dto.response.TagDetailResponse;
-import com.sloyardms.stashboxapi.domain.tag.service.TagService;
 import com.sloyardms.stashboxapi.infrastructure.security.dto.AuthenticatedUser;
 import com.sloyardms.stashboxapi.shared.validation.SortableFields;
 import jakarta.validation.Valid;
@@ -27,7 +23,6 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import tools.jackson.databind.JsonNode;
 
@@ -42,8 +37,9 @@ public class ItemGroupController {
     private final ItemGroupService itemGroupService;
 
     @GetMapping("/{id}")
-    public ResponseEntity<ItemGroupDetailResponse> getItemGroup(@PathVariable UUID id,
-                                                                @AuthenticationPrincipal AuthenticatedUser authenticatedUser) {
+    public ResponseEntity<ItemGroupDetailResponse> getItemGroup(
+            @PathVariable UUID id,
+            @AuthenticationPrincipal AuthenticatedUser authenticatedUser) {
         ItemGroupDetailResponse response = itemGroupService.findById(id, authenticatedUser.id());
         return ResponseEntity.ok(response);
     }
@@ -69,23 +65,26 @@ public class ItemGroupController {
     }
 
     @PatchMapping(path = "/{id}")
-    public ResponseEntity<ItemGroupDetailResponse> patch(@PathVariable UUID id,
-                                                         @RequestBody JsonNode body,
-                                                         @AuthenticationPrincipal AuthenticatedUser authenticatedUser) {
+    public ResponseEntity<ItemGroupDetailResponse> patch(
+            @PathVariable UUID id,
+            @RequestBody JsonNode body,
+            @AuthenticationPrincipal AuthenticatedUser authenticatedUser) {
         ItemGroupDetailResponse response = itemGroupService.patch(id, body, authenticatedUser.id());
         return ResponseEntity.ok(response);
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> delete(@PathVariable UUID id,
-                                       @AuthenticationPrincipal AuthenticatedUser authenticatedUser) {
+    public ResponseEntity<Void> delete(
+            @PathVariable UUID id,
+            @AuthenticationPrincipal AuthenticatedUser authenticatedUser) {
         itemGroupService.delete(id, authenticatedUser.id());
         return ResponseEntity.noContent().build();
     }
 
     @PutMapping("/{id}/default")
-    public ResponseEntity<Void> updateDefaultItemGroup(@PathVariable UUID id,
-                                                       @AuthenticationPrincipal AuthenticatedUser authenticatedUser) {
+    public ResponseEntity<Void> updateDefaultItemGroup(
+            @PathVariable UUID id,
+            @AuthenticationPrincipal AuthenticatedUser authenticatedUser) {
         itemGroupService.setDefaultGroup(id, authenticatedUser.id());
         return ResponseEntity.noContent().build();
     }
