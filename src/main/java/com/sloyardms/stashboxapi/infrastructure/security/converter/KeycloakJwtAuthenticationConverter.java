@@ -26,34 +26,20 @@ public class KeycloakJwtAuthenticationConverter implements Converter<Jwt, Abstra
 
     @Override
     public AbstractAuthenticationToken convert(@NonNull Jwt jwt) {
-        Collection<GrantedAuthority> authorities = extractAuthorities(jwt);
-
-        UUID userId = UUID.fromString(jwt.getSubject());
-        String username = jwt.getClaimAsString(USERNAME_CLAIM);
-        String email = jwt.getClaimAsString(EMAIL_CLAIM);
         List<String> roles = extractRoles(jwt);
+        Collection<GrantedAuthority> authorities = toAuthorities(roles);
 
         AuthenticatedUser authenticatedUser = new AuthenticatedUser(
-                userId,
-                username,
-                email,
+                UUID.fromString(jwt.getSubject()),
+                jwt.getClaimAsString(USERNAME_CLAIM),
+                jwt.getClaimAsString(EMAIL_CLAIM),
                 roles
         );
 
-        return new UsernamePasswordAuthenticationToken(
-                authenticatedUser,
-                null,
-                authorities
-        );
+        return new UsernamePasswordAuthenticationToken(authenticatedUser, null, authorities);
     }
 
-    private List<GrantedAuthority> extractAuthorities(Jwt jwt) {
-        List<String> roles = jwt.getClaimAsStringList(ROLES_CLAIM);
-
-        if (roles == null || roles.isEmpty()) {
-            return Collections.emptyList();
-        }
-
+    private Collection<GrantedAuthority> toAuthorities(List<String> roles) {
         return roles.stream()
                 .map(role -> (GrantedAuthority) new SimpleGrantedAuthority("ROLE_" + role.toUpperCase()))
                 .toList();
