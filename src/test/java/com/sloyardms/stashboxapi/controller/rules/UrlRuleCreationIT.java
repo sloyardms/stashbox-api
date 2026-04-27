@@ -11,8 +11,6 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.context.jdbc.SqlMergeMode;
 
-import java.util.UUID;
-
 import static io.restassured.RestAssured.given;
 import static org.hamcrest.Matchers.*;
 
@@ -21,7 +19,7 @@ import static org.hamcrest.Matchers.*;
 @SqlMergeMode(SqlMergeMode.MergeMode.MERGE)
 public class UrlRuleCreationIT extends BaseIntegrationTest {
 
-    private final String ENDPOINT = "/api/v1/item-groups/{groupId}/url-rules";
+    private final String ENDPOINT = "/api/v1/item-groups/{groupSlug}/url-rules";
 
     @Nested
     @DisplayName("Successful Operations")
@@ -52,7 +50,7 @@ public class UrlRuleCreationIT extends BaseIntegrationTest {
                     """;
 
             givenNormalUserRequest()
-                    .pathParam("groupId", TestConstants.Groups.DESIGN_ID)
+                    .pathParam("groupSlug", TestConstants.Groups.DESIGN_SLUG)
                     .body(body)
                     .when()
                     .post(ENDPOINT)
@@ -98,7 +96,7 @@ public class UrlRuleCreationIT extends BaseIntegrationTest {
                     """;
 
             givenNormalUserRequest()
-                    .pathParam("groupId", TestConstants.Groups.DESIGN_ID)
+                    .pathParam("groupSlug", TestConstants.Groups.DESIGN_SLUG)
                     .body(body)
                     .when()
                     .post(ENDPOINT)
@@ -133,7 +131,7 @@ public class UrlRuleCreationIT extends BaseIntegrationTest {
                     """;
 
             givenNormalUserRequest()
-                    .pathParam("groupId", TestConstants.Groups.DESIGN_ID)
+                    .pathParam("groupSlug", TestConstants.Groups.DESIGN_SLUG)
                     .body(body)
                     .when()
                     .post(ENDPOINT)
@@ -168,7 +166,7 @@ public class UrlRuleCreationIT extends BaseIntegrationTest {
                     """;
 
             givenNormalUserRequest()
-                    .pathParam("groupId", UUID.randomUUID())
+                    .pathParam("groupSlug", "non-existent-slug")
                     .body(body)
                     .when()
                     .post(ENDPOINT)
@@ -188,7 +186,7 @@ public class UrlRuleCreationIT extends BaseIntegrationTest {
         @DisplayName("Should return 401 when the user is not authenticated")
         void shouldReturn401WhenUserIsNotAuthenticated() {
             given()
-                    .pathParam("groupId", UUID.randomUUID())
+                    .pathParam("groupSlug", TestConstants.Groups.DESIGN_SLUG)
                     .when()
                     .post(ENDPOINT)
                     .then()

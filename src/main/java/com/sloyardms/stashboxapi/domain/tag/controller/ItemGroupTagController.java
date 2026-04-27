@@ -6,6 +6,7 @@ import com.sloyardms.stashboxapi.domain.tag.dto.response.TagDetailResponse;
 import com.sloyardms.stashboxapi.domain.tag.service.TagService;
 import com.sloyardms.stashboxapi.infrastructure.security.dto.AuthenticatedUser;
 import com.sloyardms.stashboxapi.shared.validation.SortableFields;
+import com.sloyardms.stashboxapi.shared.validation.ValidSlug;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -31,23 +32,23 @@ import java.util.UUID;
 @RestController
 @RequiredArgsConstructor
 @Validated
-@RequestMapping("/api/v1/item-groups/{groupId}/tags")
+@RequestMapping("/api/v1/item-groups/{groupSlug}/tags")
 public class ItemGroupTagController {
 
     private final TagService tagService;
 
     @PostMapping
     public ResponseEntity<TagDetailResponse> createTag(
-            @PathVariable UUID groupId,
+            @PathVariable @ValidSlug String groupSlug,
             @RequestBody @Valid CreateTagRequest createTagRequest,
             @AuthenticationPrincipal AuthenticatedUser authenticatedUser) {
-        TagDetailResponse response = tagService.create(authenticatedUser.id(), groupId, createTagRequest);
+        TagDetailResponse response = tagService.create(authenticatedUser.id(), groupSlug, createTagRequest);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
     @GetMapping
     public ResponseEntity<Page<TagCountResponse>> getTags(
-            @PathVariable UUID groupId,
+            @PathVariable @ValidSlug String groupSlug,
             @RequestParam(name = "search", required = false) String searchQuery,
             @SortableFields(
                     value = {"name", "createdAt", "updatedAt",
@@ -56,32 +57,36 @@ public class ItemGroupTagController {
                     defaultDirection = Sort.Direction.ASC
             ) Pageable pageable,
             @AuthenticationPrincipal AuthenticatedUser authenticatedUser) {
-        Page<TagCountResponse> responsePage = tagService.search(authenticatedUser.id(), groupId, searchQuery, pageable);
+        Page<TagCountResponse> responsePage = tagService.search(authenticatedUser.id(), groupSlug, searchQuery,
+                pageable);
         return ResponseEntity.ok(responsePage);
     }
 
-    @GetMapping("/{tagId}")
+    @GetMapping("/{tagSlug}")
     public ResponseEntity<TagDetailResponse> getTag(
-            @PathVariable UUID groupId, @PathVariable UUID tagId,
+            @PathVariable @ValidSlug String groupSlug,
+            @PathVariable @ValidSlug String tagSlug,
             @AuthenticationPrincipal AuthenticatedUser authenticatedUser) {
-        TagDetailResponse response = tagService.findDetail(authenticatedUser.id(), groupId, tagId);
+        TagDetailResponse response = tagService.findDetail(authenticatedUser.id(), groupSlug, tagSlug);
         return ResponseEntity.ok(response);
     }
 
-    @PatchMapping("/{tagId}")
+    @PatchMapping("/{tagSlug}")
     public ResponseEntity<TagDetailResponse> patchTag(
-            @PathVariable UUID groupId, @PathVariable UUID tagId,
+            @PathVariable @ValidSlug String groupSlug,
+            @PathVariable @ValidSlug String tagSlug,
             @RequestBody JsonNode body,
             @AuthenticationPrincipal AuthenticatedUser authenticatedUser) {
-        TagDetailResponse response = tagService.patch(authenticatedUser.id(), groupId, tagId, body);
+        TagDetailResponse response = tagService.patch(authenticatedUser.id(), groupSlug, tagSlug, body);
         return ResponseEntity.ok(response);
     }
 
-    @DeleteMapping("/{tagId}")
+    @DeleteMapping("/{tagSlug}")
     public ResponseEntity<TagDetailResponse> patchTag(
-            @PathVariable UUID groupId, @PathVariable UUID tagId,
+            @PathVariable @ValidSlug String groupSlug,
+            @PathVariable @ValidSlug String tagSlug,
             @AuthenticationPrincipal AuthenticatedUser authenticatedUser) {
-        tagService.delete(authenticatedUser.id(), groupId, tagId);
+        tagService.delete(authenticatedUser.id(), groupSlug, tagSlug);
         return ResponseEntity.noContent().build();
     }
 

@@ -21,7 +21,7 @@ import static org.hamcrest.Matchers.equalTo;
 @SqlMergeMode(SqlMergeMode.MergeMode.MERGE)
 public class UrlRuleUpdateIT extends BaseIntegrationTest {
 
-    private final String ENDPOINT = "/api/v1/item-groups/{groupId}/url-rules/{ruleId}";
+    private final String ENDPOINT = "/api/v1/item-groups/{groupSlug}/url-rules/{ruleId}";
 
     @Nested
     @DisplayName("Successful Operations")
@@ -44,7 +44,7 @@ public class UrlRuleUpdateIT extends BaseIntegrationTest {
                     """, newName, newDescription, newDomain);
 
             givenNormalUserRequest()
-                    .pathParam("groupId", TestConstants.Groups.DEV_RESOURCES_ID)
+                    .pathParam("groupSlug", TestConstants.Groups.DEV_RESOURCES_SLUG)
                     .pathParam("ruleId", TestConstants.UrlRules.GITHUB_REPO_NAME_ID)
                     .body(body)
                     .when()
@@ -83,7 +83,7 @@ public class UrlRuleUpdateIT extends BaseIntegrationTest {
                     """;
 
             givenNormalUserRequest()
-                    .pathParam("groupId", TestConstants.Groups.DEV_RESOURCES_ID)
+                    .pathParam("groupSlug", TestConstants.Groups.DEV_RESOURCES_SLUG)
                     .pathParam("ruleId", UUID.randomUUID())
                     .body(request)
                     .patch(ENDPOINT)
@@ -104,7 +104,7 @@ public class UrlRuleUpdateIT extends BaseIntegrationTest {
                     """;
 
             givenNormalUserRequest()
-                    .pathParam("groupId", TestConstants.Groups.DEV_RESOURCES_ID)
+                    .pathParam("groupSlug", TestConstants.Groups.DEV_RESOURCES_SLUG)
                     .pathParam("ruleId", TestConstants.UrlRules.STACK_OVERFLOW_QUESTION_ID)
                     .body(request)
                     .patch(ENDPOINT)
@@ -126,7 +126,7 @@ public class UrlRuleUpdateIT extends BaseIntegrationTest {
                     """, name);
 
             givenNormalUserRequest()
-                    .pathParam("groupId", TestConstants.Groups.DEV_RESOURCES_ID)
+                    .pathParam("groupSlug", TestConstants.Groups.DEV_RESOURCES_SLUG)
                     .pathParam("ruleId", TestConstants.UrlRules.STACK_OVERFLOW_QUESTION_ID)
                     .body(request)
                     .patch(ENDPOINT)
@@ -146,7 +146,7 @@ public class UrlRuleUpdateIT extends BaseIntegrationTest {
         @DisplayName("Should return 401 when the user is not authenticated")
         void shouldReturn401WhenUserIsNotAuthenticated() {
             given()
-                    .pathParam("groupId", TestConstants.Groups.DEV_RESOURCES_ID)
+                    .pathParam("groupSlug", TestConstants.Groups.DEV_RESOURCES_SLUG)
                     .pathParam("ruleId", TestConstants.UrlRules.GITHUB_REPO_NAME_ID)
                     .when()
                     .patch(ENDPOINT)

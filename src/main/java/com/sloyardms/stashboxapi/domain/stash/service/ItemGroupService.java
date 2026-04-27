@@ -6,7 +6,6 @@ import com.sloyardms.stashboxapi.domain.stash.dto.response.ItemGroupDetailRespon
 import com.sloyardms.stashboxapi.domain.stash.dto.response.ItemGroupResponse;
 import com.sloyardms.stashboxapi.domain.stash.mapper.ItemGroupMapper;
 import com.sloyardms.stashboxapi.domain.stash.model.ItemGroup;
-import com.sloyardms.stashboxapi.domain.stash.model.ItemGroupSettings;
 import com.sloyardms.stashboxapi.domain.stash.repository.ItemGroupRepository;
 import com.sloyardms.stashboxapi.domain.user.model.User;
 import com.sloyardms.stashboxapi.domain.user.repository.UserRepository;
@@ -36,9 +35,9 @@ public class ItemGroupService {
     private final JsonPatchService jsonPatchService;
 
     @Transactional(readOnly = true)
-    public ItemGroupDetailResponse findById(UUID id, UUID userId) {
-        ItemGroup targetGroup = itemGroupRepository.findByIdAndUserId(id, userId)
-                .orElseThrow(() -> new ResourceNotFoundException("ItemGroup", "Id", id));
+    public ItemGroupDetailResponse findBySlug(UUID userId, String slug) {
+        ItemGroup targetGroup = itemGroupRepository.findBySlugAndUserId(slug, userId)
+                .orElseThrow(() -> new ResourceNotFoundException("ItemGroup", "slug", slug));
         return itemGroupMapper.toDetailResponse(targetGroup);
     }
 
@@ -49,7 +48,7 @@ public class ItemGroupService {
     }
 
     @Transactional(rollbackFor = Exception.class)
-    public ItemGroupDetailResponse create(CreateItemGroupRequest createItemGroupRequest, UUID userId) {
+    public ItemGroupDetailResponse create(UUID userId, CreateItemGroupRequest createItemGroupRequest) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("User", "Id", userId));
 
@@ -61,18 +60,14 @@ public class ItemGroupService {
         itemGroup.setPosition(maxPosition + 1);
         itemGroup.setDefaultGroup(false);
 
-        if (itemGroup.getSettings() == null) {
-            itemGroup.setSettings(new ItemGroupSettings());
-        }
-
         itemGroup = itemGroupRepository.save(itemGroup);
         return itemGroupMapper.toDetailResponse(itemGroup);
     }
 
     @Transactional(rollbackFor = Exception.class)
-    public ItemGroupDetailResponse patch(UUID id, JsonNode patch, UUID userId) {
-        ItemGroup targetGroup = itemGroupRepository.findByIdAndUserId(id, userId)
-                .orElseThrow(() -> new ResourceNotFoundException("ItemGroup", "Id", id));
+    public ItemGroupDetailResponse patch(UUID userId, String slug, JsonNode patch) {
+        ItemGroup targetGroup = itemGroupRepository.findBySlugAndUserId(slug, userId)
+                .orElseThrow(() -> new ResourceNotFoundException("ItemGroup", "slug", slug));
 
         String originalName = targetGroup.getName();
 
@@ -90,23 +85,23 @@ public class ItemGroupService {
     }
 
     @Transactional(rollbackFor = Exception.class)
-    public void delete(UUID id, UUID userId) {
-        ItemGroup targetGroup = itemGroupRepository.findByIdAndUserId(id, userId)
-                .orElseThrow(() -> new ResourceNotFoundException("ItemGroup", "Id", id));
+    public void delete(UUID userId, String slug) {
+        ItemGroup targetGroup = itemGroupRepository.findBySlugAndUserId(slug, userId)
+                .orElseThrow(() -> new ResourceNotFoundException("ItemGroup", "slug", slug));
 
         if (targetGroup.isDefaultGroup()) {
             throw new DefaultGroupDeletionNotAllowedException();
         }
-        itemGroupRepository.deleteById(id);
+        itemGroupRepository.deleteById(targetGroup.getId());
     }
 
     @Transactional(rollbackFor = Exception.class)
-    public void setDefaultGroup(UUID id, UUID userId) {
-        if (!itemGroupRepository.existsByIdAndUserId(id, userId)) {
-            throw new ResourceNotFoundException("ItemGroup", "Id", id);
+    public void setDefaultGroup(UUID userId, String slug) {
+        if (!itemGroupRepository.existsBySlugAndUserId(slug, userId)) {
+            throw new ResourceNotFoundException("ItemGroup", "slug", slug);
         }
         itemGroupRepository.clearDefaultGroup(userId);
-        itemGroupRepository.setDefaultGroup(id, userId);
+        itemGroupRepository.setDefaultGroup(slug, userId);
     }
 
     // Must be called within an active transaction (e.g. during user registration)

@@ -9,6 +9,7 @@ import com.sloyardms.stashboxapi.domain.rules.mapper.UrlRuleMapper;
 import com.sloyardms.stashboxapi.domain.rules.model.UrlRule;
 import com.sloyardms.stashboxapi.domain.rules.projection.UrlRuleListProjection;
 import com.sloyardms.stashboxapi.domain.rules.repository.UrlRuleRepository;
+import com.sloyardms.stashboxapi.domain.stash.model.ItemGroup;
 import com.sloyardms.stashboxapi.domain.stash.repository.ItemGroupRepository;
 import com.sloyardms.stashboxapi.domain.user.repository.UserRepository;
 import com.sloyardms.stashboxapi.shared.exception.types.ResourceNotFoundException;
@@ -41,15 +42,15 @@ public class UrlRuleService {
     private final JsonPatchService jsonPatchService;
 
     @Transactional(readOnly = true)
-    public UrlRuleDetailResponse findById(UUID userId, UUID groupId, UUID ruleId) {
-        UrlRule result = urlRuleRepository.findWithGroupByIdAndUserIdAndGroupId(ruleId, userId, groupId)
+    public UrlRuleDetailResponse findById(UUID userId, String groupSlug, UUID ruleId) {
+        UrlRule result = urlRuleRepository.findWithGroupByIdAndUserIdAndGroupSlug(ruleId, userId, groupSlug)
                 .orElseThrow(() -> new ResourceNotFoundException("UrlRule", "Id", ruleId));
         return urlRuleMapper.toDetailResponse(result);
     }
 
     @Transactional(readOnly = true)
-    public List<UrlRuleSummaryResponse> searchByGroupAndDomain(UUID userId, UUID groupId, String domain) {
-        List<UrlRule> result = urlRuleRepository.findActiveByDomain(userId, groupId, domain);
+    public List<UrlRuleSummaryResponse> searchByGroupAndDomain(UUID userId, String groupSlug, String domain) {
+        List<UrlRule> result = urlRuleRepository.findActiveByDomain(userId, groupSlug, domain);
         return result.stream().map(urlRuleMapper::toSummaryResponse).toList();
     }
 
@@ -63,29 +64,30 @@ public class UrlRuleService {
     }
 
     @Transactional(rollbackFor = Exception.class)
-    public UrlRuleDetailResponse create(UUID userId, UUID groupId, CreateUrlRuleRequest createUrlRuleRequest) {
-        if (!itemGroupRepository.existsByIdAndUserId(groupId, userId)) {
-            throw new ResourceNotFoundException("ItemGroup", "Id", groupId);
-        }
+    public UrlRuleDetailResponse create(UUID userId, String groupSlug, CreateUrlRuleRequest createUrlRuleRequest) {
+        ItemGroup group = itemGroupRepository.findBySlugAndUserId(groupSlug, userId)
+                .orElseThrow(() -> new ResourceNotFoundException("ItemGroup", "slug", groupSlug));
 
         UrlRule newRule = urlRuleMapper.toEntity(createUrlRuleRequest);
         newRule.setUser(userRepository.getReferenceById(userId));
-        newRule.setGroup(itemGroupRepository.getReferenceById(groupId));
+        newRule.setGroup(group);
 
         newRule = urlRuleRepository.save(newRule);
         return urlRuleMapper.toDetailResponse(newRule);
     }
 
     @Transactional(rollbackFor = Exception.class)
-    public UrlRuleDetailResponse patch(UUID userId, UUID groupId, UUID urlRuleId, JsonNode patch) {
-        UrlRule targetRule = urlRuleRepository.findByIdAndUserIdAndGroupId(urlRuleId, userId, groupId)
+    public UrlRuleDetailResponse patch(UUID userId, String groupSlug, UUID urlRuleId, JsonNode patch) {
+        UrlRule targetRule = urlRuleRepository.findByIdAndUserIdAndGroupSlug(urlRuleId, userId, groupSlug)
                 .orElseThrow(() -> new ResourceNotFoundException("UrlRule", "Id", urlRuleId));
+
+        UUID originalGroupId = targetRule.getGroup().getId();
 
         UpdateUrlRuleRequest updateDto = urlRuleMapper.toUpdateRequest(targetRule);
         UpdateUrlRuleRequest patchedDto = jsonPatchService.applyPatch(patch, updateDto, UpdateUrlRuleRequest.class);
         urlRuleMapper.updateEntityFromDto(patchedDto, targetRule);
 
-        if (patchedDto.getGroupId() != null && !patchedDto.getGroupId().equals(groupId)) {
+        if (patchedDto.getGroupId() != null && !patchedDto.getGroupId().equals(originalGroupId)) {
             if (!itemGroupRepository.existsByIdAndUserId(patchedDto.getGroupId(), userId)) {
                 throw new ResourceNotFoundException("ItemGroup", "Id", patchedDto.getGroupId());
             }
@@ -97,16 +99,16 @@ public class UrlRuleService {
     }
 
     @Transactional(rollbackFor = Exception.class)
-    public void delete(UUID userId, UUID groupId, UUID urlRuleId) {
-        int deleted = urlRuleRepository.deleteByIdAndUserIdAndGroupId(urlRuleId, userId, groupId);
+    public void delete(UUID userId, String groupSlug, UUID urlRuleId) {
+        int deleted = urlRuleRepository.deleteByIdAndUserIdAndGroupSlug(urlRuleId, userId, groupSlug);
         if (deleted == 0) {
             throw new ResourceNotFoundException("UrlRule", "Id", urlRuleId);
         }
     }
 
     @Transactional(rollbackFor = Exception.class)
-    public void updateLastMatched(UUID userId, UUID groupId, UUID urlRuleId) {
-        int modified = urlRuleRepository.updateLastMatched(urlRuleId, userId, groupId);
+    public void updateLastMatched(UUID userId, String groupSlug, UUID urlRuleId) {
+        int modified = urlRuleRepository.updateLastMatched(urlRuleId, userId, groupSlug);
         if (modified == 0) {
             throw new ResourceNotFoundException("UrlRule", "Id", urlRuleId);
         }

@@ -6,7 +6,9 @@ import com.sloyardms.stashboxapi.domain.stash.dto.response.ItemGroupResponse;
 import com.sloyardms.stashboxapi.domain.stash.service.ItemGroupService;
 import com.sloyardms.stashboxapi.infrastructure.security.dto.AuthenticatedUser;
 import com.sloyardms.stashboxapi.shared.validation.SortableFields;
+import com.sloyardms.stashboxapi.shared.validation.ValidSlug;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Pattern;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -36,11 +38,11 @@ public class ItemGroupController {
 
     private final ItemGroupService itemGroupService;
 
-    @GetMapping("/{id}")
+    @GetMapping("/{slug}")
     public ResponseEntity<ItemGroupDetailResponse> getItemGroup(
-            @PathVariable UUID id,
+            @PathVariable @ValidSlug String slug,
             @AuthenticationPrincipal AuthenticatedUser authenticatedUser) {
-        ItemGroupDetailResponse response = itemGroupService.findById(id, authenticatedUser.id());
+        ItemGroupDetailResponse response = itemGroupService.findBySlug(authenticatedUser.id(), slug);
         return ResponseEntity.ok(response);
     }
 
@@ -60,32 +62,32 @@ public class ItemGroupController {
     public ResponseEntity<ItemGroupDetailResponse> create(
             @RequestBody @Valid CreateItemGroupRequest createItemGroupRequest,
             @AuthenticationPrincipal AuthenticatedUser authenticatedUser) {
-        ItemGroupDetailResponse response = itemGroupService.create(createItemGroupRequest, authenticatedUser.id());
+        ItemGroupDetailResponse response = itemGroupService.create(authenticatedUser.id(), createItemGroupRequest);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
-    @PatchMapping(path = "/{id}")
+    @PatchMapping(path = "/{slug}")
     public ResponseEntity<ItemGroupDetailResponse> patch(
-            @PathVariable UUID id,
+            @PathVariable @ValidSlug String slug,
             @RequestBody JsonNode body,
             @AuthenticationPrincipal AuthenticatedUser authenticatedUser) {
-        ItemGroupDetailResponse response = itemGroupService.patch(id, body, authenticatedUser.id());
+        ItemGroupDetailResponse response = itemGroupService.patch(authenticatedUser.id(), slug, body);
         return ResponseEntity.ok(response);
     }
 
-    @DeleteMapping("/{id}")
+    @DeleteMapping("/{slug}")
     public ResponseEntity<Void> delete(
-            @PathVariable UUID id,
+            @PathVariable @ValidSlug String slug,
             @AuthenticationPrincipal AuthenticatedUser authenticatedUser) {
-        itemGroupService.delete(id, authenticatedUser.id());
+        itemGroupService.delete(authenticatedUser.id(), slug);
         return ResponseEntity.noContent().build();
     }
 
-    @PutMapping("/{id}/default")
+    @PutMapping("/{slug}/default")
     public ResponseEntity<Void> updateDefaultItemGroup(
-            @PathVariable UUID id,
+            @PathVariable @ValidSlug String slug,
             @AuthenticationPrincipal AuthenticatedUser authenticatedUser) {
-        itemGroupService.setDefaultGroup(id, authenticatedUser.id());
+        itemGroupService.setDefaultGroup(authenticatedUser.id(), slug);
         return ResponseEntity.noContent().build();
     }
 

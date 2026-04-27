@@ -11,8 +11,6 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.context.jdbc.SqlMergeMode;
 
-import java.util.UUID;
-
 import static io.restassured.RestAssured.given;
 import static org.hamcrest.Matchers.equalTo;
 
@@ -21,7 +19,7 @@ import static org.hamcrest.Matchers.equalTo;
 @SqlMergeMode(SqlMergeMode.MergeMode.MERGE)
 public class TagDeletionIT extends BaseIntegrationTest {
 
-    private final String ENDPOINT = "/api/v1/item-groups/{groupId}/tags/{tagId}";
+    private final String ENDPOINT = "/api/v1/item-groups/{groupSlug}/tags/{tagSlug}";
 
     @Nested
     @DisplayName("Successful Operations")
@@ -32,8 +30,8 @@ public class TagDeletionIT extends BaseIntegrationTest {
         @Sql({"/sql/data/users.sql", "/sql/data/item-groups.sql", "/sql/data/tags.sql"})
         void shouldDeleteTheItemGroup() {
             givenNormalUserRequest()
-                    .pathParam("groupId", TestConstants.Groups.DESIGN_ID)
-                    .pathParam("tagId", TestConstants.Tags.UX_ID)
+                    .pathParam("groupSlug", TestConstants.Groups.DESIGN_SLUG)
+                    .pathParam("tagSlug", TestConstants.Tags.UX_SLUG)
                     .when()
                     .delete(ENDPOINT)
                     .then()
@@ -51,8 +49,8 @@ public class TagDeletionIT extends BaseIntegrationTest {
         void shouldReturn404WhenTheTagDoesNotExist() {
             // Doesn't distinguish between "tag not found", "group not found", or "belongs to another user"
             givenNormalUserRequest()
-                    .pathParam("groupId", TestConstants.Groups.DESIGN_ID)
-                    .pathParam("tagId", UUID.randomUUID())
+                    .pathParam("groupSlug", TestConstants.Groups.DESIGN_SLUG)
+                    .pathParam("tagSlug", "non-exsistent-slug")
                     .when()
                     .delete(ENDPOINT)
                     .then()
@@ -71,8 +69,8 @@ public class TagDeletionIT extends BaseIntegrationTest {
         @DisplayName("Should return 401 when the user is not authenticated")
         void shouldReturn401WhenUserIsNotAuthenticated() {
             given()
-                    .pathParam("groupId", TestConstants.Groups.DESIGN_ID)
-                    .pathParam("tagId", TestConstants.Tags.UI_ID)
+                    .pathParam("groupSlug", TestConstants.Groups.DESIGN_SLUG)
+                    .pathParam("tagSlug", TestConstants.Tags.UI_SLUG)
                     .when()
                     .delete(ENDPOINT)
                     .then()

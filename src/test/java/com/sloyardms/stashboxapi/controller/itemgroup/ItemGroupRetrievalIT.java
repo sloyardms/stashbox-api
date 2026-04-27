@@ -11,8 +11,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.jdbc.Sql;
 
-import java.util.UUID;
-
 import static io.restassured.RestAssured.given;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.equalTo;
@@ -21,7 +19,7 @@ import static org.hamcrest.Matchers.equalTo;
 @Sql(scripts = "/sql/cleanup.sql", executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD)
 public class ItemGroupRetrievalIT extends BaseIntegrationTest {
 
-    private final String ENDPOINT = "/api/v1/item-groups/{id}";
+    private final String ENDPOINT = "/api/v1/item-groups/{slug}";
 
     @Nested
     @DisplayName("Successful Operations")
@@ -32,7 +30,7 @@ public class ItemGroupRetrievalIT extends BaseIntegrationTest {
         @Sql({"/sql/data/users.sql", "/sql/data/item-groups.sql"})
         void shouldReturn200AndTheItemGroup() {
             ItemGroupDetailResponse response = givenNormalUserRequest()
-                    .pathParam("id", TestConstants.Groups.UNGROUPED_ID)
+                    .pathParam("slug", TestConstants.Groups.UNGROUPED_SLUG)
                     .when()
                     .get(ENDPOINT)
                     .then()
@@ -66,7 +64,7 @@ public class ItemGroupRetrievalIT extends BaseIntegrationTest {
         void shouldReturn404WhenItemGroupDoesNotExist() {
             // Doesn't distinguish between "group not found" or "belongs to another user"
             givenNormalUserRequest()
-                    .pathParam("id", UUID.randomUUID())
+                    .pathParam("slug", "non-existent-slug")
                     .when()
                     .get(ENDPOINT)
                     .then()
@@ -85,7 +83,7 @@ public class ItemGroupRetrievalIT extends BaseIntegrationTest {
         @DisplayName("Should return 401 when the user is not authenticated")
         void shouldReturn401WhenUserIsNotAuthenticated() {
             given()
-                    .pathParam("id", UUID.randomUUID())
+                    .pathParam("slug", TestConstants.Groups.UNGROUPED_SLUG)
                     .when()
                     .get(ENDPOINT)
                     .then()

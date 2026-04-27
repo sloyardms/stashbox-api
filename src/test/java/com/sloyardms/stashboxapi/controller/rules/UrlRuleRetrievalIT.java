@@ -21,7 +21,7 @@ import static org.hamcrest.Matchers.*;
 @SqlMergeMode(SqlMergeMode.MergeMode.MERGE)
 public class UrlRuleRetrievalIT extends BaseIntegrationTest {
 
-    private final String ENDPOINT = "/api/v1/item-groups/{groupId}/url-rules/{ruleId}";
+    private final String ENDPOINT = "/api/v1/item-groups/{groupSlug}/url-rules/{ruleId}";
 
     @Nested
     @DisplayName("Successful Operations")
@@ -32,7 +32,7 @@ public class UrlRuleRetrievalIT extends BaseIntegrationTest {
         @Sql({"/sql/data/users.sql", "/sql/data/item-groups.sql", "/sql/data/url-rules.sql"})
         void shouldReturnUrlRuleAnd200() {
             givenNormalUserRequest()
-                    .pathParam("groupId", TestConstants.Groups.DEV_RESOURCES_ID)
+                    .pathParam("groupSlug", TestConstants.Groups.DEV_RESOURCES_SLUG)
                     .pathParam("ruleId", TestConstants.UrlRules.GITHUB_REPO_NAME_ID)
                     .when()
                     .get(ENDPOINT)
@@ -64,7 +64,7 @@ public class UrlRuleRetrievalIT extends BaseIntegrationTest {
         void shouldReturn404WhenTheUrlRuleDoesNotExist() {
             // Doesn't distinguish between "rule not found", "group not found", or "belongs to another user"
             givenNormalUserRequest()
-                    .pathParam("groupId", TestConstants.Groups.DEV_RESOURCES_ID)
+                    .pathParam("groupSlug", TestConstants.Groups.DEV_RESOURCES_SLUG)
                     .pathParam("ruleId", UUID.randomUUID())
                     .when()
                     .get(ENDPOINT)
@@ -84,7 +84,7 @@ public class UrlRuleRetrievalIT extends BaseIntegrationTest {
         @DisplayName("Should return 401 when the user is not authenticated")
         void shouldReturn401WhenUserIsNotAuthenticated() {
             given()
-                    .pathParam("groupId", TestConstants.Groups.DEV_RESOURCES_ID)
+                    .pathParam("groupSlug", TestConstants.Groups.DEV_RESOURCES_SLUG)
                     .pathParam("ruleId", TestConstants.UrlRules.GITHUB_REPO_NAME_ID)
                     .when()
                     .get(ENDPOINT)

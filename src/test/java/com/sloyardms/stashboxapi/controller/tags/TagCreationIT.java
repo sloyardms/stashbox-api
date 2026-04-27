@@ -13,8 +13,6 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.context.jdbc.SqlMergeMode;
 
-import java.util.UUID;
-
 import static io.restassured.RestAssured.given;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.equalTo;
@@ -24,7 +22,7 @@ import static org.hamcrest.Matchers.equalTo;
 @SqlMergeMode(SqlMergeMode.MergeMode.MERGE)
 public class TagCreationIT extends BaseIntegrationTest {
 
-    private final String ENDPOINT = "/api/v1/item-groups/{groupId}/tags";
+    private final String ENDPOINT = "/api/v1/item-groups/{groupSlug}/tags";
 
     @Nested
     @DisplayName("Successful Operations")
@@ -37,10 +35,8 @@ public class TagCreationIT extends BaseIntegrationTest {
             CreateTagRequest body = new CreateTagRequest();
             body.setName("test tag");
 
-            UUID groupId = TestConstants.Groups.DESIGN_ID;
-
             TagDetailResponse savedTag = givenNormalUserRequest()
-                    .pathParam("groupId", groupId)
+                    .pathParam("groupSlug", TestConstants.Groups.DESIGN_SLUG)
                     .body(body)
                     .when()
                     .post(ENDPOINT)
@@ -71,7 +67,7 @@ public class TagCreationIT extends BaseIntegrationTest {
             CreateTagRequest body = new CreateTagRequest();
 
             givenNormalUserRequest()
-                    .pathParam("groupId", TestConstants.Groups.DESIGN_ID)
+                    .pathParam("groupSlug", TestConstants.Groups.DESIGN_SLUG)
                     .body(body)
                     .when()
                     .post(ENDPOINT)
@@ -89,7 +85,7 @@ public class TagCreationIT extends BaseIntegrationTest {
             body.setName("t".repeat(100));
 
             givenNormalUserRequest()
-                    .pathParam("groupId", TestConstants.Groups.DESIGN_ID)
+                    .pathParam("groupSlug", TestConstants.Groups.DESIGN_SLUG)
                     .when()
                     .body(body)
                     .post(ENDPOINT)
@@ -107,7 +103,7 @@ public class TagCreationIT extends BaseIntegrationTest {
             body.setName("test tag");
 
             givenNormalUserRequest()
-                    .pathParam("groupId", UUID.randomUUID())
+                    .pathParam("groupSlug", "non-existent-slug")
                     .body(body)
                     .when()
                     .post(ENDPOINT)
@@ -125,7 +121,7 @@ public class TagCreationIT extends BaseIntegrationTest {
             body.setName("UI");
 
             givenNormalUserRequest()
-                    .pathParam("groupId", TestConstants.Groups.DESIGN_ID)
+                    .pathParam("groupSlug", TestConstants.Groups.DESIGN_SLUG)
                     .body(body)
                     .when()
                     .post(ENDPOINT)
@@ -143,7 +139,7 @@ public class TagCreationIT extends BaseIntegrationTest {
             body.setName("ui"); // "UI" exists in tags.sql, slug would be "ui" — same slug
 
             givenNormalUserRequest()
-                    .pathParam("groupId", TestConstants.Groups.DESIGN_ID)
+                    .pathParam("groupSlug", TestConstants.Groups.DESIGN_SLUG)
                     .body(body)
                     .when()
                     .post(ENDPOINT)
@@ -163,7 +159,7 @@ public class TagCreationIT extends BaseIntegrationTest {
         @DisplayName("Should return 401 when the user is not authenticated")
         void shouldReturn401WhenUserIsNotAuthenticated() {
             given()
-                    .pathParam("groupId", UUID.randomUUID())
+                    .pathParam("groupSlug", TestConstants.Groups.DESIGN_SLUG)
                     .when()
                     .post(ENDPOINT)
                     .then()

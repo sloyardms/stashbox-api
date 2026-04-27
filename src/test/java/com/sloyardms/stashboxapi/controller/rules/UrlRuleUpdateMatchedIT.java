@@ -26,7 +26,7 @@ import static org.hamcrest.Matchers.equalTo;
 @SqlMergeMode(SqlMergeMode.MergeMode.MERGE)
 public class UrlRuleUpdateMatchedIT extends BaseIntegrationTest {
 
-    private final String ENDPOINT = "/api/v1/item-groups/{groupId}/url-rules/{ruleId}/matched";
+    private final String ENDPOINT = "/api/v1/item-groups/{groupSlug}/url-rules/{ruleId}/matched";
     @Autowired
     private UrlRuleRepository urlRuleRepository;
 
@@ -43,7 +43,7 @@ public class UrlRuleUpdateMatchedIT extends BaseIntegrationTest {
             assertThat(existingRule.get().getLastMatchedAt()).isNull();
 
             givenNormalUserRequest()
-                    .pathParam("groupId", TestConstants.Groups.DEV_RESOURCES_ID)
+                    .pathParam("groupSlug", TestConstants.Groups.DEV_RESOURCES_SLUG)
                     .pathParam("ruleId", TestConstants.UrlRules.NPM_PACKAGE_NAME_ID)
                     .when()
                     .patch(ENDPOINT)
@@ -67,7 +67,7 @@ public class UrlRuleUpdateMatchedIT extends BaseIntegrationTest {
         void shouldReturn404WhenTheUrlRuleDoesNotExist() {
             // Doesn't distinguish between "rule not found", "group not found", or "belongs to another user"
             givenNormalUserRequest()
-                    .pathParam("groupId", TestConstants.Groups.DEV_RESOURCES_ID)
+                    .pathParam("groupSlug", TestConstants.Groups.DEV_RESOURCES_SLUG)
                     .pathParam("ruleId", UUID.randomUUID())
                     .when()
                     .patch(ENDPOINT)
@@ -87,7 +87,7 @@ public class UrlRuleUpdateMatchedIT extends BaseIntegrationTest {
         @DisplayName("Should return 401 when the user is not authenticated")
         void shouldReturn401WhenUserIsNotAuthenticated() {
             given()
-                    .pathParam("groupId", TestConstants.Groups.DEV_RESOURCES_ID)
+                    .pathParam("groupSlug", TestConstants.Groups.DEV_RESOURCES_SLUG)
                     .pathParam("ruleId", TestConstants.UrlRules.GITHUB_REPO_NAME_ID)
                     .when()
                     .patch(ENDPOINT)

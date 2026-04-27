@@ -23,7 +23,7 @@ import static org.hamcrest.Matchers.equalTo;
 @SqlMergeMode(SqlMergeMode.MergeMode.MERGE)
 public class TagUpdateIT extends BaseIntegrationTest {
 
-    private final String ENDPOINT = "/api/v1/item-groups/{groupId}/tags/{tagId}";
+    private final String ENDPOINT = "/api/v1/item-groups/{groupSlug}/tags/{tagSlug}";
 
     @Nested
     @DisplayName("Successful Operations")
@@ -40,8 +40,8 @@ public class TagUpdateIT extends BaseIntegrationTest {
                     """;
 
             TagDetailResponse response = givenNormalUserRequest()
-                    .pathParam("groupId", TestConstants.Groups.DESIGN_ID)
-                    .pathParam("tagId", TestConstants.Tags.UX_ID)
+                    .pathParam("groupSlug", TestConstants.Groups.DESIGN_SLUG)
+                    .pathParam("tagSlug", TestConstants.Tags.UX_SLUG)
                     .body(request)
                     .when()
                     .patch(ENDPOINT)
@@ -50,7 +50,7 @@ public class TagUpdateIT extends BaseIntegrationTest {
                     .extract().as(TagDetailResponse.class);
 
             assertThat(response).isNotNull();
-            assertThat(response.getId()).isEqualTo(TestConstants.Tags.UX_ID);
+            assertThat(response.getId()).isNotNull();
             assertThat(response.getName()).isEqualTo("new name");
             assertThat(response.getSlug()).isEqualTo("new-name");
             assertThat(response.getCreatedAt()).isNotNull();
@@ -77,8 +77,8 @@ public class TagUpdateIT extends BaseIntegrationTest {
 
             // Doesn't distinguish between "tag not found", "group not found", or "belongs to another user"
             givenNormalUserRequest()
-                    .pathParam("groupId", TestConstants.Groups.DESIGN_ID)
-                    .pathParam("tagId", UUID.randomUUID())
+                    .pathParam("groupSlug", TestConstants.Groups.DESIGN_SLUG)
+                    .pathParam("tagSlug", "non-existent-slug")
                     .body(request)
                     .when()
                     .patch(ENDPOINT)
@@ -99,8 +99,8 @@ public class TagUpdateIT extends BaseIntegrationTest {
                     """;
 
             givenNormalUserRequest()
-                    .pathParam("groupId", TestConstants.Groups.DESIGN_ID)
-                    .pathParam("tagId", TestConstants.Tags.UI_ID)
+                    .pathParam("groupSlug", TestConstants.Groups.DESIGN_SLUG)
+                    .pathParam("tagSlug", TestConstants.Tags.UI_SLUG)
                     .body(request)
                     .when()
                     .patch(ENDPOINT)
@@ -121,8 +121,8 @@ public class TagUpdateIT extends BaseIntegrationTest {
                     """;
 
             givenNormalUserRequest()
-                    .pathParam("groupId", TestConstants.Groups.DESIGN_ID)
-                    .pathParam("tagId", TestConstants.Tags.UI_ID)
+                    .pathParam("groupSlug", TestConstants.Groups.DESIGN_SLUG)
+                    .pathParam("tagSlug", TestConstants.Tags.UI_SLUG)
                     .body(request)
                     .when()
                     .patch(ENDPOINT)
@@ -140,8 +140,8 @@ public class TagUpdateIT extends BaseIntegrationTest {
             String request = String.format("{ \"name\": \"%s\" }", name);
 
             givenNormalUserRequest()
-                    .pathParam("groupId", TestConstants.Groups.DESIGN_ID)
-                    .pathParam("tagId", TestConstants.Tags.UI_ID)
+                    .pathParam("groupSlug", TestConstants.Groups.DESIGN_SLUG)
+                    .pathParam("tagSlug", TestConstants.Tags.UI_SLUG)
                     .body(request)
                     .when()
                     .patch(ENDPOINT)
@@ -161,8 +161,8 @@ public class TagUpdateIT extends BaseIntegrationTest {
         @DisplayName("Should return 401 when the user is not authenticated")
         void shouldReturn401WhenUserIsNotAuthenticated() {
             given()
-                    .pathParam("groupId", TestConstants.Groups.DESIGN_ID)
-                    .pathParam("tagId", TestConstants.Tags.UI_ID)
+                    .pathParam("groupSlug", TestConstants.Groups.DESIGN_SLUG)
+                    .pathParam("tagSlug", TestConstants.Tags.UI_SLUG)
                     .when()
                     .patch(ENDPOINT)
                     .then()

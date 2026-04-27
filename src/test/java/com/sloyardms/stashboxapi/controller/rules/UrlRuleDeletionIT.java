@@ -14,14 +14,14 @@ import org.springframework.test.context.jdbc.SqlMergeMode;
 import java.util.UUID;
 
 import static io.restassured.RestAssured.given;
-import static org.hamcrest.Matchers.*;
+import static org.hamcrest.Matchers.equalTo;
 
 @ActiveProfiles("test")
 @Sql(scripts = "/sql/cleanup.sql", executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD)
 @SqlMergeMode(SqlMergeMode.MergeMode.MERGE)
 public class UrlRuleDeletionIT extends BaseIntegrationTest {
 
-    private final String ENDPOINT = "/api/v1/item-groups/{groupId}/url-rules/{ruleId}";
+    private final String ENDPOINT = "/api/v1/item-groups/{groupSlug}/url-rules/{ruleId}";
 
     @Nested
     @DisplayName("Successful Operations")
@@ -32,7 +32,7 @@ public class UrlRuleDeletionIT extends BaseIntegrationTest {
         @Sql({"/sql/data/users.sql", "/sql/data/item-groups.sql", "/sql/data/url-rules.sql"})
         void shouldDeleteTheUrlRuleAndReturn204() {
             givenNormalUserRequest()
-                    .pathParam("groupId", TestConstants.Groups.DEV_RESOURCES_ID)
+                    .pathParam("groupSlug", TestConstants.Groups.DEV_RESOURCES_SLUG)
                     .pathParam("ruleId", TestConstants.UrlRules.GITHUB_REPO_NAME_ID)
                     .when()
                     .delete(ENDPOINT)
@@ -51,7 +51,7 @@ public class UrlRuleDeletionIT extends BaseIntegrationTest {
         void shouldReturn404WhenTheUrlRuleDoesNotExist() {
             // Doesn't distinguish between "rule not found", "group not found", or "belongs to another user"
             givenNormalUserRequest()
-                    .pathParam("groupId", TestConstants.Groups.DEV_RESOURCES_ID)
+                    .pathParam("groupSlug", TestConstants.Groups.DEV_RESOURCES_SLUG)
                     .pathParam("ruleId", UUID.randomUUID())
                     .when()
                     .delete(ENDPOINT)
@@ -71,7 +71,7 @@ public class UrlRuleDeletionIT extends BaseIntegrationTest {
         @DisplayName("Should return 401 when the user is not authenticated")
         void shouldReturn401WhenUserIsNotAuthenticated() {
             given()
-                    .pathParam("groupId", TestConstants.Groups.DEV_RESOURCES_ID)
+                    .pathParam("groupSlug", TestConstants.Groups.DEV_RESOURCES_SLUG)
                     .pathParam("ruleId", TestConstants.UrlRules.GITHUB_REPO_NAME_ID)
                     .when()
                     .delete(ENDPOINT)

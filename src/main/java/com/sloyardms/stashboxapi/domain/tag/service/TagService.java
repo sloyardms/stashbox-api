@@ -1,5 +1,6 @@
 package com.sloyardms.stashboxapi.domain.tag.service;
 
+import com.sloyardms.stashboxapi.domain.stash.model.ItemGroup;
 import com.sloyardms.stashboxapi.domain.stash.repository.ItemGroupRepository;
 import com.sloyardms.stashboxapi.domain.tag.dto.request.CreateTagRequest;
 import com.sloyardms.stashboxapi.domain.tag.dto.request.UpdateTagRequest;
@@ -39,14 +40,14 @@ public class TagService {
     private final JsonPatchService jsonPatchService;
 
     @Transactional(readOnly = true)
-    public TagDetailResponse findDetail(UUID userId, UUID groupId, UUID tagId) {
-        TagDetailProjection tagDetail = tagRepository.findTagDetail(userId, groupId, tagId)
-                .orElseThrow(() -> new ResourceNotFoundException("Tag", "Id", tagId));
+    public TagDetailResponse findDetail(UUID userId, String groupSlug, String tagSlug) {
+        TagDetailProjection tagDetail = tagRepository.findTagDetail(userId, groupSlug, tagSlug)
+                .orElseThrow(() -> new ResourceNotFoundException("Tag", "slug", tagSlug));
         return tagMapper.toDetailResponse(tagDetail);
     }
 
     @Transactional(readOnly = true)
-    public Page<TagCountResponse> search(UUID userId, UUID groupId, String searchQuery, Pageable pageable) {
+    public Page<TagCountResponse> search(UUID userId, String groupSlug, String searchQuery, Pageable pageable) {
         Map<String, String> sortFieldMappings = Map.of(
                 "itemCount", "tu.item_count",
                 "lastUsed", "tu.last_used"
@@ -54,19 +55,18 @@ public class TagService {
         Pageable mappedPageable = PageableUtils.remapSort(pageable, sortFieldMappings);
         String query = (searchQuery == null || searchQuery.isBlank()) ? null : searchQuery;
 
-        Page<TagCountProjection> tags = tagRepository.findAllTagCount(userId, groupId, query, mappedPageable);
+        Page<TagCountProjection> tags = tagRepository.findAllTagCount(userId, groupSlug, query, mappedPageable);
         return tags.map(tagMapper::toCountResponse);
     }
 
     @Transactional(rollbackFor = Exception.class)
-    public TagDetailResponse create(UUID userId, UUID groupId, CreateTagRequest createTagRequest) {
-        if (!itemGroupRepository.existsByIdAndUserId(groupId, userId)) {
-            throw new ResourceNotFoundException("ItemGroup", "Id", groupId);
-        }
+    public TagDetailResponse create(UUID userId, String groupSlug, CreateTagRequest createTagRequest) {
+        ItemGroup group = itemGroupRepository.findBySlugAndUserId(groupSlug, userId)
+                .orElseThrow(() -> new ResourceNotFoundException("ItemGroup", "slug", groupSlug));
 
         Tag newTag = tagMapper.toEntity(createTagRequest);
         newTag.setUser(userRepository.getReferenceById(userId));
-        newTag.setGroup(itemGroupRepository.getReferenceById(groupId));
+        newTag.setGroup(group);
         newTag.setSlug(SlugUtils.slugify(newTag.getName()));
 
         newTag = tagRepository.save(newTag);
@@ -74,9 +74,9 @@ public class TagService {
     }
 
     @Transactional(rollbackFor = Exception.class)
-    public TagDetailResponse patch(UUID userId, UUID groupId, UUID tagId, JsonNode patch) {
-        Tag targetTag = tagRepository.findByIdAndUserId(tagId, userId)
-                .orElseThrow(() -> new ResourceNotFoundException("Tag", "Id", tagId));
+    public TagDetailResponse patch(UUID userId, String groupSlug, String tagSlug, JsonNode patch) {
+        Tag targetTag = tagRepository.findBySlugAndUserIdAndGroupSlug(tagSlug, userId, groupSlug)
+                .orElseThrow(() -> new ResourceNotFoundException("Tag", "slug", tagSlug));
 
         String originalName = targetTag.getName();
 
@@ -90,14 +90,14 @@ public class TagService {
         }
 
         targetTag = tagRepository.save(targetTag);
-        return findDetail(userId, groupId, targetTag.getId());
+        return findDetail(userId, groupSlug, targetTag.getSlug());
     }
 
     @Transactional(rollbackFor = Exception.class)
-    public void delete(UUID userId, UUID groupId, UUID tagId) {
-        int deleted = tagRepository.deleteByIdAndUserIdAndGroupId(tagId, userId, groupId);
+    public void delete(UUID userId, String groupSlug, String tagSlug) {
+        int deleted = tagRepository.deleteBySlugAndUserIdAndGroupSlug(tagSlug, userId, groupSlug);
         if (deleted == 0) {
-            throw new ResourceNotFoundException("Tag", "Id", tagId);
+            throw new ResourceNotFoundException("Tag", "slug", tagSlug);
         }
     }
 

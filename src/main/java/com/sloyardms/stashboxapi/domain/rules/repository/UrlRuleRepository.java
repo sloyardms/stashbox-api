@@ -8,6 +8,7 @@ import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 import java.util.List;
 import java.util.Optional;
@@ -16,20 +17,43 @@ import java.util.UUID;
 public interface UrlRuleRepository extends JpaRepository<UrlRule, UUID> {
 
     @EntityGraph(value = "UrlRule.withGroup")
-    Optional<UrlRule> findWithGroupByIdAndUserIdAndGroupId(UUID id, UUID userId, UUID groupId);
+    @Query("""
+            SELECT ur
+            FROM UrlRule ur
+            WHERE ur.id = :ruleId
+                 AND ur.user.id = :userId
+                 AND ur.group.slug = :groupSlug
+            """)
+    Optional<UrlRule> findWithGroupByIdAndUserIdAndGroupSlug(
+            @Param("ruleId") UUID ruleId,
+            @Param("userId") UUID userId,
+            @Param("groupSlug") String groupSlug);
 
-    Optional<UrlRule> findByIdAndUserIdAndGroupId(UUID id, UUID userId, UUID groupId);
+    @Query("""
+            SELECT ur
+            FROM UrlRule ur
+            WHERE ur.id = :ruleId
+                 AND ur.user.id = :userId
+                 AND ur.group.slug = :groupSlug
+            """)
+    Optional<UrlRule> findByIdAndUserIdAndGroupSlug(
+            @Param("ruleId") UUID ruleId,
+            @Param("userId") UUID userId,
+            @Param("groupSlug") String groupSlug);
 
     @Query("""
             SELECT ur
             FROM UrlRule ur
             WHERE ur.user.id = :userId
-                AND ur.group.id = :groupId
+                AND ur.group.slug = :groupSlug
                 AND ur.domain = :domain
                 AND ur.active = true
                 ORDER BY ur.priority ASC
             """)
-    List<UrlRule> findActiveByDomain(UUID userId, UUID groupId, String domain);
+    List<UrlRule> findActiveByDomain(
+            @Param("userId") UUID userId,
+            @Param("groupSlug") String groupSlug,
+            @Param("domain") String domain);
 
     @Query(value = """
             SELECT
@@ -61,18 +85,38 @@ public interface UrlRuleRepository extends JpaRepository<UrlRule, UUID> {
                     OR ur.domain ILIKE CONCAT ('%', :searchQuery, '%')
                     )
             """, nativeQuery = true)
-    Page<UrlRuleListProjection> search(UUID userId, String searchQuery, Pageable pageable);
+    Page<UrlRuleListProjection> search(
+            @Param("userId") UUID userId,
+            @Param("searchQuery") String searchQuery,
+            Pageable pageable);
 
-    int deleteByIdAndUserIdAndGroupId(UUID id, UUID userId, UUID groupId);
+    @Modifying
+    @Query(value = """
+            DELETE FROM url_rules ur
+            WHERE ur.id = :ruleId
+                AND ur.user_id = :userId
+                AND ur.group_id = (
+                    SELECT id FROM item_groups WHERE slug = :groupSlug AND user_id = :userId
+                )
+            """, nativeQuery = true)
+    int deleteByIdAndUserIdAndGroupSlug(
+            @Param("ruleId") UUID id,
+            @Param("userId") UUID userId,
+            @Param("groupSlug") String groupSlug);
 
     @Query(value = """
-            UPDATE url_rules
-            SET last_matched_at = NOW()
-            WHERE id = :id
-                AND user_id = :userId
-                AND group_id = :groupId
+            UPDATE url_rules ur
+                SET last_matched_at = NOW()
+            FROM item_groups ig
+            WHERE ur.group_id = ig.id
+                AND ur.id = :ruleId
+                AND ur.user_id = :userId
+                AND ig.slug = :groupSlug
             """, nativeQuery = true)
     @Modifying(clearAutomatically = true)
-    int updateLastMatched(UUID id, UUID userId, UUID groupId);
+    int updateLastMatched(
+            @Param("ruleId") UUID ruleId,
+            @Param("userId") UUID userId,
+            @Param("groupSlug") String groupSlug);
 
 }

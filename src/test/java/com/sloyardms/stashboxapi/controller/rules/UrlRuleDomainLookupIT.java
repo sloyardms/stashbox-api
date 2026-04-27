@@ -11,8 +11,6 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.context.jdbc.SqlMergeMode;
 
-import java.util.UUID;
-
 import static io.restassured.RestAssured.given;
 import static org.hamcrest.Matchers.*;
 
@@ -21,7 +19,7 @@ import static org.hamcrest.Matchers.*;
 @SqlMergeMode(SqlMergeMode.MergeMode.MERGE)
 public class UrlRuleDomainLookupIT extends BaseIntegrationTest {
 
-    private final String ENDPOINT = "/api/v1/item-groups/{groupId}/url-rules";
+    private final String ENDPOINT = "/api/v1/item-groups/{groupSlug}/url-rules";
 
     @Nested
     @DisplayName("Successful Operations")
@@ -32,7 +30,7 @@ public class UrlRuleDomainLookupIT extends BaseIntegrationTest {
         @Sql({"/sql/data/users.sql", "/sql/data/item-groups.sql", "/sql/data/url-rules.sql"})
         void shouldReturnListOfUrlRules() {
             givenNormalUserRequest()
-                    .pathParam("groupId", TestConstants.Groups.DEV_RESOURCES_ID)
+                    .pathParam("groupSlug", TestConstants.Groups.DEV_RESOURCES_SLUG)
                     .queryParam("domain", TestConstants.UrlRules.GITHUB_DOMAIN)
                     .when()
                     .get(ENDPOINT)
@@ -53,7 +51,7 @@ public class UrlRuleDomainLookupIT extends BaseIntegrationTest {
         @Sql({"/sql/data/users.sql", "/sql/data/item-groups.sql", "/sql/data/url-rules.sql"})
         void shouldReturnEmptyListWhenNoRulesMatchDomain() {
             givenNormalUserRequest()
-                    .pathParam("groupId", TestConstants.Groups.DEV_RESOURCES_ID)
+                    .pathParam("groupSlug", TestConstants.Groups.DEV_RESOURCES_SLUG)
                     .queryParam("domain", "nonexistent.com")
                     .when()
                     .get(ENDPOINT)
@@ -67,7 +65,7 @@ public class UrlRuleDomainLookupIT extends BaseIntegrationTest {
         @Sql({"/sql/data/users.sql", "/sql/data/item-groups.sql", "/sql/data/url-rules.sql"})
         void shouldReturnEmptyListWhenFetchingInactiveUrlRules() {
             givenNormalUserRequest()
-                    .pathParam("groupId", TestConstants.Groups.DEV_RESOURCES_ID)
+                    .pathParam("groupSlug", TestConstants.Groups.DEV_RESOURCES_SLUG)
                     .queryParam("domain", TestConstants.UrlRules.YOUTUBE_DOMAIN)
                     .when()
                     .get(ENDPOINT)
@@ -81,7 +79,7 @@ public class UrlRuleDomainLookupIT extends BaseIntegrationTest {
         @Sql({"/sql/data/users.sql"})
         void shouldReturnEmptyListWhenItemGroupDoesNotExist() {
             givenNormalUserRequest()
-                    .pathParam("groupId", UUID.randomUUID())
+                    .pathParam("groupSlug", "non-existent-slug")
                     .queryParam("domain", TestConstants.UrlRules.GITHUB_DOMAIN)
                     .when()
                     .get(ENDPOINT)
@@ -100,7 +98,7 @@ public class UrlRuleDomainLookupIT extends BaseIntegrationTest {
         @DisplayName("Should return 400 when domain parameter is missing")
         void shouldReturn400WhenDomainIsMissing() {
             givenNormalUserRequest()
-                    .pathParam("groupId", TestConstants.Groups.DEV_RESOURCES_ID)
+                    .pathParam("groupSlug", TestConstants.Groups.DEV_RESOURCES_SLUG)
                     .when()
                     .get(ENDPOINT)
                     .then()
@@ -113,7 +111,7 @@ public class UrlRuleDomainLookupIT extends BaseIntegrationTest {
         @DisplayName("Should return 422 when domain parameter is empty")
         void shouldReturn422WhenDomainIsEmpty() {
             givenNormalUserRequest()
-                    .pathParam("groupId", TestConstants.Groups.DEV_RESOURCES_ID)
+                    .pathParam("groupSlug", TestConstants.Groups.DEV_RESOURCES_SLUG)
                     .queryParam("domain", " ")
                     .when()
                     .get(ENDPOINT)
@@ -133,7 +131,7 @@ public class UrlRuleDomainLookupIT extends BaseIntegrationTest {
         @DisplayName("Should return 401 when the user is not authenticated")
         void shouldReturn401WhenUserIsNotAuthenticated() {
             given()
-                    .pathParam("groupId", TestConstants.Groups.DEV_RESOURCES_ID)
+                    .pathParam("groupSlug", TestConstants.Groups.DEV_RESOURCES_SLUG)
                     .queryParam("domain", TestConstants.UrlRules.GITHUB_DOMAIN)
                     .when()
                     .get(ENDPOINT)
