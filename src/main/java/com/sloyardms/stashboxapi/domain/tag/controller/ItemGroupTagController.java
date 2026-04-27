@@ -27,8 +27,6 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import tools.jackson.databind.JsonNode;
 
-import java.util.UUID;
-
 @RestController
 @RequiredArgsConstructor
 @Validated

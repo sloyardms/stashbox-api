@@ -14,8 +14,6 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.context.jdbc.SqlMergeMode;
 
-import java.util.UUID;
-
 import static io.restassured.RestAssured.given;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.equalTo;
@@ -48,7 +46,8 @@ public class ItemGroupDefaultIT extends BaseIntegrationTest {
             assertThat(oldDefaultGroup).isNotNull();
             assertThat(oldDefaultGroup.isDefaultGroup()).isFalse();
 
-            ItemGroup newDefaultGroup = itemGroupRepository.findById(TestConstants.Groups.DEV_RESOURCES_ID).orElse(null);
+            ItemGroup newDefaultGroup =
+                    itemGroupRepository.findById(TestConstants.Groups.DEV_RESOURCES_ID).orElse(null);
             assertThat(newDefaultGroup).isNotNull();
             assertThat(newDefaultGroup.isDefaultGroup()).isTrue();
         }

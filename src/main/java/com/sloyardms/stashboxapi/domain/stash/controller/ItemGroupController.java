@@ -8,7 +8,6 @@ import com.sloyardms.stashboxapi.infrastructure.security.dto.AuthenticatedUser;
 import com.sloyardms.stashboxapi.shared.validation.SortableFields;
 import com.sloyardms.stashboxapi.shared.validation.ValidSlug;
 import jakarta.validation.Valid;
-import jakarta.validation.constraints.Pattern;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -27,8 +26,6 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import tools.jackson.databind.JsonNode;
-
-import java.util.UUID;
 
 @RestController
 @RequiredArgsConstructor
