@@ -68,8 +68,6 @@ CREATE TABLE stash_items (
 );
 CREATE INDEX stash_items_user_group_active_idx ON stash_items(user_id, group_id, created_at DESC) WHERE deleted_at IS NULL;
 CREATE INDEX stash_items_user_group_deleted_idx ON stash_items(user_id, group_id, deleted_at DESC) WHERE deleted_at IS NOT NULL;
-CREATE INDEX stash_items_user_group_title_normalized_idx ON stash_items(user_id, group_id, title_normalized) WHERE deleted_at IS NULL;
-CREATE INDEX stash_items_user_group_url_normalized_idx ON stash_items(user_id, group_id, url_normalized) WHERE deleted_at IS NULL;
 
 CREATE TABLE tags (
     id UUID PRIMARY KEY,
