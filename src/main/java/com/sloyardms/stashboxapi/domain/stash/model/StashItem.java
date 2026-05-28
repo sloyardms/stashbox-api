@@ -26,7 +26,9 @@ import org.hibernate.annotations.OnDeleteAction;
 
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 @Getter
@@ -89,9 +91,9 @@ public class StashItem extends AuditableEntity {
                     foreignKey = @ForeignKey(name = "item_tags_stash_item_id_fk")),
             inverseJoinColumns = @JoinColumn(name = "tag_id",
                     foreignKey = @ForeignKey(name = "item_tags_tag_id_fk")))
-    private List<Tag> tags = new ArrayList<>();
+    private Set<Tag> tags = new HashSet<>();
 
     @OneToMany(fetch = FetchType.LAZY, mappedBy = "item")
-    private List<ItemNote> notes = new ArrayList<>();
+    private Set<ItemNote> notes = new HashSet<>();
 
 }
