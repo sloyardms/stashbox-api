@@ -10,10 +10,10 @@ import lombok.Setter;
 @NoArgsConstructor
 public class UpdateUserSettingsRequest {
 
-    @NotNull(message = "{validation.notNull}")
+    @NotNull(message = "validation.notNull}")
     private Boolean darkModeEnabled;
 
-    @NotNull(message = "{validation.notNull}")
+    @NotNull(message = "validation.notNull")
     private Boolean filtersEnabled;
 
 }
