@@ -1,6 +1,6 @@
 package com.sloyardms.stashboxapi.domain.user.mapper;
 
-import com.sloyardms.stashboxapi.domain.user.dto.UserProfileResponse;
+import com.sloyardms.stashboxapi.domain.user.dto.response.UserProfileResponse;
 import com.sloyardms.stashboxapi.domain.user.model.User;
 import org.mapstruct.Mapper;
 

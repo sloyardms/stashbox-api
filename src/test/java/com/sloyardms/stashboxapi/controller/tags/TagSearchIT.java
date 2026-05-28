@@ -20,7 +20,7 @@ import static org.hamcrest.Matchers.notNullValue;
 @SqlMergeMode(SqlMergeMode.MergeMode.MERGE)
 public class TagSearchIT extends BaseIntegrationTest {
 
-    private final String ENDPOINT = "/api/v1/item-groups/{groupId}/tags";
+    private final String ENDPOINT = "/api/v1/item-groups/{groupSlug}/tags";
 
     @Nested
     @DisplayName("Successful Operations")
@@ -34,7 +34,7 @@ public class TagSearchIT extends BaseIntegrationTest {
             int expectedTotalPages = (int) Math.ceil((double) numberOfTags / defaultPageSize);
 
             givenNormalUserRequest()
-                    .pathParam("groupId", TestConstants.Groups.DESIGN_ID)
+                    .pathParam("groupSlug", TestConstants.Groups.DESIGN_SLUG)
                     .queryParam("sort", "name,asc")
                     .when()
                     .get(ENDPOINT)
@@ -61,7 +61,7 @@ public class TagSearchIT extends BaseIntegrationTest {
             int expectedTotalPages = (int) Math.ceil((double) numberOfTags / defaultPageSize);
 
             givenNormalUserRequest()
-                    .pathParam("groupId", TestConstants.Groups.DESIGN_ID)
+                    .pathParam("groupSlug", TestConstants.Groups.DESIGN_SLUG)
                     .queryParam("search", "grap")
                     .queryParam("sort", "name,asc")
                     .when()
@@ -91,7 +91,7 @@ public class TagSearchIT extends BaseIntegrationTest {
         @DisplayName("Should return 422 when sort field is not allowed")
         void shouldReturn422WhenSortFieldIsNotAllowed() {
             givenNormalUserRequest()
-                    .pathParam("groupId", TestConstants.Groups.DESIGN_ID)
+                    .pathParam("groupSlug", TestConstants.Groups.DESIGN_SLUG)
                     .queryParam("sort", "not_allowed")
                     .when()
                     .get(ENDPOINT)
@@ -111,7 +111,7 @@ public class TagSearchIT extends BaseIntegrationTest {
         @DisplayName("Should return 401 when the user is not authenticated")
         void shouldReturn401WhenUserIsNotAuthenticated() {
             given()
-                    .pathParam("groupId", TestConstants.Groups.DESIGN_ID)
+                    .pathParam("groupSlug", TestConstants.Groups.DESIGN_SLUG)
                     .when()
                     .get(ENDPOINT)
                     .then()

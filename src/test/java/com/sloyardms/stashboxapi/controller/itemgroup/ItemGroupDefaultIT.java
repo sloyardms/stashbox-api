@@ -14,8 +14,6 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.context.jdbc.SqlMergeMode;
 
-import java.util.UUID;
-
 import static io.restassured.RestAssured.given;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.equalTo;
@@ -25,7 +23,7 @@ import static org.hamcrest.Matchers.equalTo;
 @SqlMergeMode(SqlMergeMode.MergeMode.MERGE)
 public class ItemGroupDefaultIT extends BaseIntegrationTest {
 
-    private final String ENDPOINT = "/api/v1/item-groups/{id}/default";
+    private final String ENDPOINT = "/api/v1/item-groups/{slug}/default";
     @Autowired
     private ItemGroupRepository itemGroupRepository;
 
@@ -37,10 +35,8 @@ public class ItemGroupDefaultIT extends BaseIntegrationTest {
         @DisplayName("Should set the group to default and return 204")
         @Sql({"/sql/data/users.sql", "/sql/data/item-groups.sql"})
         void shouldSetGroupToDefaultAndReturn204() {
-            UUID itemGroup1Id = TestConstants.Groups.DEV_RESOURCES_ID;
-
             givenNormalUserRequest()
-                    .pathParam("id", itemGroup1Id)
+                    .pathParam("slug", TestConstants.Groups.DEV_RESOURCES_SLUG)
                     .when()
                     .put(ENDPOINT)
                     .then()
@@ -50,7 +46,8 @@ public class ItemGroupDefaultIT extends BaseIntegrationTest {
             assertThat(oldDefaultGroup).isNotNull();
             assertThat(oldDefaultGroup.isDefaultGroup()).isFalse();
 
-            ItemGroup newDefaultGroup = itemGroupRepository.findById(itemGroup1Id).orElse(null);
+            ItemGroup newDefaultGroup =
+                    itemGroupRepository.findById(TestConstants.Groups.DEV_RESOURCES_ID).orElse(null);
             assertThat(newDefaultGroup).isNotNull();
             assertThat(newDefaultGroup.isDefaultGroup()).isTrue();
         }
@@ -64,10 +61,8 @@ public class ItemGroupDefaultIT extends BaseIntegrationTest {
         @Test
         @DisplayName("Should return 404 when the item group does not exist")
         void shouldReturn404WhenItemGroupDoesNotExist() {
-            UUID nonExistentItemGroupId = UUID.randomUUID();
-
             givenNormalUserRequest()
-                    .pathParam("id", nonExistentItemGroupId)
+                    .pathParam("slug", "non-existent-slug")
                     .when()
                     .put(ENDPOINT)
                     .then()
@@ -86,7 +81,7 @@ public class ItemGroupDefaultIT extends BaseIntegrationTest {
         @DisplayName("Should return 401 when the user is not authenticated")
         void shouldReturn401WhenUserIsNotAuthenticated() {
             given()
-                    .pathParam("id", UUID.randomUUID())
+                    .pathParam("slug", TestConstants.Groups.UNGROUPED_SLUG)
                     .when()
                     .put(ENDPOINT)
                     .then()

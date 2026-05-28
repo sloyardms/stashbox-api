@@ -11,8 +11,6 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.context.jdbc.SqlMergeMode;
 
-import java.util.UUID;
-
 import static io.restassured.RestAssured.given;
 import static org.hamcrest.Matchers.equalTo;
 
@@ -21,7 +19,7 @@ import static org.hamcrest.Matchers.equalTo;
 @SqlMergeMode(SqlMergeMode.MergeMode.MERGE)
 public class ItemGroupDeletionIT extends BaseIntegrationTest {
 
-    private final String ENDPOINT = "/api/v1/item-groups/{id}";
+    private final String ENDPOINT = "/api/v1/item-groups/{slug}";
 
     @Nested
     @DisplayName("Successful Operations")
@@ -33,7 +31,7 @@ public class ItemGroupDeletionIT extends BaseIntegrationTest {
         void shouldDeleteTheItemGroup() {
             givenNormalUserRequest()
                     .when()
-                    .pathParam("id", TestConstants.Groups.DEV_RESOURCES_ID)
+                    .pathParam("slug", TestConstants.Groups.DEV_RESOURCES_SLUG)
                     .delete(ENDPOINT)
                     .then()
                     .statusCode(HttpStatus.NO_CONTENT.value());
@@ -49,7 +47,7 @@ public class ItemGroupDeletionIT extends BaseIntegrationTest {
         @DisplayName("Should return 404 when the item group does not exist")
         void shouldReturn404WhenItemGroupDoesNotExist() {
             givenNormalUserRequest()
-                    .pathParam("id", UUID.randomUUID())
+                    .pathParam("slug", "non-existent-slug")
                     .when()
                     .delete(ENDPOINT)
                     .then()
@@ -68,7 +66,7 @@ public class ItemGroupDeletionIT extends BaseIntegrationTest {
         @DisplayName("Should return 401 when the user is not authenticated")
         void shouldReturn401WhenUserIsNotAuthenticated() {
             given()
-                    .pathParam("id", UUID.randomUUID())
+                    .pathParam("slug", TestConstants.Groups.DEV_RESOURCES_SLUG)
                     .when()
                     .delete(ENDPOINT)
                     .then()

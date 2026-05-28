@@ -30,7 +30,7 @@ import java.util.UUID;
 @Entity
 @Table(name = "tags",
         uniqueConstraints = {
-                @UniqueConstraint(name = "tags_slug_unique", columnNames = {"user_id", "group_id", "slug"})
+                @UniqueConstraint(name = "tags_user_id_group_id_slug_unique", columnNames = {"user_id", "group_id", "slug"})
         })
 public class Tag extends AuditableEntity {
 

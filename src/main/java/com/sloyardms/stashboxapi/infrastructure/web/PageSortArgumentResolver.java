@@ -39,6 +39,13 @@ public class PageSortArgumentResolver implements HandlerMethodArgumentResolver {
         SortableFields annotation = parameter.getParameterAnnotation(SortableFields.class);
         Set<String> allowed = Set.of(annotation.value());
 
+        if (!annotation.defaultField().isBlank()
+            && !allowed.contains(annotation.defaultField())) {
+            throw new IllegalStateException(
+                    "Default sort field '%s' is not in the allowed fields list"
+                            .formatted(annotation.defaultField()));
+        }
+
         for (Sort.Order order : pageable.getSort()) {
             if (!allowed.contains(order.getProperty())) {
                 throw new InvalidSortFieldException(order.getProperty(), allowed);

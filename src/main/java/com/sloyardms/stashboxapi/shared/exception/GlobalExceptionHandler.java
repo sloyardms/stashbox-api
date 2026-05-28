@@ -1,7 +1,6 @@
 package com.sloyardms.stashboxapi.shared.exception;
 
 import com.sloyardms.stashboxapi.shared.exception.types.DefaultGroupDeletionNotAllowedException;
-import com.sloyardms.stashboxapi.shared.exception.types.DuplicateResourceException;
 import com.sloyardms.stashboxapi.shared.exception.types.EmptyPatchBodyException;
 import com.sloyardms.stashboxapi.shared.exception.types.InvalidPatchFieldException;
 import com.sloyardms.stashboxapi.shared.exception.types.InvalidPatchStructureException;
@@ -13,6 +12,8 @@ import jakarta.validation.ConstraintViolationException;
 import jakarta.validation.Path;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.MessageSource;
+import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.ProblemDetail;
 import org.springframework.http.ResponseEntity;
@@ -36,6 +37,9 @@ import org.springframework.web.multipart.MultipartException;
 import org.springframework.web.servlet.NoHandlerFoundException;
 
 import java.util.List;
+import java.util.Locale;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -44,6 +48,8 @@ import java.util.stream.Collectors;
 public class GlobalExceptionHandler {
 
     private final ProblemDetailFactory problemDetailFactory;
+    private final ConstraintMappings constraintMappings;
+    private final MessageSource messageSource;
 
     // -------------------------------------------------------------------------
     // Server Errors
@@ -60,9 +66,22 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(DataIntegrityViolationException.class)
     public ResponseEntity<ProblemDetail> handleDataIntegrityViolationException(
             DataIntegrityViolationException ex, HttpServletRequest request) {
-        ProblemDetail problemDetail = problemDetailFactory.create(ErrorCatalog.DATA_INTEGRITY_VIOLATION, request);
-        log.warn("[{}] Data integrity violation, Path: {}",
-                problemDetailFactory.getTraceId(problemDetail), request.getRequestURI(), ex);
+
+        Optional<String> constraintName = Optional.empty();
+        if (ex.getCause() instanceof org.hibernate.exception.ConstraintViolationException cve) {
+            constraintName = Optional.ofNullable(cve.getConstraintName());
+        }
+
+        ConstraintInfo info = constraintName
+                .map(constraintMappings::resolve)
+                .orElse(ConstraintInfo.UNKNOWN);
+
+        Locale locale = LocaleContextHolder.getLocale();
+        String detail = messageSource.getMessage(info.detail(), null, locale);
+
+        ProblemDetail problemDetail = problemDetailFactory.createWithDetail(
+                ErrorCatalog.DATA_INTEGRITY_VIOLATION, detail, request);
+
         return ResponseEntity.status(ErrorCatalog.DATA_INTEGRITY_VIOLATION.getStatus()).body(problemDetail);
     }
 
@@ -175,7 +194,8 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ProblemDetail> handleInvalidPatchFieldException(
             InvalidPatchFieldException ex, HttpServletRequest request) {
         Object[] details = {ex.getFieldName()};
-        ProblemDetail problemDetail = problemDetailFactory.createWithArgs(ErrorCatalog.INVALID_PATCH_FIELD_TYPE, details,
+        ProblemDetail problemDetail = problemDetailFactory.createWithArgs(ErrorCatalog.INVALID_PATCH_FIELD_TYPE,
+                details,
                 request);
         return ResponseEntity.status(ErrorCatalog.INVALID_PATCH_FIELD_TYPE.getStatus()).body(problemDetail);
     }
@@ -208,9 +228,10 @@ public class GlobalExceptionHandler {
         ProblemDetail problemDetail = problemDetailFactory.create(ErrorCatalog.VALIDATION_ERROR, request);
 
         List<FieldErrorDetail> fieldErrors = ex.getConstraintViolations().stream()
-                .collect(Collectors.groupingBy(
+                .collect(Collectors.toMap(
                         v -> extractFieldName(v.getPropertyPath()),
-                        Collectors.mapping(ConstraintViolation::getMessage, Collectors.toList())
+                        ConstraintViolation::getMessage,
+                        (existing, duplicate) -> existing
                 ))
                 .entrySet().stream()
                 .map(e -> new FieldErrorDetail(e.getKey(), e.getValue()))
@@ -244,15 +265,6 @@ public class GlobalExceptionHandler {
         problemDetail.setProperty("identifier", ex.getIdentifier());
         problemDetail.setProperty("value", ex.getValue());
         return ResponseEntity.status(ErrorCatalog.RESOURCE_NOT_FOUND.getStatus()).body(problemDetail);
-    }
-
-    @ExceptionHandler(DuplicateResourceException.class)
-    public ResponseEntity<ProblemDetail> handleDuplicateResourceException(
-            DuplicateResourceException ex, HttpServletRequest request) {
-        Object[] details = {ex.getField(), ex.getValue()};
-        ProblemDetail problemDetail = problemDetailFactory.createWithArgs(ErrorCatalog.DUPLICATE_RESOURCE, details,
-                request);
-        return ResponseEntity.status(ErrorCatalog.DUPLICATE_RESOURCE.getStatus()).body(problemDetail);
     }
 
     // -------------------------------------------------------------------------
@@ -294,9 +306,10 @@ public class GlobalExceptionHandler {
         ProblemDetail problemDetail = problemDetailFactory.create(ErrorCatalog.VALIDATION_ERROR, request);
 
         List<FieldErrorDetail> fieldErrors = bindingResult.getFieldErrors().stream()
-                .collect(Collectors.groupingBy(
+                .collect(Collectors.toMap(
                         FieldError::getField,
-                        Collectors.mapping(FieldError::getDefaultMessage, Collectors.toList())
+                        e -> Objects.requireNonNullElse(e.getDefaultMessage(), "validation.unknown"),
+                        (existing, duplicate) -> existing
                 ))
                 .entrySet().stream()
                 .map(e -> new FieldErrorDetail(e.getKey(), e.getValue()))

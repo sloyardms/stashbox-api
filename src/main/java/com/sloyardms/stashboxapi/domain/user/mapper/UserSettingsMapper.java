@@ -1,7 +1,7 @@
 package com.sloyardms.stashboxapi.domain.user.mapper;
 
-import com.sloyardms.stashboxapi.domain.user.dto.UpdateUserSettingsRequest;
-import com.sloyardms.stashboxapi.domain.user.dto.UserSettingsResponse;
+import com.sloyardms.stashboxapi.domain.user.dto.request.UpdateUserSettingsRequest;
+import com.sloyardms.stashboxapi.domain.user.dto.response.UserSettingsResponse;
 import com.sloyardms.stashboxapi.domain.user.model.UserSettings;
 import org.mapstruct.BeanMapping;
 import org.mapstruct.Mapper;

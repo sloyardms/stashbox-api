@@ -58,11 +58,6 @@ public enum ErrorCatalog {
             "error.resource.notFound.detail",
             "urn:stashbox:error:resource-not-found"),
 
-    DUPLICATE_RESOURCE(HttpStatus.CONFLICT,
-            "error.resource.duplicate.title",
-            "error.resource.duplicate.detail",
-            "urn:stashbox:error:duplicate-resource"),
-
     ENDPOINT_NOT_FOUND(HttpStatus.NOT_FOUND,
             "error.endpoint.notFound.title",
             "error.endpoint.notFound.detail",

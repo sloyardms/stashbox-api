@@ -15,8 +15,6 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.context.jdbc.SqlMergeMode;
 
-import java.util.UUID;
-
 import static io.restassured.RestAssured.given;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.equalTo;
@@ -26,7 +24,7 @@ import static org.hamcrest.Matchers.equalTo;
 @SqlMergeMode(SqlMergeMode.MergeMode.MERGE)
 public class ItemGroupUpdateIT extends BaseIntegrationTest {
 
-    private final String ENDPOINT = "/api/v1/item-groups/{id}";
+    private final String ENDPOINT = "/api/v1/item-groups/{slug}";
 
     @Autowired
     private ItemGroupRepository itemGroupRepository;
@@ -55,7 +53,7 @@ public class ItemGroupUpdateIT extends BaseIntegrationTest {
 
             ItemGroupDetailResponse response = givenNormalUserRequest()
                     .body(request)
-                    .pathParam("id", TestConstants.Groups.DEV_RESOURCES_ID)
+                    .pathParam("slug", TestConstants.Groups.DEV_RESOURCES_SLUG)
                     .when()
                     .patch(ENDPOINT)
                     .then()
@@ -98,7 +96,7 @@ public class ItemGroupUpdateIT extends BaseIntegrationTest {
                     """;
 
             givenNormalUserRequest()
-                    .pathParam("id", TestConstants.Groups.DEV_RESOURCES_ID)
+                    .pathParam("slug", TestConstants.Groups.DEV_RESOURCES_SLUG)
                     .body(request)
                     .when()
                     .patch(ENDPOINT)
@@ -119,14 +117,14 @@ public class ItemGroupUpdateIT extends BaseIntegrationTest {
                     """;
 
             givenNormalUserRequest()
-                    .pathParam("id", TestConstants.Groups.DEV_RESOURCES_ID)
+                    .pathParam("slug", TestConstants.Groups.DEV_RESOURCES_SLUG)
                     .body(request)
                     .when()
                     .patch(ENDPOINT)
                     .then()
                     .log().body()
-                    .statusCode(ErrorCatalog.DUPLICATE_RESOURCE.getStatus().value())
-                    .body("type", equalTo(ErrorCatalog.DUPLICATE_RESOURCE.getType().toString()));
+                    .statusCode(ErrorCatalog.DATA_INTEGRITY_VIOLATION.getStatus().value())
+                    .body("type", equalTo(ErrorCatalog.DATA_INTEGRITY_VIOLATION.getType().toString()));
         }
 
         @Test
@@ -140,7 +138,7 @@ public class ItemGroupUpdateIT extends BaseIntegrationTest {
                     """;
 
             givenNormalUserRequest()
-                    .pathParam("id", TestConstants.Groups.DEV_RESOURCES_ID)
+                    .pathParam("slug", TestConstants.Groups.DEV_RESOURCES_SLUG)
                     .body(request)
                     .when()
                     .patch(ENDPOINT)
@@ -155,10 +153,14 @@ public class ItemGroupUpdateIT extends BaseIntegrationTest {
         @Sql({"/sql/data/users.sql", "/sql/data/item-groups.sql"})
         void shouldReturn422WhenNameExceedsMaxLength() {
             String name = "N".repeat(100);
-            String request = String.format("{ \"name\": \"%s\" }", name);
+            String request = String.format("""
+                    {
+                        "name": "%s"
+                    }
+                    """, name);
 
             givenNormalUserRequest()
-                    .pathParam("id", TestConstants.Groups.DEV_RESOURCES_ID)
+                    .pathParam("slug", TestConstants.Groups.DEV_RESOURCES_SLUG)
                     .body(request)
                     .when()
                     .patch(ENDPOINT)
@@ -178,7 +180,7 @@ public class ItemGroupUpdateIT extends BaseIntegrationTest {
         @DisplayName("Should return 401 when the user is not authenticated")
         void shouldReturn401WhenUserIsNotAuthenticated() {
             given()
-                    .pathParam("id", UUID.randomUUID())
+                    .pathParam("slug", TestConstants.Groups.DEV_RESOURCES_SLUG)
                     .when()
                     .patch(ENDPOINT)
                     .then()

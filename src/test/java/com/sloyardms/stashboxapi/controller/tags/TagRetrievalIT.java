@@ -23,7 +23,7 @@ import static org.hamcrest.Matchers.equalTo;
 @SqlMergeMode(SqlMergeMode.MergeMode.MERGE)
 public class TagRetrievalIT extends BaseIntegrationTest {
 
-    private final String ENDPOINT = "/api/v1/item-groups/{groupId}/tags/{tagId}";
+    private final String ENDPOINT = "/api/v1/item-groups/{groupSlug}/tags/{tagSlug}";
 
     @Nested
     @DisplayName("Successful Operations")
@@ -34,8 +34,8 @@ public class TagRetrievalIT extends BaseIntegrationTest {
         @Sql({"/sql/data/users.sql", "/sql/data/item-groups.sql", "/sql/data/tags.sql"})
         void shouldReturnTheTagDetailAnd200() {
             TagDetailResponse response = givenNormalUserRequest()
-                    .pathParam("groupId", TestConstants.Groups.RECIPES_ID)
-                    .pathParam("tagId", TestConstants.Tags.QUICK_MEALS_ID)
+                    .pathParam("groupSlug", TestConstants.Groups.RECIPES_SLUG)
+                    .pathParam("tagSlug", TestConstants.Tags.QUICK_MEALS_SLUG)
                     .when()
                     .get(ENDPOINT)
                     .then()
@@ -44,7 +44,7 @@ public class TagRetrievalIT extends BaseIntegrationTest {
                     .extract().body().as(TagDetailResponse.class);
 
             assertThat(response).isNotNull();
-            assertThat(response.getId()).isEqualTo(TestConstants.Tags.QUICK_MEALS_ID);
+            assertThat(response.getId()).isNotNull();
             assertThat(response.getName()).isEqualTo("Quick Meals");
             assertThat(response.getSlug()).isEqualTo("quick-meals");
             assertThat(response.getCreatedAt()).isNotNull();
@@ -65,8 +65,8 @@ public class TagRetrievalIT extends BaseIntegrationTest {
         void shouldReturn404WhenTheTagDoesNotExist() {
             // Doesn't distinguish between "tag not found", "group not found", or "belongs to another user"
             givenNormalUserRequest()
-                    .pathParam("groupId", TestConstants.Groups.RECIPES_ID)
-                    .pathParam("tagId", UUID.randomUUID())
+                    .pathParam("groupSlug", TestConstants.Groups.RECIPES_SLUG)
+                    .pathParam("tagSlug", UUID.randomUUID())
                     .when()
                     .get(ENDPOINT)
                     .then()
@@ -85,8 +85,8 @@ public class TagRetrievalIT extends BaseIntegrationTest {
         @DisplayName("Should return 401 when the user is not authenticated")
         void shouldReturn401WhenUserIsNotAuthenticated() {
             given()
-                    .pathParam("groupId", UUID.randomUUID())
-                    .pathParam("tagId", UUID.randomUUID())
+                    .pathParam("groupSlug", TestConstants.Groups.RECIPES_SLUG)
+                    .pathParam("tagSlug", TestConstants.Tags.QUICK_MEALS_SLUG)
                     .when()
                     .get(ENDPOINT)
                     .then()

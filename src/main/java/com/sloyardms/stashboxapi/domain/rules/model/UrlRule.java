@@ -1,5 +1,7 @@
-package com.sloyardms.stashboxapi.domain.user.model;
+package com.sloyardms.stashboxapi.domain.rules.model;
 
+import com.sloyardms.stashboxapi.domain.stash.model.ItemGroup;
+import com.sloyardms.stashboxapi.domain.user.model.User;
 import com.sloyardms.stashboxapi.shared.persistence.AuditableEntity;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -10,17 +12,21 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.NamedAttributeNode;
+import jakarta.persistence.NamedEntityGraph;
 import jakarta.persistence.Table;
-import jakarta.persistence.UniqueConstraint;
-import jakarta.validation.constraints.PositiveOrZero;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
+import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.annotations.OnDelete;
 import org.hibernate.annotations.OnDeleteAction;
+import org.hibernate.type.SqlTypes;
 
 import java.time.Instant;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 @Getter
@@ -28,13 +34,12 @@ import java.util.UUID;
 @NoArgsConstructor
 @ToString(onlyExplicitlyIncluded = true)
 @Entity
-@Table(name = "user_filters",
-        uniqueConstraints = {
-                @UniqueConstraint(name = "user_filters_user_name_unique", columnNames = {"user_id", "name"}),
-                @UniqueConstraint(name = "user_filters_user_url_pattern_unique", columnNames = {"user_id",
-                        "url_pattern"})
-        })
-public class UserFilter extends AuditableEntity {
+@NamedEntityGraph(
+        name = "UrlRule.withGroup",
+        attributeNodes = @NamedAttributeNode("group")
+)
+@Table(name = "url_rules")
+public class UrlRule extends AuditableEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
@@ -45,33 +50,34 @@ public class UserFilter extends AuditableEntity {
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @OnDelete(action = OnDeleteAction.CASCADE)
     @JoinColumn(name = "user_id", nullable = false, updatable = false,
-            foreignKey = @ForeignKey(name = "user_filters_user_id_fk"))
+            foreignKey = @ForeignKey(name = "url_rules_user_id_fk"))
     private User user;
 
-    @Column(name = "name", nullable = false)
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @OnDelete(action = OnDeleteAction.CASCADE)
+    @JoinColumn(name = "group_id", nullable = false,
+            foreignKey = @ForeignKey(name = "url_rules_group_id_fk"))
+    private ItemGroup group;
+
+    @Column(name = "name", nullable = false, length = 50)
     @ToString.Include
     private String name;
 
-    @Column(name = "domain", nullable = false)
+    @Column(name = "description", length = 255)
+    @ToString.Include
+    private String description;
+
+    @Column(name = "domain", nullable = false, length = 100)
     @ToString.Include
     private String domain;
 
-    @Column(name = "url_pattern", nullable = false)
+    @Column(name = "url_pattern", nullable = false, length = 2048)
     @ToString.Include
     private String urlPattern;
 
-    @Column(name = "extraction_pattern", nullable = false)
-    @ToString.Include
-    private String extractionPattern;
-
-    @Column(name = "extraction_group", nullable = false)
-    @PositiveOrZero
-    @ToString.Include
-    private Integer extractionGroup = 1;
-
-    @Column(name = "title_template")
-    @ToString.Include
-    private String titleTemplate;
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(name = "transforms", columnDefinition = "jsonb", nullable = false)
+    private List<Transform> transforms = new ArrayList<>();
 
     @Column(name = "is_active", nullable = false)
     @ToString.Include
@@ -79,7 +85,6 @@ public class UserFilter extends AuditableEntity {
 
     @Column(name = "priority", nullable = false)
     @ToString.Include
-    @PositiveOrZero
     private Integer priority = 100;
 
     @Column(name = "last_matched_at")

@@ -1,31 +1,8 @@
 CREATE TABLE users (
     id UUID PRIMARY KEY,
     settings JSONB NOT NULL DEFAULT '{}'::jsonb,
-    created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-    updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
-);
-
-CREATE TABLE user_filters (
-    id UUID PRIMARY KEY,
-    user_id UUID NOT NULL,
-    name TEXT NOT NULL,
-    domain TEXT NOT NULL,
-    url_pattern TEXT NOT NULL,
-    extraction_pattern TEXT NOT NULL,
-    extraction_group INTEGER NOT NULL DEFAULT 1,
-    title_template TEXT,
-    is_active BOOLEAN NOT NULL DEFAULT true,
-    priority INTEGER NOT NULL DEFAULT 100,
-    last_matched_at TIMESTAMPTZ,
-    created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-    updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-
-    CONSTRAINT user_filters_user_id_fk FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
-
-    CONSTRAINT user_filters_user_name_unique UNIQUE (user_id, name),
-    CONSTRAINT user_filters_user_url_pattern_unique UNIQUE (user_id, url_pattern),
-    CONSTRAINT user_filters_priority_positive CHECK (priority >= 0),
-    CONSTRAINT user_filters_extraction_group_positive CHECK (extraction_group >= 0)
+    created_at TIMESTAMPTZ NOT NULL,
+    updated_at TIMESTAMPTZ NOT NULL
 );
 
 CREATE TABLE item_groups (
@@ -35,17 +12,40 @@ CREATE TABLE item_groups (
     slug TEXT NOT NULL,
     description TEXT,
     icon TEXT,
-    default_group BOOLEAN NOT NULL DEFAULT true,
+    default_group BOOLEAN NOT NULL DEFAULT false,
     settings JSONB NOT NULL DEFAULT '{}'::jsonb,
     position INTEGER NOT NULL DEFAULT 0,
-    created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-    updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    created_at TIMESTAMPTZ NOT NULL,
+    updated_at TIMESTAMPTZ NOT NULL,
 
     CONSTRAINT item_groups_user_id_fk FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
-    CONSTRAINT item_groups_slug_unique UNIQUE (user_id, slug),
-    CONSTRAINT item_groups_position_positive_check CHECK (position >= 0)
+
+    CONSTRAINT item_groups_user_id_slug_unique UNIQUE (user_id, slug),
+    CONSTRAINT item_groups_position_check CHECK (position >= 0)
 );
-CREATE UNIQUE INDEX item_groups_one_default_group ON item_groups(default_group) WHERE default_group = true;
+CREATE UNIQUE INDEX item_groups_default_group_uidx ON item_groups(default_group) WHERE default_group = true;
+
+CREATE TABLE url_rules (
+    id UUID PRIMARY KEY,
+    user_id UUID NOT NULL,
+    group_id UUID NOT NULL,
+    name TEXT NOT NULL,
+    description TEXT,
+    domain TEXT NOT NULL,
+    url_pattern TEXT NOT NULL,
+    transforms JSONB NOT NULL DEFAULT '[]'::jsonb,
+    is_active BOOLEAN NOT NULL DEFAULT true,
+    priority INTEGER NOT NULL DEFAULT 100,
+    last_matched_at TIMESTAMPTZ,
+    created_at TIMESTAMPTZ NOT NULL,
+    updated_at TIMESTAMPTZ NOT NULL,
+
+    CONSTRAINT url_rules_user_id_fk FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    CONSTRAINT url_rules_group_id_fk FOREIGN KEY (group_id) REFERENCES item_groups(id) ON DELETE CASCADE,
+
+    CONSTRAINT url_rules_priority_check CHECK (priority >= 0)
+);
+CREATE INDEX url_rules_user_id_domain_idx ON url_rules (user_id, domain, is_active) WHERE is_active = true;
 
 CREATE TABLE stash_items (
     id UUID PRIMARY KEY,
@@ -59,8 +59,8 @@ CREATE TABLE stash_items (
     image_path TEXT,
     is_favorite BOOLEAN NOT NULL DEFAULT false,
     deleted_at TIMESTAMPTZ,
-    created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-    updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    created_at TIMESTAMPTZ NOT NULL,
+    updated_at TIMESTAMPTZ NOT NULL,
 
     CONSTRAINT stash_items_user_id_fk FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE,
     CONSTRAINT stash_items_group_id_fk FOREIGN KEY(group_id) REFERENCES item_groups(id) ON DELETE SET NULL
@@ -77,12 +77,13 @@ CREATE TABLE tags (
     group_id UUID NOT NULL,
     name TEXT NOT NULL,
     slug TEXT NOT NULL,
-    created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-    updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    created_at TIMESTAMPTZ NOT NULL,
+    updated_at TIMESTAMPTZ NOT NULL,
 
     CONSTRAINT tags_user_id_fk FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE,
     CONSTRAINT tags_group_id_fk FOREIGN KEY(group_id) REFERENCES item_groups(id) ON DELETE CASCADE,
-    CONSTRAINT tags_slug_unique UNIQUE (user_id, group_id, slug)
+
+    CONSTRAINT tags_user_id_group_id_slug_unique UNIQUE (user_id, group_id, slug)
 );
 
 CREATE TABLE item_tags (
@@ -98,7 +99,7 @@ CREATE TABLE item_tags (
 CREATE TABLE tag_usage (
     tag_id UUID PRIMARY KEY,
     item_count INTEGER NOT NULL DEFAULT 0,
-    last_used TIMESTAMPTZ NOT NULL DEFAULT now(),
+    last_used TIMESTAMPTZ NOT NULL,
 
     CONSTRAINT tag_usage_tag_id_fk FOREIGN KEY(tag_id) REFERENCES tags(id) ON DELETE CASCADE,
     CONSTRAINT tag_usage_item_count_positive CHECK (item_count >= 0)
@@ -119,8 +120,8 @@ CREATE TABLE item_notes (
     position INTEGER NOT NULL DEFAULT 0,
     is_pinned BOOLEAN NOT NULL DEFAULT false,
     is_draft BOOLEAN NOT NULL DEFAULT true,
-    created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-    updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    created_at TIMESTAMPTZ NOT NULL,
+    updated_at TIMESTAMPTZ NOT NULL,
 
     CONSTRAINT item_notes_user_id_fk FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE,
     CONSTRAINT item_notes_item_id_fk FOREIGN KEY(item_id) REFERENCES stash_items(id) ON DELETE CASCADE
@@ -139,8 +140,8 @@ CREATE TABLE note_files (
     file_extension TEXT NOT NULL,
     upload_status upload_status_enum NOT NULL DEFAULT 'PENDING',
     display_order INTEGER NOT NULL DEFAULT 0,
-    created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-    updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    created_at TIMESTAMPTZ NOT NULL,
+    updated_at TIMESTAMPTZ NOT NULL,
 
     CONSTRAINT note_files_user_id_fk FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE,
     CONSTRAINT note_files_item_note_id_fk FOREIGN KEY(note_id) REFERENCES item_notes(id) ON DELETE CASCADE

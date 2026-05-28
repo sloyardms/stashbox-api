@@ -1,4 +1,4 @@
-package com.sloyardms.stashboxapi.domain.user.dto;
+package com.sloyardms.stashboxapi.domain.user.dto.response;
 
 import lombok.Getter;
 import lombok.NoArgsConstructor;

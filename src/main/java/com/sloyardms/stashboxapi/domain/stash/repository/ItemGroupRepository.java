@@ -13,9 +13,11 @@ import java.util.UUID;
 
 public interface ItemGroupRepository extends JpaRepository<ItemGroup, UUID> {
 
-    Optional<ItemGroup> findByIdAndUserId(UUID id, UUID userId);
+    Optional<ItemGroup> findBySlugAndUserId(String slug, UUID userId);
 
     Page<ItemGroup> findAllByUserId(UUID userId, Pageable pageable);
+
+    boolean existsBySlugAndUserId(String slug, UUID userId);
 
     boolean existsByIdAndUserId(UUID id, UUID userId);
 
@@ -27,7 +29,7 @@ public interface ItemGroupRepository extends JpaRepository<ItemGroup, UUID> {
     void clearDefaultGroup(@Param("userId") UUID userId);
 
     @Modifying
-    @Query("UPDATE ItemGroup ig SET ig.defaultGroup = true WHERE ig.id = :id AND ig.user.id = :userId")
-    void setDefaultGroup(@Param("id") UUID id, @Param("userId") UUID userId);
+    @Query("UPDATE ItemGroup ig SET ig.defaultGroup = true WHERE ig.slug = :slug AND ig.user.id = :userId")
+    void setDefaultGroup(@Param("slug") String slug, @Param("userId") UUID userId);
 
 }
