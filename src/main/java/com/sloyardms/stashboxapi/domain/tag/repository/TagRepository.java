@@ -10,7 +10,9 @@ import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 
 public interface TagRepository extends JpaRepository<Tag, UUID> {
@@ -73,5 +75,8 @@ public interface TagRepository extends JpaRepository<Tag, UUID> {
             @Param("tagSlug") String tagSlug,
             @Param("userId") UUID userId,
             @Param("groupSlug") String groupSlug);
+
+    @Query("SELECT t FROM Tag t WHERE t.user.id = :userId AND t.group.id = :groupId AND t.slug IN :slugs")
+    List<Tag> findAllByUserIdAndGroupIdAndSlugIn(UUID userId, UUID groupId, Set<String> slugs);
 
 }
