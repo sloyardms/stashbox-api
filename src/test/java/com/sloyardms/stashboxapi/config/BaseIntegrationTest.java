@@ -91,4 +91,11 @@ public abstract class BaseIntegrationTest extends TestContainersConfig {
                 .path("access_token");
     }
 
+    public RequestSpecification givenNormalUserMultipartRequest() {
+        return given()
+                .auth().oauth2(normalUserToken)
+                .contentType(ContentType.MULTIPART)
+                .accept(ContentType.JSON);
+    }
+
 }
