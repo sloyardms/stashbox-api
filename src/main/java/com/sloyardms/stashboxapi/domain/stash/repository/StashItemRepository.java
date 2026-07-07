@@ -7,4 +7,8 @@ import java.util.UUID;
 
 public interface StashItemRepository extends JpaRepository<StashItem, UUID> {
 
+    boolean existsByGroupIdAndTitleNormalized(UUID groupId,String title);
+
+    boolean existsByGroupIdAndUrlNormalized(UUID groupId,String url);
+
 }
