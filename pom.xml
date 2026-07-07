@@ -37,6 +37,8 @@
         <icu4j.version>78.2</icu4j.version>
         <keycloak-admin-client.version>26.0.8</keycloak-admin-client.version>
         <commons-io.version>2.21.0</commons-io.version>
+        <thumbnailator.version>0.4.20</thumbnailator.version>
+        <caffeine.version>3.2.4</caffeine.version>
     </properties>
 
     <dependencies>
@@ -107,6 +109,12 @@
             <artifactId>postgresql</artifactId>
             <scope>runtime</scope>
         </dependency>
+        <dependency>
+            <groupId>com.github.ben-manes.caffeine</groupId>
+            <artifactId>caffeine</artifactId>
+            <version>${caffeine.version}</version>
+            <scope>compile</scope>
+        </dependency>
 
         <!-- DATABASE -->
         <dependency>
@@ -167,6 +175,11 @@
             <groupId>commons-io</groupId>
             <artifactId>commons-io</artifactId>
             <version>${commons-io.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>net.coobird</groupId>
+            <artifactId>thumbnailator</artifactId>
+            <version>${thumbnailator.version}</version>
         </dependency>
     </dependencies>
 
