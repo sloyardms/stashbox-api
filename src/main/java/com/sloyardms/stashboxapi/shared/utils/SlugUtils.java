@@ -34,4 +34,12 @@ public class SlugUtils {
         return lowercase.trim().replaceAll("\\s+", " ");
     }
 
+    public static String normalizeUrl(String text) {
+        if (text == null || text.isBlank()) {
+            return null;
+        }
+
+        return text.trim().toLowerCase();
+    }
+
 }
