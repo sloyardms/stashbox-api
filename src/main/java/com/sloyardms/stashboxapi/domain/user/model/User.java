@@ -3,6 +3,8 @@ package com.sloyardms.stashboxapi.domain.user.model;
 import com.sloyardms.stashboxapi.shared.persistence.AuditableEntity;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import lombok.Getter;
@@ -23,9 +25,14 @@ import java.util.UUID;
 public class User extends AuditableEntity {
 
     @Id
+    @GeneratedValue(strategy = GenerationType.UUID)
     @Column(name = "id", nullable = false, updatable = false)
     @ToString.Include
     private UUID id;
+
+    @Column(name = "external_id", nullable = false)
+    @ToString.Include
+    private UUID externalId;
 
     @Column(name = "settings", columnDefinition = "jsonb not null default '{}'::jsonb", nullable = false)
     @JdbcTypeCode(SqlTypes.JSON)

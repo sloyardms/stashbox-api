@@ -8,6 +8,7 @@ import com.sloyardms.stashboxapi.domain.user.mapper.UserMapper;
 import com.sloyardms.stashboxapi.domain.user.mapper.UserSettingsMapper;
 import com.sloyardms.stashboxapi.domain.user.model.User;
 import com.sloyardms.stashboxapi.domain.user.repository.UserRepository;
+import com.sloyardms.stashboxapi.infrastructure.cache.UserIdCacheStore;
 import com.sloyardms.stashboxapi.infrastructure.security.client.KeycloakClient;
 import com.sloyardms.stashboxapi.infrastructure.storage.event.UserFolderDeleteEvent;
 import com.sloyardms.stashboxapi.shared.exception.types.ResourceNotFoundException;
@@ -36,22 +37,34 @@ public class UserService {
     private final ApplicationEventPublisher eventPublisher;
     private final KeycloakClient keycloakClient;
     private final JsonPatchService jsonPatchService;
+    private final UserIdCacheStore userIdCacheStore;
 
     @Transactional(rollbackFor = Exception.class)
-    public UserProfileResponse findOrCreate(UUID id) {
-        Optional<User> foundUser = userRepository.findById(id);
-        if (foundUser.isPresent()) {
-            return userMapper.toProfileResponse(foundUser.get());
+    public UUID resolveInternalId(UUID externalId) {
+        Optional<User> user = userRepository.findByExternalId(externalId);
+        if(user.isPresent()){
+            return user.get().getId();
         }
 
+        User newUser = createUser(externalId);
+        return newUser.getId();
+    }
+
+    @Transactional(rollbackFor = Exception.class)
+    public UserProfileResponse findOrCreate(UUID externalId) {
+        User user = userRepository.findByExternalId(externalId)
+                .orElseGet(() -> createUser(externalId));
+        return userMapper.toProfileResponse(user);
+    }
+    
+    private User createUser(UUID externalId) {
         User newUser = new User();
-        newUser.setId(id);
+        newUser.setExternalId(externalId);
         newUser = userRepository.save(newUser);
 
-        log.info("User created for keycloak id: {}", id);
         userGroupService.createDefaultGroup(newUser);
-
-        return userMapper.toProfileResponse(newUser);
+        log.info("User created for external id: {}", externalId);
+        return newUser;
     }
 
     @Transactional(rollbackFor = Exception.class)

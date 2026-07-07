@@ -1,5 +1,6 @@
 CREATE TABLE users (
     id UUID PRIMARY KEY,
+    external_id UUID NOT NULL,
     settings JSONB NOT NULL DEFAULT '{}'::jsonb,
     created_at TIMESTAMPTZ NOT NULL,
     updated_at TIMESTAMPTZ NOT NULL
