@@ -2,9 +2,11 @@ package com.sloyardms.stashboxapi.shared.exception;
 
 import com.sloyardms.stashboxapi.shared.exception.types.DefaultGroupDeletionNotAllowedException;
 import com.sloyardms.stashboxapi.shared.exception.types.EmptyPatchBodyException;
+import com.sloyardms.stashboxapi.shared.exception.types.FieldValidationException;
 import com.sloyardms.stashboxapi.shared.exception.types.InvalidPatchFieldException;
 import com.sloyardms.stashboxapi.shared.exception.types.InvalidPatchStructureException;
 import com.sloyardms.stashboxapi.shared.exception.types.InvalidSortFieldException;
+import com.sloyardms.stashboxapi.shared.exception.types.ResourceAlreadyExistException;
 import com.sloyardms.stashboxapi.shared.exception.types.ResourceNotFoundException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.ConstraintViolation;
@@ -252,7 +254,7 @@ public class GlobalExceptionHandler {
     }
 
     // -------------------------------------------------------------------------
-    // Resource
+    // Resource (Custom exceptions)
     // -------------------------------------------------------------------------
 
     @ExceptionHandler(ResourceNotFoundException.class)
@@ -265,6 +267,29 @@ public class GlobalExceptionHandler {
         problemDetail.setProperty("identifier", ex.getIdentifier());
         problemDetail.setProperty("value", ex.getValue());
         return ResponseEntity.status(ErrorCatalog.RESOURCE_NOT_FOUND.getStatus()).body(problemDetail);
+    }
+
+    @ExceptionHandler(ResourceAlreadyExistException.class)
+    public ResponseEntity<ProblemDetail> handleResourceAlreadyExistException(ResourceAlreadyExistException ex,
+                                                                             HttpServletRequest request) {
+        Locale locale = LocaleContextHolder.getLocale();
+        String detail = messageSource.getMessage(ex.getMessageKey(), null, locale);
+
+        ProblemDetail problemDetail = problemDetailFactory.createWithDetail(
+                ErrorCatalog.DATA_INTEGRITY_VIOLATION, detail, request);
+
+        return ResponseEntity.status(ErrorCatalog.DATA_INTEGRITY_VIOLATION.getStatus())
+                .body(problemDetail);
+    }
+
+
+    @ExceptionHandler(FieldValidationException.class)
+    public ResponseEntity<ProblemDetail> handleFieldValidationException(FieldValidationException ex, HttpServletRequest request) {
+        ProblemDetail problemDetail = problemDetailFactory.create(ErrorCatalog.VALIDATION_ERROR, request);
+
+        if (!ex.getFieldErrors().isEmpty()) problemDetail.setProperty("fieldErrors", ex.getFieldErrors());
+
+        return ResponseEntity.status(ErrorCatalog.VALIDATION_ERROR.getStatus()).body(problemDetail);
     }
 
     // -------------------------------------------------------------------------
