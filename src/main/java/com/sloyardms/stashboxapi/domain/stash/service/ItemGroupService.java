@@ -6,6 +6,7 @@ import com.sloyardms.stashboxapi.domain.stash.dto.response.ItemGroupDetailRespon
 import com.sloyardms.stashboxapi.domain.stash.dto.response.ItemGroupResponse;
 import com.sloyardms.stashboxapi.domain.stash.mapper.ItemGroupMapper;
 import com.sloyardms.stashboxapi.domain.stash.model.ItemGroup;
+import com.sloyardms.stashboxapi.domain.stash.model.ItemGroupSettings;
 import com.sloyardms.stashboxapi.domain.stash.repository.ItemGroupRepository;
 import com.sloyardms.stashboxapi.domain.user.model.User;
 import com.sloyardms.stashboxapi.domain.user.repository.UserRepository;
@@ -59,6 +60,10 @@ public class ItemGroupService {
         itemGroup.setSlug(SlugUtils.slugify(itemGroup.getName()));
         itemGroup.setPosition(maxPosition + 1);
         itemGroup.setDefaultGroup(false);
+
+        if(itemGroup.getSettings()==null){
+            itemGroup.setSettings(new ItemGroupSettings());
+        }
 
         itemGroup = itemGroupRepository.save(itemGroup);
         return itemGroupMapper.toDetailResponse(itemGroup);
