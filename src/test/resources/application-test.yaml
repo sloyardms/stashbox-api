@@ -3,10 +3,16 @@ server:
 
 app:
   storage:
-    base-path: /data/stashbox
+    base-path: ${java.io.tmpdir}stashbox-test
     users-dir: users
     temp-dir: temp
-    logs-dir: logs
+    items-dir: items
+    cover-dir: cover
+    comments-dir: comments
+  images:
+    max-width: 2000
+    format: jpg
+    output-quality: 0.9
   security:
     keycloak:
       server-url: http://localhost:8080
