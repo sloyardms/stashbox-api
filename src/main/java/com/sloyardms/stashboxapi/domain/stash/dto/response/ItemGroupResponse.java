@@ -18,5 +18,6 @@ public class ItemGroupResponse {
     private String icon;
     private Boolean defaultGroup;
     private Integer position;
+    private Long itemCount;
 
 }

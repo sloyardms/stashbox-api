@@ -1,6 +1,7 @@
 package com.sloyardms.stashboxapi.domain.stash.controller;
 
 import com.sloyardms.stashboxapi.domain.stash.dto.request.CreateItemGroupRequest;
+import com.sloyardms.stashboxapi.domain.stash.dto.request.ReorderItemGroupsRequest;
 import com.sloyardms.stashboxapi.domain.stash.dto.response.ItemGroupDetailResponse;
 import com.sloyardms.stashboxapi.domain.stash.dto.response.ItemGroupResponse;
 import com.sloyardms.stashboxapi.domain.stash.service.ItemGroupService;
@@ -46,7 +47,7 @@ public class ItemGroupController {
     @GetMapping
     public ResponseEntity<Page<ItemGroupResponse>> getAllItemGroups(
             @SortableFields(
-                    value = {"name", "description", "position", "createdAt"},
+                    value = {"name", "position", "itemCount", "createdAt"},
                     defaultField = "position",
                     defaultDirection = Sort.Direction.ASC
             ) Pageable pageable,
@@ -85,6 +86,14 @@ public class ItemGroupController {
             @PathVariable @ValidSlug String slug,
             @AuthenticationPrincipal AuthenticatedUser authenticatedUser) {
         itemGroupService.setDefaultGroup(authenticatedUser.id(), slug);
+        return ResponseEntity.noContent().build();
+    }
+
+    @PutMapping("/reorder")
+    public ResponseEntity<Void> reorderItemGroups(
+            @RequestBody @Valid ReorderItemGroupsRequest reorderItemGroupsRequest,
+            @AuthenticationPrincipal AuthenticatedUser authenticatedUser) {
+        itemGroupService.reorder(authenticatedUser.id(), reorderItemGroupsRequest.getOrderedItemGroupIds());
         return ResponseEntity.noContent().build();
     }
 

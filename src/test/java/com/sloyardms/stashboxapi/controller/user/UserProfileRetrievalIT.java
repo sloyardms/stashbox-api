@@ -3,6 +3,7 @@ package com.sloyardms.stashboxapi.controller.user;
 import com.sloyardms.stashboxapi.config.BaseIntegrationTest;
 import com.sloyardms.stashboxapi.config.TestConstants;
 import com.sloyardms.stashboxapi.domain.stash.model.ItemGroup;
+import com.sloyardms.stashboxapi.domain.stash.projection.ItemGroupWithCount;
 import com.sloyardms.stashboxapi.domain.stash.repository.ItemGroupRepository;
 import com.sloyardms.stashboxapi.domain.user.dto.response.UserProfileResponse;
 import com.sloyardms.stashboxapi.shared.exception.ErrorCatalog;
@@ -55,8 +56,8 @@ public class UserProfileRetrievalIT extends BaseIntegrationTest {
             assertThat(body.getUpdatedAt()).isNotNull();
 
             // Verify that a default group was assigned to the user
-            ItemGroup defaultGroup =
-                    itemGroupRepository.findAllByUserId(TestConstants.Users.NORMAL_USER_ID, Pageable.unpaged())
+            ItemGroupWithCount defaultGroup =
+                    itemGroupRepository.findAllWithItemCountByUserId(TestConstants.Users.NORMAL_USER_ID, Pageable.unpaged())
                             .getContent().getFirst();
             assertThat(defaultGroup.getName()).isEqualTo("Ungrouped");
             assertThat(defaultGroup.getSlug()).isEqualTo("ungrouped");
