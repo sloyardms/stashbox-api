@@ -1,7 +1,6 @@
 package com.sloyardms.stashboxapi.domain.stash.controller;
 
 import com.sloyardms.stashboxapi.domain.stash.dto.request.CreateItemGroupRequest;
-import com.sloyardms.stashboxapi.domain.stash.dto.request.ReorderItemGroupsRequest;
 import com.sloyardms.stashboxapi.domain.stash.dto.response.ItemGroupDetailResponse;
 import com.sloyardms.stashboxapi.domain.stash.dto.response.ItemGroupResponse;
 import com.sloyardms.stashboxapi.domain.stash.service.ItemGroupService;
@@ -27,6 +26,9 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import tools.jackson.databind.JsonNode;
+
+import java.util.List;
+import java.util.UUID;
 
 @RestController
 @RequiredArgsConstructor
@@ -91,9 +93,9 @@ public class ItemGroupController {
 
     @PutMapping("/reorder")
     public ResponseEntity<Void> reorderItemGroups(
-            @RequestBody @Valid ReorderItemGroupsRequest reorderItemGroupsRequest,
+            @RequestBody List<UUID> orderedItemGroupIds,
             @AuthenticationPrincipal AuthenticatedUser authenticatedUser) {
-        itemGroupService.reorder(authenticatedUser.id(), reorderItemGroupsRequest.getOrderedItemGroupIds());
+        itemGroupService.reorder(authenticatedUser.id(), orderedItemGroupIds);
         return ResponseEntity.noContent().build();
     }
 
