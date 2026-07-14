@@ -38,10 +38,7 @@ import org.springframework.web.multipart.MaxUploadSizeExceededException;
 import org.springframework.web.multipart.MultipartException;
 import org.springframework.web.servlet.NoHandlerFoundException;
 
-import java.util.List;
-import java.util.Locale;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -83,6 +80,16 @@ public class GlobalExceptionHandler {
 
         ProblemDetail problemDetail = problemDetailFactory.createWithDetail(
                 ErrorCatalog.DATA_INTEGRITY_VIOLATION, detail, request);
+
+        if (!info.fields().isEmpty()) {
+            problemDetail.setProperty(
+                    "fieldErrors",
+                    info.fields().stream()
+                            .map(field -> Map.of(
+                                    "field", field,
+                                    "message", "validation.conflict"))
+                            .toList());
+        }
 
         return ResponseEntity.status(ErrorCatalog.DATA_INTEGRITY_VIOLATION.getStatus()).body(problemDetail);
     }

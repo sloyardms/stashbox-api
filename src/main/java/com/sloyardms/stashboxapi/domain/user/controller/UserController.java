@@ -27,7 +27,7 @@ public class UserController {
     @PostMapping("/me")
     public ResponseEntity<UserProfileResponse> findOrCreate(
             @AuthenticationPrincipal AuthenticatedUser authenticatedUser) {
-        UserProfileResponse response = userService.findOrCreate(authenticatedUser.id());
+        UserProfileResponse response = userService.findOrCreate(authenticatedUser.externalId());
         return ResponseEntity.ok(response);
     }
 

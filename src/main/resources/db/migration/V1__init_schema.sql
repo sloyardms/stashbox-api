@@ -3,7 +3,9 @@ CREATE TABLE users (
     external_id UUID NOT NULL,
     settings JSONB NOT NULL DEFAULT '{}'::jsonb,
     created_at TIMESTAMPTZ NOT NULL,
-    updated_at TIMESTAMPTZ NOT NULL
+    updated_at TIMESTAMPTZ NOT NULL,
+
+    CONSTRAINT users_external_id_unique UNIQUE (external_id)
 );
 
 CREATE TABLE item_groups (
