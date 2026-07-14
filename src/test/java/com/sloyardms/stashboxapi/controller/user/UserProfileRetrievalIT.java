@@ -46,7 +46,7 @@ public class UserProfileRetrievalIT extends BaseIntegrationTest {
             UserProfileResponse body = givenNormalUserRequest()
                     .given()
                     .when()
-                    .post(ENDPOINT)
+                    .get(ENDPOINT)
                     .then()
                     .log().body()
                     .statusCode(HttpStatus.OK.value())
@@ -83,7 +83,7 @@ public class UserProfileRetrievalIT extends BaseIntegrationTest {
         void shouldReturn401WhenUserIsNotAuthenticated() {
             given()
                     .when()
-                    .post(ENDPOINT)
+                    .get(ENDPOINT)
                     .then()
                     .log().body()
                     .statusCode(HttpStatus.UNAUTHORIZED.value())

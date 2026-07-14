@@ -51,9 +51,9 @@ public class UserService {
     }
 
     @Transactional(rollbackFor = Exception.class)
-    public UserProfileResponse findOrCreate(UUID externalId) {
-        User user = userRepository.findByExternalId(externalId)
-                .orElseGet(() -> createUser(externalId));
+    public UserProfileResponse findById(UUID id) {
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("User", "Id", id));
         return userMapper.toProfileResponse(user);
     }
     
@@ -72,6 +72,7 @@ public class UserService {
         User user = userRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("User", "Id", id));
         keycloakClient.deleteUser(user.getId().toString());
         userRepository.delete(user);
+        userIdCacheStore.evict(user.getExternalId());
         eventPublisher.publishEvent(new UserFolderDeleteEvent(id));
     }
 
@@ -79,6 +80,7 @@ public class UserService {
     public void delete(UUID id) {
         User user = userRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("User", "Id", id));
         userRepository.delete(user);
+        userIdCacheStore.evict(user.getExternalId());
         eventPublisher.publishEvent(new UserFolderDeleteEvent(id));
     }
 
