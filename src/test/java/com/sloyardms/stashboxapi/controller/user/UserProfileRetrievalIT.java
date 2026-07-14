@@ -6,6 +6,8 @@ import com.sloyardms.stashboxapi.domain.stash.model.ItemGroup;
 import com.sloyardms.stashboxapi.domain.stash.projection.ItemGroupWithCount;
 import com.sloyardms.stashboxapi.domain.stash.repository.ItemGroupRepository;
 import com.sloyardms.stashboxapi.domain.user.dto.response.UserProfileResponse;
+import com.sloyardms.stashboxapi.domain.user.model.User;
+import com.sloyardms.stashboxapi.domain.user.repository.UserRepository;
 import com.sloyardms.stashboxapi.shared.exception.ErrorCatalog;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -16,6 +18,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.context.jdbc.SqlMergeMode;
+
+import java.util.Optional;
+import java.util.UUID;
 
 import static io.restassured.RestAssured.given;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -30,6 +35,8 @@ public class UserProfileRetrievalIT extends BaseIntegrationTest {
 
     @Autowired
     private ItemGroupRepository itemGroupRepository;
+    @Autowired
+    private UserRepository userRepository;
 
     @Nested
     @DisplayName("Successful Operations")
@@ -56,8 +63,10 @@ public class UserProfileRetrievalIT extends BaseIntegrationTest {
             assertThat(body.getUpdatedAt()).isNotNull();
 
             // Verify that a default group was assigned to the user
+            Optional<User> foundUser = userRepository.findByExternalId(TestConstants.Users.NORMAL_USER_EXTERNAL_ID);
+            assertThat(foundUser).isPresent();
             ItemGroupWithCount defaultGroup =
-                    itemGroupRepository.findAllWithItemCountByUserId(TestConstants.Users.NORMAL_USER_ID, Pageable.unpaged())
+                    itemGroupRepository.findAllWithItemCountByUserId(foundUser.get().getId(), Pageable.unpaged())
                             .getContent().getFirst();
             assertThat(defaultGroup.getName()).isEqualTo("Ungrouped");
             assertThat(defaultGroup.getSlug()).isEqualTo("ungrouped");

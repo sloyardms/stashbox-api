@@ -1,12 +1,14 @@
-INSERT INTO users (id, settings, created_at, updated_at)
-VALUES ('1a9d5015-5330-46af-959b-d6d9913ad75c',
+INSERT INTO users (id, external_id, settings, created_at, updated_at)
+VALUES ('478f7eba-d161-4d33-b058-2bc4553110ad',
+        '1a9d5015-5330-46af-959b-d6d9913ad75c',
         '{
           "darkModeEnabled": true,
           "filtersEnabled": false
         }'::jsonb,
         '2025-11-01 09:00:00+00',
         '2025-11-01 09:00:00+00'),
-       ('438536b5-335b-4182-9f1b-cc3388b3b707',
+       ('573e407f-3ab7-4495-aceb-b310938542e5',
+        '438536b5-335b-4182-9f1b-cc3388b3b707',
         '{
           "darkModeEnabled": false,
           "filtersEnabled": true

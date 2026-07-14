@@ -11,7 +11,7 @@ INSERT INTO url_rules (id, user_id, group_id, name, description, domain, url_pat
 VALUES
     -- GitHub repository rule
     ('b1c2d3e4-0001-4000-8000-000000000001',
-     '1a9d5015-5330-46af-959b-d6d9913ad75c',
+     '478f7eba-d161-4d33-b058-2bc4553110ad',
      'a1b2c3d4-0002-4000-8000-000000000002',
      'GitHub Repo Name',
      'Extracts the repository name from a GitHub URL',
@@ -26,7 +26,7 @@ VALUES
 
     -- Stack Overflow question rule
     ('b1c2d3e4-0001-4000-8000-000000000002',
-     '1a9d5015-5330-46af-959b-d6d9913ad75c',
+     '478f7eba-d161-4d33-b058-2bc4553110ad',
      'a1b2c3d4-0002-4000-8000-000000000002',
      'Stack Overflow Question',
      'Extracts the question title slug from Stack Overflow',
@@ -41,7 +41,7 @@ VALUES
 
     -- NPM package rule
     ('b1c2d3e4-0001-4000-8000-000000000003',
-     '1a9d5015-5330-46af-959b-d6d9913ad75c',
+     '478f7eba-d161-4d33-b058-2bc4553110ad',
      'a1b2c3d4-0002-4000-8000-000000000002',
      'NPM Package Name',
      'Extracts the package name from an NPM URL',
@@ -56,7 +56,7 @@ VALUES
 
     -- Maven Central artifact rule
     ('b1c2d3e4-0001-4000-8000-000000000004',
-     '1a9d5015-5330-46af-959b-d6d9913ad75c',
+     '478f7eba-d161-4d33-b058-2bc4553110ad',
      'a1b2c3d4-0002-4000-8000-000000000002',
      'Maven Artifact',
      'Extracts the artifact name from Maven Central',
@@ -71,7 +71,7 @@ VALUES
 
     -- YouTube video rule (inactive - to test is_active filter)
     ('b1c2d3e4-0001-4000-8000-000000000005',
-     '1a9d5015-5330-46af-959b-d6d9913ad75c',
+     '478f7eba-d161-4d33-b058-2bc4553110ad',
      'a1b2c3d4-0002-4000-8000-000000000002',
      'YouTube Video Title',
      'Extracts video title from YouTube URL - inactive rule',
@@ -86,7 +86,7 @@ VALUES
 
     -- Medium article rule
     ('b1c2d3e4-0001-4000-8000-000000000006',
-     '1a9d5015-5330-46af-959b-d6d9913ad75c',
+     '478f7eba-d161-4d33-b058-2bc4553110ad',
      'a1b2c3d4-0002-4000-8000-000000000002',
      'Medium Article',
      'Extracts article slug from Medium URL',
@@ -101,7 +101,7 @@ VALUES
 
     -- Docker Hub image rule
     ('b1c2d3e4-0001-4000-8000-000000000007',
-     '1a9d5015-5330-46af-959b-d6d9913ad75c',
+     '478f7eba-d161-4d33-b058-2bc4553110ad',
      'a1b2c3d4-0002-4000-8000-000000000002',
      'Docker Hub Image',
      'Extracts image name from Docker Hub',
@@ -122,7 +122,7 @@ INSERT INTO url_rules (id, user_id, group_id, name, description, domain, url_pat
 VALUES
     -- Dribbble shot rule
     ('b1c2d3e4-0002-4000-8000-000000000001',
-     '1a9d5015-5330-46af-959b-d6d9913ad75c',
+     '478f7eba-d161-4d33-b058-2bc4553110ad',
      'a1b2c3d4-0003-4000-8000-000000000003',
      'Dribbble Shot',
      'Extracts shot name from Dribbble',
@@ -137,7 +137,7 @@ VALUES
 
     -- Behance project rule
     ('b1c2d3e4-0002-4000-8000-000000000002',
-     '1a9d5015-5330-46af-959b-d6d9913ad75c',
+     '478f7eba-d161-4d33-b058-2bc4553110ad',
      'a1b2c3d4-0003-4000-8000-000000000003',
      'Behance Project',
      'Extracts project name from Behance',
@@ -158,7 +158,7 @@ INSERT INTO url_rules (id, user_id, group_id, name, description, domain, url_pat
 VALUES
     -- AllRecipes rule
     ('b1c2d3e4-0003-4000-8000-000000000001',
-     '1a9d5015-5330-46af-959b-d6d9913ad75c',
+     '478f7eba-d161-4d33-b058-2bc4553110ad',
      'a1b2c3d4-0004-4000-8000-000000000004',
      'AllRecipes Title',
      'Extracts recipe name from AllRecipes URL',
@@ -178,7 +178,7 @@ INSERT INTO url_rules (id, user_id, group_id, name, description, domain, url_pat
                        last_matched_at, created_at, updated_at)
 VALUES
     ('b1c2d3e4-0004-4000-8000-000000000001',
-     '438536b5-335b-4182-9f1b-cc3388b3b707',
+     '573e407f-3ab7-4495-aceb-b310938542e5',
      'a1b2c3d4-0005-4000-8000-000000000005',
      'Admin GitHub Rule',
      'Admin user GitHub repo extractor',
