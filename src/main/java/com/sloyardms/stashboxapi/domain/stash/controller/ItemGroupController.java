@@ -9,7 +9,6 @@ import com.sloyardms.stashboxapi.shared.validation.SortableFields;
 import com.sloyardms.stashboxapi.shared.validation.ValidSlug;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
