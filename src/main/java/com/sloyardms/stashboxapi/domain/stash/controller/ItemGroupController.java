@@ -47,14 +47,14 @@ public class ItemGroupController {
     }
 
     @GetMapping
-    public ResponseEntity<Page<ItemGroupResponse>> getAllItemGroups(
+    public ResponseEntity<List<ItemGroupResponse>> getAllItemGroups(
             @SortableFields(
                     value = {"name", "position", "itemCount", "createdAt"},
                     defaultField = "position",
                     defaultDirection = Sort.Direction.ASC
             ) Pageable pageable,
             @AuthenticationPrincipal AuthenticatedUser authenticatedUser) {
-        Page<ItemGroupResponse> response = itemGroupService.findAll(authenticatedUser.id(), pageable);
+        List<ItemGroupResponse> response = itemGroupService.findAll(authenticatedUser.id(), pageable);
         return ResponseEntity.ok(response);
     }
 

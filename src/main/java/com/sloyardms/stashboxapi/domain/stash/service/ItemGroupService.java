@@ -49,9 +49,11 @@ public class ItemGroupService {
     }
 
     @Transactional(readOnly = true)
-    public Page<ItemGroupResponse> findAll(UUID userId, Pageable pageable) {
-        Page<ItemGroupWithCount> groups = itemGroupRepository.findAllWithItemCountByUserId(userId, pageable);
-        return groups.map(itemGroupMapper::toResponse);
+    public List<ItemGroupResponse> findAll(UUID userId, Pageable pageable) {
+        Pageable unpaged = Pageable.unpaged(pageable.getSort());
+        Page<ItemGroupWithCount> groups = itemGroupRepository.findAllWithItemCountByUserId(userId, unpaged);
+        List<ItemGroupWithCount> groupsList = groups.getContent();
+        return groupsList.stream().map(itemGroupMapper::toResponse).collect(Collectors.toList());
     }
 
     @Transactional(rollbackFor = Exception.class)
