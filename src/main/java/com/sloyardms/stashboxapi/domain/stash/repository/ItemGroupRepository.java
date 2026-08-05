@@ -35,6 +35,7 @@ public interface ItemGroupRepository extends JpaRepository<ItemGroup, UUID> {
             value = """
         SELECT ig.id AS id,
                ig.name AS name,
+               ig.description AS description,
                ig.slug AS slug,
                ig.icon AS icon,
                ig.defaultGroup AS defaultGroup,

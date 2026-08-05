@@ -24,7 +24,9 @@ public interface ItemGroupMapper {
     @Mapping(target = "defaultGroup",  ignore = true)
     ItemGroup toEntity(CreateItemGroupRequest createItemGroupRequest);
 
+    @Mapping(target = "itemCount", ignore = true)
     ItemGroupResponse toResponse(ItemGroup itemGroup);
+
 
     ItemGroupResponse toResponse(ItemGroupWithCount itemGroup);
 

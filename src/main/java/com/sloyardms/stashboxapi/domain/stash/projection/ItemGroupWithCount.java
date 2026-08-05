@@ -8,6 +8,8 @@ public interface ItemGroupWithCount {
 
     String getName();
 
+    String getDescription();
+
     String getSlug();
 
     String getIcon();

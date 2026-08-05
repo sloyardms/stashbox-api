@@ -65,7 +65,7 @@ public class ItemGroupController {
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
-    @PatchMapping(path = "/{slug}")
+    @PatchMapping("/{slug}")
     public ResponseEntity<ItemGroupDetailResponse> patch(
             @PathVariable @ValidSlug String slug,
             @RequestBody JsonNode body,
