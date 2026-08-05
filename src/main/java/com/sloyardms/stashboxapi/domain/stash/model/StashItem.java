@@ -40,7 +40,6 @@ import java.util.UUID;
 public class StashItem extends AuditableEntity {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
     @Column(name = "id", nullable = false, updatable = false)
     @ToString.Include
     private UUID id;
