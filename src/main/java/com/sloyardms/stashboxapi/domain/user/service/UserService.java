@@ -67,20 +67,43 @@ public class UserService {
         return newUser;
     }
 
+    /**
+     * Deletes a user from Keycloak and the local database.
+     *
+     * Keycloak emits a USER-DELETE event after the external deletion. That event
+     * is consumed by the backend and triggers delete(UUID), which is intentionally
+     * idempotent because this method and external Keycloak actions can both result
+     * in the same local deletion attempt.
+     *
+     * @param id the internal user id
+     */
     @Transactional(rollbackFor = Exception.class)
     public void deleteAndSyncWithKeycloak(UUID id) {
         User user = userRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("User", "Id", id));
-        keycloakClient.deleteUser(user.getId().toString());
         userRepository.delete(user);
+        keycloakClient.deleteUser(user.getExternalId().toString());
         userIdCacheStore.evict(user.getExternalId());
         eventPublisher.publishEvent(new UserFolderDeleteEvent(id));
     }
 
+    /**
+     * Handles user deletion events originating from external systems (keycloak).
+     *
+     * This method is idempotent because deletion events can be duplicated or can
+     * arrive after the user has already been deleted locally.
+     *
+     * @param id the internal user id
+     */
     @Transactional(rollbackFor = Exception.class)
     public void delete(UUID id) {
-        User user = userRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("User", "Id", id));
-        userRepository.delete(user);
-        userIdCacheStore.evict(user.getExternalId());
+        Optional<User> user = userRepository.findById(id);
+
+        if(user.isEmpty()){
+            log.debug("Ignoring duplicate user deletion event for already deleted user {}",id);
+            return;
+        }
+        userRepository.delete(user.get());
+        userIdCacheStore.evict(user.get().getExternalId());
         eventPublisher.publishEvent(new UserFolderDeleteEvent(id));
     }
 
