@@ -75,23 +75,7 @@ public class GlobalExceptionHandler {
                 .map(constraintMappings::resolve)
                 .orElse(ConstraintInfo.UNKNOWN);
 
-        Locale locale = LocaleContextHolder.getLocale();
-        String detail = messageSource.getMessage(info.detail(), null, locale);
-
-        ProblemDetail problemDetail = problemDetailFactory.createWithDetail(
-                ErrorCatalog.DATA_INTEGRITY_VIOLATION, detail, request);
-
-        if (!info.fields().isEmpty()) {
-            problemDetail.setProperty(
-                    "fieldErrors",
-                    info.fields().stream()
-                            .map(field -> Map.of(
-                                    "field", field,
-                                    "message", "validation.conflict"))
-                            .toList());
-        }
-
-        return ResponseEntity.status(ErrorCatalog.DATA_INTEGRITY_VIOLATION.getStatus()).body(problemDetail);
+        return buildConstraintViolationResponse(info, request);
     }
 
     // -------------------------------------------------------------------------
@@ -279,14 +263,9 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(ResourceAlreadyExistException.class)
     public ResponseEntity<ProblemDetail> handleResourceAlreadyExistException(ResourceAlreadyExistException ex,
                                                                              HttpServletRequest request) {
-        Locale locale = LocaleContextHolder.getLocale();
-        String detail = messageSource.getMessage(ex.getMessageKey(), null, locale);
+        ConstraintInfo info = constraintMappings.resolve(ex.getConstraintName());
 
-        ProblemDetail problemDetail = problemDetailFactory.createWithDetail(
-                ErrorCatalog.DATA_INTEGRITY_VIOLATION, detail, request);
-
-        return ResponseEntity.status(ErrorCatalog.DATA_INTEGRITY_VIOLATION.getStatus())
-                .body(problemDetail);
+        return buildConstraintViolationResponse(info, request);
     }
 
 
@@ -363,6 +342,30 @@ public class GlobalExceptionHandler {
             fieldName = node.getName();
         }
         return fieldName != null ? fieldName : path.toString();
+    }
+
+    private ResponseEntity<ProblemDetail> buildConstraintViolationResponse(
+            ConstraintInfo info,
+            HttpServletRequest request) {
+
+        Locale locale = LocaleContextHolder.getLocale();
+        String detail = messageSource.getMessage(info.detail(), null, locale);
+
+        ProblemDetail problemDetail = problemDetailFactory.createWithDetail(
+                ErrorCatalog.DATA_INTEGRITY_VIOLATION, detail, request);
+
+        if (!info.fields().isEmpty()) {
+            problemDetail.setProperty(
+                    "fieldErrors",
+                    info.fields().stream()
+                            .map(field -> Map.of(
+                                    "field", field,
+                                    "message", "validation.conflict"))
+                            .toList());
+        }
+
+        return ResponseEntity.status(ErrorCatalog.DATA_INTEGRITY_VIOLATION.getStatus())
+                .body(problemDetail);
     }
 
 }

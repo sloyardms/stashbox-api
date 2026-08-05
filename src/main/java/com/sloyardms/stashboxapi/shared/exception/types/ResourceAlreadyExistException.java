@@ -8,11 +8,11 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 @ResponseStatus(HttpStatus.CONFLICT)
 public class ResourceAlreadyExistException extends RuntimeException {
 
-    private final String messageKey;
+    private final String constraintName;
 
-    public ResourceAlreadyExistException(String messageKey) {
-        super(messageKey);
-        this.messageKey = messageKey;
+    public ResourceAlreadyExistException(String constraintName) {
+        super(constraintName);
+        this.constraintName = constraintName;
     }
 
 }
