@@ -26,7 +26,7 @@ CREATE TABLE item_groups (
     CONSTRAINT item_groups_user_id_slug_unique UNIQUE (user_id, slug),
     CONSTRAINT item_groups_position_check CHECK (position >= 0)
 );
-CREATE UNIQUE INDEX item_groups_default_group_uidx ON item_groups(default_group) WHERE default_group = true;
+CREATE UNIQUE INDEX item_groups_default_group_uidx ON item_groups(user_id) WHERE default_group = true;
 
 CREATE TABLE url_rules (
     id UUID PRIMARY KEY,
