@@ -24,11 +24,11 @@ public interface StashItemRepository extends JpaRepository<StashItem, UUID> {
     @Modifying
     @Query("""
         UPDATE StashItem si
-        SET si.favorite = CASE 
+        SET si.favorite = CASE
             WHEN si.favorite = TRUE THEN FALSE
             ELSE TRUE
         END
-        WHERE 
+        WHERE
             si.user.id = :userId AND 
             si.group.slug  = :groupSlug AND
             si.id = :stashItemId

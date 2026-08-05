@@ -1,7 +1,6 @@
 package com.sloyardms.stashboxapi.domain.stash.controller;
 
 import com.sloyardms.stashboxapi.domain.stash.dto.request.CreateStashItemRequest;
-import com.sloyardms.stashboxapi.domain.stash.dto.request.UpdateStashItemRequest;
 import com.sloyardms.stashboxapi.domain.stash.dto.response.StashItemDetailResponse;
 import com.sloyardms.stashboxapi.domain.stash.service.StashItemService;
 import com.sloyardms.stashboxapi.infrastructure.security.dto.AuthenticatedUser;

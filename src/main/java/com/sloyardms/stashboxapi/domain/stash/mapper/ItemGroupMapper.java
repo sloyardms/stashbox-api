@@ -27,7 +27,6 @@ public interface ItemGroupMapper {
     @Mapping(target = "itemCount", ignore = true)
     ItemGroupResponse toResponse(ItemGroup itemGroup);
 
-
     ItemGroupResponse toResponse(ItemGroupWithCount itemGroup);
 
     ItemGroupDetailResponse toDetailResponse(ItemGroup itemGroup);

@@ -8,8 +8,6 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.ForeignKey;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.JoinTable;
@@ -25,9 +23,7 @@ import org.hibernate.annotations.OnDelete;
 import org.hibernate.annotations.OnDeleteAction;
 
 import java.time.Instant;
-import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 
@@ -50,8 +46,8 @@ public class StashItem extends AuditableEntity {
             foreignKey = @ForeignKey(name = "stash_items_user_id_fk"))
     private User user;
 
-    @ManyToOne(fetch = FetchType.LAZY, optional = true)
-    @JoinColumn(name = "group_id", nullable = true, updatable = true,
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "group_id",
             foreignKey = @ForeignKey(name = "stash_items_group_id_fk"))
     private ItemGroup group;
 

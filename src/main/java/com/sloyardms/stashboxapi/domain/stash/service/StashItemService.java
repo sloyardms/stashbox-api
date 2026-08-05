@@ -20,7 +20,6 @@ import com.sloyardms.stashboxapi.shared.exception.types.ResourceNotFoundExceptio
 import com.sloyardms.stashboxapi.shared.service.JsonPatchService;
 import com.sloyardms.stashboxapi.shared.utils.FileValidator;
 import com.sloyardms.stashboxapi.shared.utils.SlugUtils;
-import jakarta.ws.rs.BadRequestException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -58,7 +57,7 @@ public class StashItemService {
      * @throws ResourceNotFoundException if the group doesn't exist or isn't owned by the user
      * @throws FieldValidationException if the image is invalid, or required/at-least-one-field rules are violated
      * @throws ResourceAlreadyExistException if the group enforces unique title/url and a conflict exists
-     * @return
+     * @return StashItemDetailResponse the created stash item Dto
      */
     @Transactional(rollbackFor = Exception.class)
     public StashItemDetailResponse create(UUID userId, String groupSlug,
@@ -176,6 +175,7 @@ public class StashItemService {
      * @throws ResourceNotFoundException if the item doesn't exist or isn't owned by the user
      * @throws FieldValidationException if removing the image leaves the item invalid
      *         per the group's required-field / at-least-one-field rules
+     * @return StashItemDetailResponse the affected StashItem Dto
      */
     @Transactional(rollbackFor = Exception.class)
     public StashItemDetailResponse removeImage(UUID userId, String groupSlug, UUID stashItemId){
