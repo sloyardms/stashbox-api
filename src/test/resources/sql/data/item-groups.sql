@@ -59,10 +59,10 @@ VALUES ('a1b2c3d4-0001-4000-8000-000000000001',
         false,
         '{
           "requiredTitle": true,
-          "uniqueTitle": false,
-          "requiredUrl": false,
-          "uniqueUrl": false,
-          "requiredImage": true
+          "uniqueTitle": true,
+          "requiredUrl": true,
+          "uniqueUrl": true,
+          "requiredImage": false
         }'::jsonb,
         3,
         '2024-12-01 18:20:00+00',
