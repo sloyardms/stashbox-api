@@ -1,10 +1,12 @@
 package com.sloyardms.stashboxapi.domain.stash.dto.response;
 
+import com.sloyardms.stashboxapi.domain.tag.dto.response.TagCountResponse;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.time.Instant;
+import java.util.List;
 import java.util.UUID;
 
 @Getter
@@ -24,5 +26,6 @@ public class StashItemDetailResponse {
     private Instant deletedAt;
     private Instant createdAt;
     private Instant updatedAt;
+    private List<TagCountResponse> tags;
 
 }

@@ -10,7 +10,7 @@ import com.sloyardms.stashboxapi.domain.user.model.User;
 import com.sloyardms.stashboxapi.domain.user.repository.UserRepository;
 import com.sloyardms.stashboxapi.infrastructure.cache.UserIdCacheStore;
 import com.sloyardms.stashboxapi.infrastructure.security.client.KeycloakClient;
-import com.sloyardms.stashboxapi.infrastructure.storage.event.UserFolderDeleteEvent;
+import com.sloyardms.stashboxapi.infrastructure.storage.event.UserHardDeleteEvent;
 import com.sloyardms.stashboxapi.shared.exception.types.ResourceNotFoundException;
 import com.sloyardms.stashboxapi.shared.service.JsonPatchService;
 import lombok.RequiredArgsConstructor;
@@ -83,7 +83,7 @@ public class UserService {
         userRepository.delete(user);
         keycloakClient.deleteUser(user.getExternalId().toString());
         userIdCacheStore.evict(user.getExternalId());
-        eventPublisher.publishEvent(new UserFolderDeleteEvent(id));
+        eventPublisher.publishEvent(new UserHardDeleteEvent(id));
     }
 
     /**
@@ -104,7 +104,7 @@ public class UserService {
         }
         userRepository.delete(user.get());
         userIdCacheStore.evict(user.get().getExternalId());
-        eventPublisher.publishEvent(new UserFolderDeleteEvent(id));
+        eventPublisher.publishEvent(new UserHardDeleteEvent(id));
     }
 
     @Transactional(rollbackFor = Exception.class)

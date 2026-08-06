@@ -4,11 +4,12 @@ import com.sloyardms.stashboxapi.domain.stash.dto.request.CreateStashItemRequest
 import com.sloyardms.stashboxapi.domain.stash.dto.request.UpdateStashItemRequest;
 import com.sloyardms.stashboxapi.domain.stash.dto.response.StashItemDetailResponse;
 import com.sloyardms.stashboxapi.domain.stash.model.StashItem;
+import com.sloyardms.stashboxapi.domain.tag.mapper.TagMapper;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.MappingTarget;
 
-@Mapper(componentModel = "spring", uses = {ItemGroupMapper.class})
+@Mapper(componentModel = "spring", uses = {ItemGroupMapper.class, TagMapper.class})
 public interface StashItemMapper {
 
     @Mapping(target = "id", ignore = true)
@@ -23,6 +24,7 @@ public interface StashItemMapper {
     @Mapping(target = "tags", ignore = true)
     StashItem toEntity(CreateStashItemRequest createStashItemRequest);
 
+    @Mapping(target = "tags", ignore = true)
     StashItemDetailResponse toDetailResponse(StashItem stashItem);
 
     @Mapping(target = "tags", ignore = true)

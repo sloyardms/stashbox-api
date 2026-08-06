@@ -79,4 +79,14 @@ public interface TagRepository extends JpaRepository<Tag, UUID> {
     @Query("SELECT t FROM Tag t WHERE t.user.id = :userId AND t.group.id = :groupId AND t.slug IN :slugs")
     List<Tag> findAllByUserIdAndGroupIdAndSlugIn(UUID userId, UUID groupId, Set<String> slugs);
 
+    @Query(value = """
+            SELECT t.id, t.name, t.slug,
+                COALESCE(tu.item_count, 0) AS item_count
+            FROM item_tags it 
+            JOIN tags t ON t.id = it.tag_id
+            LEFT JOIN tag_usage tu ON tu.tag_id = t.id
+            WHERE it.item_id = :stashItemId
+            """, nativeQuery = true)
+    List<TagCountProjection> findTagsWithCountForStashItem(
+            @Param("stashItemId") UUID stashItemId);
 }

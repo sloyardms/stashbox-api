@@ -9,8 +9,13 @@ import com.sloyardms.stashboxapi.domain.stash.model.ItemGroupSettings;
 import com.sloyardms.stashboxapi.domain.stash.model.StashItem;
 import com.sloyardms.stashboxapi.domain.stash.repository.ItemGroupRepository;
 import com.sloyardms.stashboxapi.domain.stash.repository.StashItemRepository;
+import com.sloyardms.stashboxapi.domain.tag.dto.response.TagCountResponse;
+import com.sloyardms.stashboxapi.domain.tag.mapper.TagMapper;
 import com.sloyardms.stashboxapi.domain.tag.model.Tag;
+import com.sloyardms.stashboxapi.domain.tag.projection.TagCountProjection;
 import com.sloyardms.stashboxapi.domain.tag.repository.TagRepository;
+import com.sloyardms.stashboxapi.infrastructure.storage.event.ImageHardDeleteEvent;
+import com.sloyardms.stashboxapi.infrastructure.storage.event.StashItemHardDeleteEvent;
 import com.sloyardms.stashboxapi.infrastructure.storage.service.FileStorageService;
 import com.sloyardms.stashboxapi.shared.exception.FieldErrorDetail;
 import com.sloyardms.stashboxapi.shared.exception.types.FieldValidationException;
@@ -21,6 +26,7 @@ import com.sloyardms.stashboxapi.shared.service.JsonPatchService;
 import com.sloyardms.stashboxapi.shared.utils.FileValidator;
 import com.sloyardms.stashboxapi.shared.utils.SlugUtils;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionSynchronization;
@@ -30,6 +36,7 @@ import org.springframework.web.multipart.MultipartFile;
 import tools.jackson.databind.JsonNode;
 
 import java.io.IOException;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -48,6 +55,8 @@ public class StashItemService {
     private final StashItemMapper stashItemMapper;
     private final FileStorageService fileStorageService;
     private final JsonPatchService jsonPatchService;
+    private final ApplicationEventPublisher applicationEventPublisher;
+    private final TagMapper tagMapper;
 
     /**
      * Creates a new StashItem in the given group, applying the group's field requirements
@@ -91,9 +100,9 @@ public class StashItemService {
         newStashItem.setImagePath(newImagePath);
 
         // save changes
-        newStashItem = stashItemRepository.save(newStashItem);
+        newStashItem = stashItemRepository.saveAndFlush(newStashItem);
 
-        return stashItemMapper.toDetailResponse(newStashItem);
+        return toDetailResponse(newStashItem);
     }
 
     /**
@@ -139,26 +148,37 @@ public class StashItemService {
         // save the stashitem and tags
         Set<Tag> tags = createTags(targetStashItem.getGroup(), patchedDto.getTags());
         targetStashItem.setTags(tags);
-        targetStashItem = stashItemRepository.save(targetStashItem);
+        targetStashItem = stashItemRepository.saveAndFlush(targetStashItem);
 
         // save the image
-        String previousImagePath = targetStashItem.getImagePath();
-        String newImagePath = saveImageCover(userId, targetStashItem.getId(), image);
-        targetStashItem.setImagePath(newImagePath);
+        if(image!=null && !image.isEmpty()){
+            String previousImagePath = targetStashItem.getImagePath();
+            String newImagePath = saveImageCover(userId, targetStashItem.getId(), image);
+            targetStashItem.setImagePath(newImagePath);
+            targetStashItem = stashItemRepository.save(targetStashItem);
 
-        // delete old image
-        if(previousImagePath != null && !previousImagePath.equals(targetStashItem.getImagePath())){
-            scheduleFileDeletionAfterCommit(previousImagePath);
+            // delete old image
+            if(previousImagePath != null && !previousImagePath.equals(targetStashItem.getImagePath())){
+                applicationEventPublisher.publishEvent(new ImageHardDeleteEvent(previousImagePath));
+            }
         }
 
-        return stashItemMapper.toDetailResponse(targetStashItem);
+        return toDetailResponse(targetStashItem);
     }
 
     @Transactional(rollbackFor = Exception.class)
     public void delete(UUID userId, String groupSlug, UUID stashItemId){
         StashItem targetStashItem = stashItemRepository.findByIdAndUserIdAndGroupSlug(stashItemId, userId, groupSlug)
                 .orElseThrow(() -> new ResourceNotFoundException("StashItem", "id", stashItemId));
-        stashItemRepository.delete(targetStashItem);
+
+        if(targetStashItem.getDeletedAt() == null){
+            // Soft delete
+            targetStashItem.setDeletedAt(Instant.now());
+            stashItemRepository.save(targetStashItem);
+        }else{
+            stashItemRepository.delete(targetStashItem);
+            applicationEventPublisher.publishEvent(new StashItemHardDeleteEvent(userId, stashItemId));
+        }
     }
 
     @Transactional(rollbackFor = Exception.class)
@@ -200,24 +220,35 @@ public class StashItemService {
         stashItemRepository.save(targetStashItem);
 
         // delete old image
-        scheduleFileDeletionAfterCommit(previousImagePath);
+        applicationEventPublisher.publishEvent(new ImageHardDeleteEvent(previousImagePath));
 
-        return stashItemMapper.toDetailResponse(targetStashItem);
+        return toDetailResponse(targetStashItem);
     }
 
     // HELPER METHODS
 
     /**
-     * Registers a callback to delete the file at {@code filePath} only if the current transaction commits.
-     * @param filePath Path to the file to delete
+     * Builds a detailed response DTO for a stash item, including tag usage information.
+     *
+     * The base response is created from the stash item entity using the mapper.
+     * Tags are intentionally excluded from the entity mapping because the response
+     * requires additional computed data (the number of items using each tag).
+     * Tags are fetched separately with their usage counts and added to the response.
+     *
+     * @param item the stash item entity to convert into detail response
+     * @return a detailed stash item response containing the information and tags with usage counts
      */
-    private void scheduleFileDeletionAfterCommit(String filePath) {
-        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
-            @Override
-            public void afterCommit() {
-                fileStorageService.deleteFile(filePath);
-            }
-        });
+    private StashItemDetailResponse toDetailResponse(StashItem item) {
+        StashItemDetailResponse response =
+                stashItemMapper.toDetailResponse(item);
+
+        List<TagCountResponse> tags =
+                tagRepository.findTagsWithCountForStashItem(item.getId())
+                        .stream()
+                        .map(tagMapper::toCountResponse)
+                        .toList();
+        response.setTags(tags);
+        return response;
     }
 
     private String saveImageCover(UUID userId, UUID stashItemId, MultipartFile image){
