@@ -2,13 +2,10 @@ package com.sloyardms.stashboxapi.controller.stashitem;
 
 import com.sloyardms.stashboxapi.config.BaseIntegrationTest;
 import com.sloyardms.stashboxapi.config.TestConstants;
-import com.sloyardms.stashboxapi.domain.stash.dto.response.ItemGroupDetailResponse;
 import com.sloyardms.stashboxapi.domain.stash.dto.response.StashItemDetailResponse;
 import com.sloyardms.stashboxapi.domain.stash.model.StashItem;
 import com.sloyardms.stashboxapi.domain.stash.repository.StashItemRepository;
 import com.sloyardms.stashboxapi.domain.tag.dto.response.TagCountResponse;
-import com.sloyardms.stashboxapi.domain.tag.model.Tag;
-import com.sloyardms.stashboxapi.domain.tag.repository.TagRepository;
 import com.sloyardms.stashboxapi.infrastructure.storage.service.FileStorageService;
 import com.sloyardms.stashboxapi.shared.exception.ErrorCatalog;
 import org.junit.jupiter.api.AfterEach;
@@ -23,7 +20,6 @@ import org.springframework.test.context.jdbc.SqlMergeMode;
 
 import java.io.File;
 import java.time.Instant;
-import java.util.Set;
 import java.util.UUID;
 
 import static io.restassured.RestAssured.given;
@@ -41,8 +37,6 @@ public class StashItemUpdateIT extends BaseIntegrationTest {
     private StashItemRepository stashItemRepository;
     @Autowired
     private FileStorageService fileStorageService;
-    @Autowired
-    private TagRepository tagRepository;
 
     @AfterEach
     void cleanupStorage() {

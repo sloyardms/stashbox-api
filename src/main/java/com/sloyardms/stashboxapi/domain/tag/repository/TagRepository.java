@@ -82,7 +82,7 @@ public interface TagRepository extends JpaRepository<Tag, UUID> {
     @Query(value = """
             SELECT t.id, t.name, t.slug,
                 COALESCE(tu.item_count, 0) AS item_count
-            FROM item_tags it 
+            FROM item_tags it
             JOIN tags t ON t.id = it.tag_id
             LEFT JOIN tag_usage tu ON tu.tag_id = t.id
             WHERE it.item_id = :stashItemId

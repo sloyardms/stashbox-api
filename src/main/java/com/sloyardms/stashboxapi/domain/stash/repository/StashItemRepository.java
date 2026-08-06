@@ -29,7 +29,7 @@ public interface StashItemRepository extends JpaRepository<StashItem, UUID> {
             ELSE TRUE
         END
         WHERE
-            si.user.id = :userId AND 
+            si.user.id = :userId AND
             si.group.slug  = :groupSlug AND
             si.id = :stashItemId
     """)

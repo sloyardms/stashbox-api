@@ -12,7 +12,6 @@ import com.sloyardms.stashboxapi.domain.stash.repository.StashItemRepository;
 import com.sloyardms.stashboxapi.domain.tag.dto.response.TagCountResponse;
 import com.sloyardms.stashboxapi.domain.tag.mapper.TagMapper;
 import com.sloyardms.stashboxapi.domain.tag.model.Tag;
-import com.sloyardms.stashboxapi.domain.tag.projection.TagCountProjection;
 import com.sloyardms.stashboxapi.domain.tag.repository.TagRepository;
 import com.sloyardms.stashboxapi.infrastructure.storage.event.ImageHardDeleteEvent;
 import com.sloyardms.stashboxapi.infrastructure.storage.event.StashItemHardDeleteEvent;
@@ -29,8 +28,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.transaction.support.TransactionSynchronization;
-import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
 import tools.jackson.databind.JsonNode;
@@ -229,7 +226,6 @@ public class StashItemService {
 
     /**
      * Builds a detailed response DTO for a stash item, including tag usage information.
-     *
      * The base response is created from the stash item entity using the mapper.
      * Tags are intentionally excluded from the entity mapping because the response
      * requires additional computed data (the number of items using each tag).

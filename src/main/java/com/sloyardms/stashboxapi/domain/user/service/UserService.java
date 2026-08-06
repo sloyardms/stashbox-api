@@ -69,7 +69,6 @@ public class UserService {
 
     /**
      * Deletes a user from Keycloak and the local database.
-     *
      * Keycloak emits a USER-DELETE event after the external deletion. That event
      * is consumed by the backend and triggers delete(UUID), which is intentionally
      * idempotent because this method and external Keycloak actions can both result
@@ -88,7 +87,6 @@ public class UserService {
 
     /**
      * Handles user deletion events originating from external systems (keycloak).
-     *
      * This method is idempotent because deletion events can be duplicated or can
      * arrive after the user has already been deleted locally.
      *
