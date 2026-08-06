@@ -98,6 +98,7 @@ CREATE TABLE item_tags (
 
     PRIMARY KEY (item_id, tag_id)
 );
+CREATE INDEX item_tags_tag_id_idx ON item_tags(tag_id);
 
 CREATE TABLE tag_usage (
     tag_id UUID PRIMARY KEY,
