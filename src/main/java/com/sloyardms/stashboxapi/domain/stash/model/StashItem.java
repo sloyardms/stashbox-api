@@ -8,8 +8,6 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.ForeignKey;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.JoinTable;
@@ -25,8 +23,8 @@ import org.hibernate.annotations.OnDelete;
 import org.hibernate.annotations.OnDeleteAction;
 
 import java.time.Instant;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.UUID;
 
 @Getter
@@ -38,7 +36,6 @@ import java.util.UUID;
 public class StashItem extends AuditableEntity {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
     @Column(name = "id", nullable = false, updatable = false)
     @ToString.Include
     private UUID id;
@@ -49,8 +46,8 @@ public class StashItem extends AuditableEntity {
             foreignKey = @ForeignKey(name = "stash_items_user_id_fk"))
     private User user;
 
-    @ManyToOne(fetch = FetchType.LAZY, optional = true)
-    @JoinColumn(name = "group_id", nullable = true, updatable = true,
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "group_id",
             foreignKey = @ForeignKey(name = "stash_items_group_id_fk"))
     private ItemGroup group;
 
@@ -89,9 +86,9 @@ public class StashItem extends AuditableEntity {
                     foreignKey = @ForeignKey(name = "item_tags_stash_item_id_fk")),
             inverseJoinColumns = @JoinColumn(name = "tag_id",
                     foreignKey = @ForeignKey(name = "item_tags_tag_id_fk")))
-    private List<Tag> tags = new ArrayList<>();
+    private Set<Tag> tags = new HashSet<>();
 
     @OneToMany(fetch = FetchType.LAZY, mappedBy = "item")
-    private List<ItemNote> notes = new ArrayList<>();
+    private Set<ItemNote> notes = new HashSet<>();
 
 }

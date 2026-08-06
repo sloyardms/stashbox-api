@@ -1,10 +1,7 @@
 package com.sloyardms.stashboxapi.domain.user.model;
 
 import com.sloyardms.stashboxapi.shared.persistence.AuditableEntity;
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -19,13 +16,20 @@ import java.util.UUID;
 @NoArgsConstructor
 @ToString(onlyExplicitlyIncluded = true)
 @Entity
-@Table(name = "users")
+@Table(name = "users",
+    uniqueConstraints = {@UniqueConstraint(name = "users_external_id_unique", columnNames = {"external_id"})
+    })
 public class User extends AuditableEntity {
 
     @Id
+    @GeneratedValue(strategy = GenerationType.UUID)
     @Column(name = "id", nullable = false, updatable = false)
     @ToString.Include
     private UUID id;
+
+    @Column(name = "external_id", nullable = false)
+    @ToString.Include
+    private UUID externalId;
 
     @Column(name = "settings", columnDefinition = "jsonb not null default '{}'::jsonb", nullable = false)
     @JdbcTypeCode(SqlTypes.JSON)

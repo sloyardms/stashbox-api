@@ -11,8 +11,8 @@ import lombok.Setter;
 @NoArgsConstructor
 public class UpdateTagRequest {
 
-    @NotBlank(message = "{validation.tag.name.notBlank}")
-    @Size(max = 50, message = "{validation.tag.name.maxLength}")
+    @NotBlank(message = "validation.notBlank")
+    @Size(max = 50, message = "validation.max")
     private String name;
 
 }

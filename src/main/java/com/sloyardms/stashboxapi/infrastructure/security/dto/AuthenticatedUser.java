@@ -6,11 +6,12 @@ import java.util.UUID;
 /**
  * Represents the authenticated user extracted from the JWT stored in the SecurityContext
  *
- * @param id       Unique identifier of the user in the database
- * @param username Username associated with the authenticated user
- * @param email    Email address of the authenticated user
- * @param roles    Client roles of the authenticated user
+ * @param id         Unique identifier of the user in the database
+ * @param externalId Unique identifier of the user in the identity provider
+ * @param username   Username associated with the authenticated user
+ * @param email      Email address of the authenticated user
+ * @param roles      Client roles of the authenticated user
  */
-public record AuthenticatedUser(UUID id, String username, String email, List<String> roles) {
+public record AuthenticatedUser(UUID id, UUID externalId, String username, String email, List<String> roles) {
 
 }

@@ -4,9 +4,10 @@ import com.sloyardms.stashboxapi.domain.user.event.UserDeletedEvent;
 import com.sloyardms.stashboxapi.domain.user.service.UserService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.event.TransactionPhase;
+import org.springframework.transaction.event.TransactionalEventListener;
 
 import java.util.UUID;
 
@@ -18,7 +19,7 @@ public class UserEventListener {
     private final UserService userService;
 
     @Async("webhookExecutor")
-    @EventListener
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void onDeleted(UserDeletedEvent event) {
         UUID userId = toUUID(event.userId());
         userService.delete(userId);

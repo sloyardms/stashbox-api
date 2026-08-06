@@ -1,8 +1,11 @@
 CREATE TABLE users (
     id UUID PRIMARY KEY,
+    external_id UUID NOT NULL,
     settings JSONB NOT NULL DEFAULT '{}'::jsonb,
     created_at TIMESTAMPTZ NOT NULL,
-    updated_at TIMESTAMPTZ NOT NULL
+    updated_at TIMESTAMPTZ NOT NULL,
+
+    CONSTRAINT users_external_id_unique UNIQUE (external_id)
 );
 
 CREATE TABLE item_groups (
@@ -23,7 +26,7 @@ CREATE TABLE item_groups (
     CONSTRAINT item_groups_user_id_slug_unique UNIQUE (user_id, slug),
     CONSTRAINT item_groups_position_check CHECK (position >= 0)
 );
-CREATE UNIQUE INDEX item_groups_default_group_uidx ON item_groups(default_group) WHERE default_group = true;
+CREATE UNIQUE INDEX item_groups_default_group_uidx ON item_groups(user_id) WHERE default_group = true;
 
 CREATE TABLE url_rules (
     id UUID PRIMARY KEY,
@@ -52,9 +55,9 @@ CREATE TABLE stash_items (
     user_id UUID NOT NULL,
     group_id UUID,
     title TEXT,
-    title_normalized TEXT GENERATED ALWAYS AS (lower(trim(regexp_replace(title, '\s+', ' ', 'g')))) STORED,
+    title_normalized TEXT,
     url TEXT,
-    url_normalized TEXT GENERATED ALWAYS AS (lower(trim(url))) STORED,
+    url_normalized TEXT,
     description TEXT,
     image_path TEXT,
     is_favorite BOOLEAN NOT NULL DEFAULT false,
@@ -68,8 +71,8 @@ CREATE TABLE stash_items (
 );
 CREATE INDEX stash_items_user_group_active_idx ON stash_items(user_id, group_id, created_at DESC) WHERE deleted_at IS NULL;
 CREATE INDEX stash_items_user_group_deleted_idx ON stash_items(user_id, group_id, deleted_at DESC) WHERE deleted_at IS NOT NULL;
-CREATE INDEX stash_items_user_group_title_normalized_idx ON stash_items(user_id, group_id, title_normalized) WHERE deleted_at IS NULL;
-CREATE INDEX stash_items_user_group_url_normalized_idx ON stash_items(user_id, group_id, url_normalized) WHERE deleted_at IS NULL;
+CREATE INDEX stash_items_title_normalized_idx ON stash_items(group_id, title_normalized) WHERE deleted_at IS NULL;
+CREATE INDEX stash_items_url_normalized_idx ON stash_items(group_id, url_normalized) WHERE deleted_at IS NULL;
 
 CREATE TABLE tags (
     id UUID PRIMARY KEY,
@@ -95,6 +98,7 @@ CREATE TABLE item_tags (
 
     PRIMARY KEY (item_id, tag_id)
 );
+CREATE INDEX item_tags_tag_id_idx ON item_tags(tag_id);
 
 CREATE TABLE tag_usage (
     tag_id UUID PRIMARY KEY,

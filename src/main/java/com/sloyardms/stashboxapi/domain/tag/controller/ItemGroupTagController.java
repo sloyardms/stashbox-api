@@ -52,7 +52,7 @@ public class ItemGroupTagController {
                     value = {"name", "createdAt", "updatedAt",
                             "itemCount", "lastUsed"},
                     defaultField = "itemCount",
-                    defaultDirection = Sort.Direction.ASC
+                    defaultDirection = Sort.Direction.DESC
             ) Pageable pageable,
             @AuthenticationPrincipal AuthenticatedUser authenticatedUser) {
         Page<TagCountResponse> responsePage = tagService.search(authenticatedUser.id(), groupSlug, searchQuery,

@@ -49,7 +49,7 @@ public class KeycloakEventsController {
 
         log.info("Received keycloak webhook event: {}", event.type());
 
-        if (event.type().equals("admin.USER-DELETE")) {
+        if ("admin.USER-DELETE".equals(event.type())){
             applicationEventPublisher.publishEvent(new UserDeletedEvent(event.userId()));
         } else {
             log.debug("Ignoring unhandled event type: {}", event.type());

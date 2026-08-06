@@ -30,7 +30,6 @@ public class ItemGroupSearchIT extends BaseIntegrationTest {
         @Sql({"/sql/data/users.sql", "/sql/data/item-groups.sql"})
         void shouldReturn200AndPaginatedListOfItemGroupsOfUser() {
             int numberOfItemGroups = TestConstants.Groups.NORMAL_USER_COUNT;
-            int expectedTotalPages = (int) Math.ceil((double) numberOfItemGroups / defaultPageSize);
 
             givenNormalUserRequest()
                     .when()
@@ -38,15 +37,12 @@ public class ItemGroupSearchIT extends BaseIntegrationTest {
                     .then()
                     .statusCode(HttpStatus.OK.value())
                     .body(
-                            "page.size", equalTo(defaultPageSize),
-                            "page.totalElements", equalTo(numberOfItemGroups),
-                            "page.totalPages", equalTo(expectedTotalPages),
-                            "page.number", equalTo(0),
-                            "content.size()", equalTo(numberOfItemGroups),
-                            "content[0].id", notNullValue(),
-                            "content[0].name", notNullValue(),
-                            "content[0].slug", notNullValue(),
-                            "content.position", contains(0, 1, 2, 3)
+                        "size()", equalTo(numberOfItemGroups),
+                        "[0].id", notNullValue(),
+                        "[0].name", notNullValue(),
+                        "[0].slug", notNullValue(),
+                        "[0].position", equalTo(0),
+                        "position", contains(0, 1, 2, 3)
                     );
         }
 

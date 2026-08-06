@@ -2,9 +2,11 @@ package com.sloyardms.stashboxapi.shared.exception;
 
 import com.sloyardms.stashboxapi.shared.exception.types.DefaultGroupDeletionNotAllowedException;
 import com.sloyardms.stashboxapi.shared.exception.types.EmptyPatchBodyException;
+import com.sloyardms.stashboxapi.shared.exception.types.FieldValidationException;
 import com.sloyardms.stashboxapi.shared.exception.types.InvalidPatchFieldException;
 import com.sloyardms.stashboxapi.shared.exception.types.InvalidPatchStructureException;
 import com.sloyardms.stashboxapi.shared.exception.types.InvalidSortFieldException;
+import com.sloyardms.stashboxapi.shared.exception.types.ResourceAlreadyExistException;
 import com.sloyardms.stashboxapi.shared.exception.types.ResourceNotFoundException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.ConstraintViolation;
@@ -36,10 +38,7 @@ import org.springframework.web.multipart.MaxUploadSizeExceededException;
 import org.springframework.web.multipart.MultipartException;
 import org.springframework.web.servlet.NoHandlerFoundException;
 
-import java.util.List;
-import java.util.Locale;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -76,13 +75,7 @@ public class GlobalExceptionHandler {
                 .map(constraintMappings::resolve)
                 .orElse(ConstraintInfo.UNKNOWN);
 
-        Locale locale = LocaleContextHolder.getLocale();
-        String detail = messageSource.getMessage(info.detail(), null, locale);
-
-        ProblemDetail problemDetail = problemDetailFactory.createWithDetail(
-                ErrorCatalog.DATA_INTEGRITY_VIOLATION, detail, request);
-
-        return ResponseEntity.status(ErrorCatalog.DATA_INTEGRITY_VIOLATION.getStatus()).body(problemDetail);
+        return buildConstraintViolationResponse(info, request);
     }
 
     // -------------------------------------------------------------------------
@@ -252,7 +245,7 @@ public class GlobalExceptionHandler {
     }
 
     // -------------------------------------------------------------------------
-    // Resource
+    // Resource (Custom exceptions)
     // -------------------------------------------------------------------------
 
     @ExceptionHandler(ResourceNotFoundException.class)
@@ -265,6 +258,24 @@ public class GlobalExceptionHandler {
         problemDetail.setProperty("identifier", ex.getIdentifier());
         problemDetail.setProperty("value", ex.getValue());
         return ResponseEntity.status(ErrorCatalog.RESOURCE_NOT_FOUND.getStatus()).body(problemDetail);
+    }
+
+    @ExceptionHandler(ResourceAlreadyExistException.class)
+    public ResponseEntity<ProblemDetail> handleResourceAlreadyExistException(ResourceAlreadyExistException ex,
+                                                                             HttpServletRequest request) {
+        ConstraintInfo info = constraintMappings.resolve(ex.getConstraintName());
+
+        return buildConstraintViolationResponse(info, request);
+    }
+
+
+    @ExceptionHandler(FieldValidationException.class)
+    public ResponseEntity<ProblemDetail> handleFieldValidationException(FieldValidationException ex, HttpServletRequest request) {
+        ProblemDetail problemDetail = problemDetailFactory.create(ErrorCatalog.VALIDATION_ERROR, request);
+
+        if (!ex.getFieldErrors().isEmpty()) problemDetail.setProperty("fieldErrors", ex.getFieldErrors());
+
+        return ResponseEntity.status(ErrorCatalog.VALIDATION_ERROR.getStatus()).body(problemDetail);
     }
 
     // -------------------------------------------------------------------------
@@ -331,6 +342,30 @@ public class GlobalExceptionHandler {
             fieldName = node.getName();
         }
         return fieldName != null ? fieldName : path.toString();
+    }
+
+    private ResponseEntity<ProblemDetail> buildConstraintViolationResponse(
+            ConstraintInfo info,
+            HttpServletRequest request) {
+
+        Locale locale = LocaleContextHolder.getLocale();
+        String detail = messageSource.getMessage(info.detail(), null, locale);
+
+        ProblemDetail problemDetail = problemDetailFactory.createWithDetail(
+                ErrorCatalog.DATA_INTEGRITY_VIOLATION, detail, request);
+
+        if (!info.fields().isEmpty()) {
+            problemDetail.setProperty(
+                    "fieldErrors",
+                    info.fields().stream()
+                            .map(field -> Map.of(
+                                    "field", field,
+                                    "message", "validation.conflict"))
+                            .toList());
+        }
+
+        return ResponseEntity.status(ErrorCatalog.DATA_INTEGRITY_VIOLATION.getStatus())
+                .body(problemDetail);
     }
 
 }

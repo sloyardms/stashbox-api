@@ -9,7 +9,6 @@ import com.sloyardms.stashboxapi.shared.validation.SortableFields;
 import com.sloyardms.stashboxapi.shared.validation.ValidSlug;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
@@ -26,6 +25,9 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import tools.jackson.databind.JsonNode;
+
+import java.util.List;
+import java.util.UUID;
 
 @RestController
 @RequiredArgsConstructor
@@ -44,14 +46,14 @@ public class ItemGroupController {
     }
 
     @GetMapping
-    public ResponseEntity<Page<ItemGroupResponse>> getAllItemGroups(
+    public ResponseEntity<List<ItemGroupResponse>> getAllItemGroups(
             @SortableFields(
-                    value = {"name", "description", "position", "createdAt"},
+                    value = {"name", "position", "itemCount", "createdAt"},
                     defaultField = "position",
                     defaultDirection = Sort.Direction.ASC
             ) Pageable pageable,
             @AuthenticationPrincipal AuthenticatedUser authenticatedUser) {
-        Page<ItemGroupResponse> response = itemGroupService.findAll(authenticatedUser.id(), pageable);
+        List<ItemGroupResponse> response = itemGroupService.findAll(authenticatedUser.id(), pageable);
         return ResponseEntity.ok(response);
     }
 
@@ -63,7 +65,7 @@ public class ItemGroupController {
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
-    @PatchMapping(path = "/{slug}")
+    @PatchMapping("/{slug}")
     public ResponseEntity<ItemGroupDetailResponse> patch(
             @PathVariable @ValidSlug String slug,
             @RequestBody JsonNode body,
@@ -85,6 +87,14 @@ public class ItemGroupController {
             @PathVariable @ValidSlug String slug,
             @AuthenticationPrincipal AuthenticatedUser authenticatedUser) {
         itemGroupService.setDefaultGroup(authenticatedUser.id(), slug);
+        return ResponseEntity.noContent().build();
+    }
+
+    @PutMapping("/reorder")
+    public ResponseEntity<Void> reorderItemGroups(
+            @RequestBody List<UUID> orderedItemGroupIds,
+            @AuthenticationPrincipal AuthenticatedUser authenticatedUser) {
+        itemGroupService.reorder(authenticatedUser.id(), orderedItemGroupIds);
         return ResponseEntity.noContent().build();
     }
 

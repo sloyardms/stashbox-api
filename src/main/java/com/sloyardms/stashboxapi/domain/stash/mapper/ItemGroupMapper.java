@@ -5,6 +5,7 @@ import com.sloyardms.stashboxapi.domain.stash.dto.request.UpdateItemGroupRequest
 import com.sloyardms.stashboxapi.domain.stash.dto.response.ItemGroupDetailResponse;
 import com.sloyardms.stashboxapi.domain.stash.dto.response.ItemGroupResponse;
 import com.sloyardms.stashboxapi.domain.stash.model.ItemGroup;
+import com.sloyardms.stashboxapi.domain.stash.projection.ItemGroupWithCount;
 import org.mapstruct.BeanMapping;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
@@ -23,7 +24,10 @@ public interface ItemGroupMapper {
     @Mapping(target = "defaultGroup",  ignore = true)
     ItemGroup toEntity(CreateItemGroupRequest createItemGroupRequest);
 
+    @Mapping(target = "itemCount", ignore = true)
     ItemGroupResponse toResponse(ItemGroup itemGroup);
+
+    ItemGroupResponse toResponse(ItemGroupWithCount itemGroup);
 
     ItemGroupDetailResponse toDetailResponse(ItemGroup itemGroup);
 

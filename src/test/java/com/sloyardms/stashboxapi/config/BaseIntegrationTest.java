@@ -4,9 +4,12 @@ import io.restassured.RestAssured;
 import io.restassured.http.ContentType;
 import io.restassured.specification.RequestSpecification;
 import org.junit.jupiter.api.BeforeEach;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.server.LocalServerPort;
+import org.springframework.cache.Cache;
+import org.springframework.cache.CacheManager;
 import org.springframework.http.HttpStatus;
 import org.springframework.util.Assert;
 import org.testcontainers.junit.jupiter.Testcontainers;
@@ -47,6 +50,9 @@ public abstract class BaseIntegrationTest extends TestContainersConfig {
     private String normalUserToken;
     private String adminUserToken;
 
+    @Autowired
+    private CacheManager cacheManager;
+
     @BeforeEach
     void setupTestBase() {
         RestAssured.baseURI = "http://localhost";
@@ -59,6 +65,15 @@ public abstract class BaseIntegrationTest extends TestContainersConfig {
 
         normalUserToken = generateAccessToken(normalUserUsername, normalUserPassword);
         adminUserToken = generateAccessToken(adminUserUsername, adminUserPassword);
+
+        // Clear caches before each test
+        cacheManager.getCacheNames()
+                .forEach(cacheName -> {
+                    Cache cache = cacheManager.getCache(cacheName);
+                    if (cache != null) {
+                        cache.clear();
+                    }
+                });
     }
 
     public RequestSpecification givenNormalUserRequest() {
@@ -89,6 +104,13 @@ public abstract class BaseIntegrationTest extends TestContainersConfig {
                 .statusCode(HttpStatus.OK.value())
                 .extract()
                 .path("access_token");
+    }
+
+    public RequestSpecification givenNormalUserMultipartRequest() {
+        return given()
+                .auth().oauth2(normalUserToken)
+                .contentType(ContentType.MULTIPART)
+                .accept(ContentType.JSON);
     }
 
 }

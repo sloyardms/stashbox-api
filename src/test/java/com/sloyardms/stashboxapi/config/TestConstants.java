@@ -11,8 +11,10 @@ public final class TestConstants {
         private Users() {
         }
 
-        public static final UUID NORMAL_USER_ID = UUID.fromString("1a9d5015-5330-46af-959b-d6d9913ad75c");
-        public static final UUID ADMIN_USER_ID = UUID.fromString("438536b5-335b-4182-9f1b-cc3388b3b707");
+        public static final UUID NORMAL_USER_EXTERNAL_ID = UUID.fromString("1a9d5015-5330-46af-959b-d6d9913ad75c");
+        public static final UUID NORMAL_USER_ID = UUID.fromString("478f7eba-d161-4d33-b058-2bc4553110ad");
+        public static final UUID ADMIN_USER_EXTERNAL_ID = UUID.fromString("438536b5-335b-4182-9f1b-cc3388b3b707");
+        public static final UUID ADMIN_USER_ID = UUID.fromString("573e407f-3ab7-4495-aceb-b310938542e5");
     }
 
     public static final class Groups {
@@ -125,4 +127,74 @@ public final class TestConstants {
         public static final int ADMIN_COUNT = 1;
         public static final int GITHUB_DOMAIN_ACTIVE_COUNT = 1;
     }
+
+    public static final class StashItems {
+        private StashItems() {
+        }
+
+        // Normal user
+        public static final UUID SPRING_BOOT_DOCS_ID =
+                UUID.fromString("b1c2d3e4-0001-4000-8000-000000000001");
+
+        public static final UUID POSTGRESQL_DOCS_ID =
+                UUID.fromString("b1c2d3e4-0001-4000-8000-000000000002");
+
+        public static final UUID DOCKER_COMPOSE_CHEAT_SHEET_ID =
+                UUID.fromString("b1c2d3e4-0001-4000-8000-000000000003");
+
+        public static final UUID TESTING_REST_APIS_ID =
+                UUID.fromString("b1c2d3e4-0001-4000-8000-000000000004");
+
+        public static final UUID INTERESTING_ARTICLE_ID =
+                UUID.fromString("b1c2d3e4-0001-4000-8000-000000000006");
+
+        public static final UUID JAVA_STREAMS_GUIDE_ID =
+                UUID.fromString("b1c2d3e4-0001-4000-8000-000000000005");
+
+        public static final UUID MODERN_DASHBOARD_ID =
+                UUID.fromString("b1c2d3e4-0001-4000-8000-000000000007");
+
+        public static final UUID CREAMY_MUSHROOM_PASTA_ID =
+                UUID.fromString("b1c2d3e4-0001-4000-8000-000000000008");
+
+        public static final UUID CLASSIC_BEEF_TACOS_ID =
+                UUID.fromString("b1c2d3e4-0001-4000-8000-000000000009");
+
+        // Admin
+        public static final UUID INTERNAL_ADMIN_GUIDE_ID =
+                UUID.fromString("b1c2d3e4-0001-4000-8000-000000000101");
+
+        public static final UUID SERVER_RUNBOOK_ID =
+                UUID.fromString("b1c2d3e4-0001-4000-8000-000000000102");
+
+
+        // Counts
+        public static final int NORMAL_USER_COUNT = 8;
+        public static final int ADMIN_USER_COUNT = 2;
+
+        public static final int UNGROUPED_COUNT = 4;
+        public static final int DEV_RESOURCES_COUNT = 2;
+        public static final int DESIGN_COUNT = 1;
+        public static final int RECIPES_COUNT = 1;
+
+        public static final int FAVORITES_COUNT = 3;
+    }
+
+    public static final class StashItemSearch {
+        private StashItemSearch() {
+        }
+
+        public static final String DOCKER = "docker";
+        public static final String JAVA = "java";
+        public static final String SPRING = "spring";
+        public static final String POSTGRES = "postgres";
+        public static final String TESTING = "testing";
+        public static final String REST = "rest";
+        public static final String LINUX = "linux";
+        public static final String DASHBOARD = "dashboard";
+        public static final String FIGMA = "figma";
+        public static final String RECIPE = "recipe";
+    }
+
+
 }

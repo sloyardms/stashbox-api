@@ -25,6 +25,9 @@ import java.util.stream.Stream;
 @RequiredArgsConstructor
 public class OrphanedFilesCleanupJob {
 
+    private static final Duration ORPHANED_FOLDER_TTL = Duration.ofHours(24);
+    private static final Duration TEMP_FILE_TTL = Duration.ofHours(1);
+
     private final FileStorageProperties fileStorageProperties;
     private final UserRepository userRepository;
 
@@ -32,10 +35,9 @@ public class OrphanedFilesCleanupJob {
     public void cleanOrphanedFolders() {
         log.info("Starting orphaned folders cleanup job");
 
-        Path usersRoot = Path.of(fileStorageProperties.getBasePath());
-
+        Path usersRoot = fileStorageProperties.getUsersPath();
         if (!Files.exists(usersRoot)) {
-            log.info("Storage root does not exist, skipping.");
+            log.info("Users storage root folder does not exist, skipping.");
             return;
         }
 
@@ -49,17 +51,66 @@ public class OrphanedFilesCleanupJob {
                     .filter(Files::isDirectory)
                     .filter(folder -> isUUID(folder.getFileName().toString()))
                     .filter(folder -> !existingUsersIds.contains(folder.getFileName().toString()))
-                    .filter(folder -> isFolderOlderThan(folder, Duration.ofHours(24)))
+                    .filter(folder -> isOlderThan(folder, ORPHANED_FOLDER_TTL))
                     .toList();
 
-            long deletedFolders = foldersToDelete.stream()
+            long deleted = foldersToDelete.stream()
                     .filter(this::deleteFolder)
                     .count();
 
-            log.info("Found {} orphaned folder(s), deleted {}", foldersToDelete.size(), deletedFolders);
-            log.info("Orphaned folders cleanup job complete.");
+            log.info("Orphaned folders cleanup complete — found {}, deleted {}",
+                    foldersToDelete.size(), deleted);
         } catch (IOException e) {
             log.error("Orphaned folders cleanup job failed", e);
+        }
+    }
+
+    @Scheduled(cron = "0 0 * * * *") // every hour
+    public void cleanStaleTempFiles() {
+        log.info("Starting stale temp files cleanup job");
+
+        Path usersRoot = fileStorageProperties.getUsersPath();
+        if (!Files.exists(usersRoot)) {
+            log.info("Users storage root does not exist, skipping.");
+            return;
+        }
+
+        try (Stream<Path> userFolders = Files.list(usersRoot)) {
+            userFolders
+                    .filter(Files::isDirectory)
+                    .filter(folder -> isUUID(folder.getFileName().toString()))
+                    .forEach(this::cleanUserTempFolder);
+        } catch (IOException e) {
+            log.error("Stale temp files cleanup job failed", e);
+        }
+
+        log.info("Stale temp files cleanup complete.");
+    }
+
+    private void cleanUserTempFolder(Path userFolder) {
+        UUID userId = UUID.fromString(userFolder.getFileName().toString());
+        Path tempDir = fileStorageProperties.getTempFilesPath(userId);
+
+        if (!Files.exists(tempDir)) {
+            return;
+        }
+
+        try (Stream<Path> files = Files.list(tempDir)) {
+            List<Path> staleFiles = files
+                    .filter(Files::isRegularFile)
+                    .filter(file -> isOlderThan(file, TEMP_FILE_TTL))
+                    .toList();
+
+            long deleted = staleFiles.stream()
+                    .filter(this::deleteFile)
+                    .count();
+
+            if (deleted > 0) {
+                log.info("Deleted {}/{} stale temp file(s) for user {}",
+                        deleted, staleFiles.size(), userId);
+            }
+        } catch (IOException e) {
+            log.error("Failed to clean temp folder for user {}", userId, e);
         }
     }
 
@@ -72,12 +123,22 @@ public class OrphanedFilesCleanupJob {
         }
     }
 
-    private boolean isFolderOlderThan(Path folder, Duration duration) {
+    private boolean isOlderThan(Path path, Duration duration) {
         try {
-            FileTime created = Files.getLastModifiedTime(folder);
-            return created.toInstant().isBefore(Instant.now().minus(duration));
+            FileTime lastModified = Files.getLastModifiedTime(path);
+            return lastModified.toInstant().isBefore(Instant.now().minus(duration));
         } catch (IOException e) {
-            log.warn("Could not read creation time for {}", folder);
+            log.warn("Could not read last modified time for {}", path);
+            return false;
+        }
+    }
+
+    private boolean deleteFile(Path file) {
+        try {
+            Files.delete(file);
+            return true;
+        } catch (IOException e) {
+            log.warn("Failed to delete temp file: {}", file, e);
             return false;
         }
     }

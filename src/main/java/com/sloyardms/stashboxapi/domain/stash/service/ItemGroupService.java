@@ -6,6 +6,8 @@ import com.sloyardms.stashboxapi.domain.stash.dto.response.ItemGroupDetailRespon
 import com.sloyardms.stashboxapi.domain.stash.dto.response.ItemGroupResponse;
 import com.sloyardms.stashboxapi.domain.stash.mapper.ItemGroupMapper;
 import com.sloyardms.stashboxapi.domain.stash.model.ItemGroup;
+import com.sloyardms.stashboxapi.domain.stash.model.ItemGroupSettings;
+import com.sloyardms.stashboxapi.domain.stash.projection.ItemGroupWithCount;
 import com.sloyardms.stashboxapi.domain.stash.repository.ItemGroupRepository;
 import com.sloyardms.stashboxapi.domain.user.model.User;
 import com.sloyardms.stashboxapi.domain.user.repository.UserRepository;
@@ -17,12 +19,16 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import tools.jackson.databind.JsonNode;
 
+import java.util.List;
+import java.util.Map;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -42,9 +48,11 @@ public class ItemGroupService {
     }
 
     @Transactional(readOnly = true)
-    public Page<ItemGroupResponse> findAll(UUID userId, Pageable pageable) {
-        Page<ItemGroup> groups = itemGroupRepository.findAllByUserId(userId, pageable);
-        return groups.map(itemGroupMapper::toResponse);
+    public List<ItemGroupResponse> findAll(UUID userId, Pageable pageable) {
+        Pageable unpaged = Pageable.unpaged(pageable.getSort());
+        Page<ItemGroupWithCount> groups = itemGroupRepository.findAllWithItemCountByUserId(userId, unpaged);
+        List<ItemGroupWithCount> groupsList = groups.getContent();
+        return groupsList.stream().map(itemGroupMapper::toResponse).collect(Collectors.toList());
     }
 
     @Transactional(rollbackFor = Exception.class)
@@ -59,6 +67,10 @@ public class ItemGroupService {
         itemGroup.setSlug(SlugUtils.slugify(itemGroup.getName()));
         itemGroup.setPosition(maxPosition + 1);
         itemGroup.setDefaultGroup(false);
+
+        if(itemGroup.getSettings()==null){
+            itemGroup.setSettings(new ItemGroupSettings());
+        }
 
         itemGroup = itemGroupRepository.save(itemGroup);
         return itemGroupMapper.toDetailResponse(itemGroup);
@@ -116,6 +128,25 @@ public class ItemGroupService {
         itemGroupRepository.save(itemGroup);
 
         log.info("Default item group created for user {}", user.getId());
+    }
+
+    @Transactional(rollbackFor = Exception.class)
+    public void reorder(UUID userId, List<UUID> orderedItemGroupIds) {
+        List<ItemGroup> groups = itemGroupRepository.findAllById(orderedItemGroupIds);
+
+        boolean allOwned = groups.stream().allMatch(g->g.getUser().getId().equals(userId));
+        if(!allOwned||groups.size() != orderedItemGroupIds.size()){
+            throw new AccessDeniedException("Invalid group ids for reorder");
+        }
+
+        Map<UUID, ItemGroup> byId = groups.stream()
+                .collect(Collectors.toMap(ItemGroup::getId, g->g));
+
+        for(int i = 0; i<orderedItemGroupIds.size(); i++){
+            byId.get(orderedItemGroupIds.get(i)).setPosition(i);
+        }
+
+        itemGroupRepository.saveAll(groups);
     }
 
 }
