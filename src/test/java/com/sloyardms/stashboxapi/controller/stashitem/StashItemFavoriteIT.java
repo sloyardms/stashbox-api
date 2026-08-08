@@ -12,7 +12,6 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.context.jdbc.SqlMergeMode;
 
@@ -31,9 +30,6 @@ public class StashItemFavoriteIT extends BaseIntegrationTest {
 
     @Autowired
     private StashItemRepository stashItemRepository;
-
-    @Autowired
-    private StashItemService stashItemService;
 
     @Nested
     @DisplayName("Successful Operations")
