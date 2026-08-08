@@ -146,10 +146,10 @@ public final class TestConstants {
                 UUID.fromString("b1c2d3e4-0001-4000-8000-000000000004");
 
         public static final UUID INTERESTING_ARTICLE_ID =
-                UUID.fromString("b1c2d3e4-0001-4000-8000-000000000006");
+                UUID.fromString("b1c2d3e4-0001-4000-8000-000000000005");
 
         public static final UUID JAVA_STREAMS_GUIDE_ID =
-                UUID.fromString("b1c2d3e4-0001-4000-8000-000000000005");
+                UUID.fromString("b1c2d3e4-0001-4000-8000-000000000006");
 
         public static final UUID MODERN_DASHBOARD_ID =
                 UUID.fromString("b1c2d3e4-0001-4000-8000-000000000007");

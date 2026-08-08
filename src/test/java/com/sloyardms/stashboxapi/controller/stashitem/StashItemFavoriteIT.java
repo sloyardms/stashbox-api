@@ -16,6 +16,8 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.context.jdbc.SqlMergeMode;
 
+import java.util.UUID;
+
 import static io.restassured.RestAssured.given;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.equalTo;
@@ -30,7 +32,7 @@ public class StashItemFavoriteIT extends BaseIntegrationTest {
     @Autowired
     private StashItemRepository stashItemRepository;
 
-    @MockitoBean
+    @Autowired
     private StashItemService stashItemService;
 
     @Nested
@@ -71,9 +73,10 @@ public class StashItemFavoriteIT extends BaseIntegrationTest {
         @DisplayName("Should return 404 when the stash item does not exist")
         @Sql(scripts = {"/sql/data/users.sql", "/sql/data/item-groups.sql"})
         void  shouldReturn404WhenTheStashItemDoesNotExist() {
+            assertThat(stashItemRepository.count()).isZero();
             givenNormalUserRequest()
                     .pathParam("groupSlug", TestConstants.Groups.DEV_RESOURCES_SLUG)
-                    .pathParam("itemId", TestConstants.StashItems.SPRING_BOOT_DOCS_ID)
+                    .pathParam("itemId", UUID.randomUUID())
                     .when()
                     .put(ENDPOINT)
                     .then()

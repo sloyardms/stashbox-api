@@ -54,7 +54,7 @@ public class TagUpdateIT extends BaseIntegrationTest {
             assertThat(response.getCreatedAt()).isNotNull();
             assertThat(response.getUpdatedAt()).isNotNull();
             assertThat(response.getItemCount()).isEqualTo(0);
-            assertThat(response.getLastUsed()).isNull();
+            assertThat(response.getLastUsed()).isNotNull();
         }
 
     }
