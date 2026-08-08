@@ -34,12 +34,7 @@ import tools.jackson.databind.JsonNode;
 
 import java.io.IOException;
 import java.time.Instant;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -180,7 +175,13 @@ public class StashItemService {
 
     @Transactional(rollbackFor = Exception.class)
     public void toggleFavorite(UUID userId, String groupSlug, UUID stashItemId){
-        if(stashItemRepository.toggleFavorite(userId, groupSlug, stashItemId) != 1){
+        System.out.println("SERVICE");
+
+        int result = stashItemRepository.toggleFavorite(userId, groupSlug, stashItemId);
+
+        System.out.println("RESULT = " + result);
+
+        if (result != 1) {
             throw new ResourceNotFoundException("StashItem", "id", stashItemId);
         }
     }
