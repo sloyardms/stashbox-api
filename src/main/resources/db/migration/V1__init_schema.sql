@@ -88,6 +88,7 @@ CREATE TABLE tags (
 
     CONSTRAINT tags_user_id_group_id_slug_unique UNIQUE (user_id, group_id, slug)
 );
+CREATE INDEX idx_tags_slug_pattern ON tags (slug text_pattern_ops);
 
 CREATE TABLE item_tags (
     item_id UUID NOT NULL,

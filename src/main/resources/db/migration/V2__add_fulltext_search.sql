@@ -1,14 +1,12 @@
--- stash_items full text search (title, url, description)
+CREATE EXTENSION IF NOT EXISTS pg_trgm;
+
+-- Generated tsvector column combining title, url, description with weights
 ALTER TABLE stash_items
     ADD COLUMN search_vector tsvector
         GENERATED ALWAYS AS (
-            to_tsvector('english', coalesce(title, ''))
+            setweight(to_tsvector('simple', coalesce(title_normalized, '')), 'A') ||
+            setweight(to_tsvector('simple', coalesce(url_normalized, '')), 'C') ||
+            setweight(to_tsvector('simple', coalesce(description, '')), 'D')
             ) STORED;
 
-CREATE INDEX stash_items_search_idx ON stash_items USING GIN (search_vector);
-
-
-CREATE EXTENSION IF NOT EXISTS pg_trgm;
-
--- tags.name trigram index
-CREATE INDEX tags_name_trgm_idx ON tags USING GIN (lower(name) gin_trgm_ops);
+CREATE INDEX idx_stash_items_search_vector ON stash_items USING GIN (search_vector);
