@@ -29,8 +29,6 @@ public interface StashItemMapper {
     @Mapping(target = "updatedAt", ignore = true)
     StashItemSummaryResponse toSummaryResponse(StashItemSearchProjection stashItem);
 
-    StashItemSummaryResponse toSummaryResponse(StashItem stashItem);
-
     @Mapping(target = "tags", ignore = true)
     StashItemDetailResponse toDetailResponse(StashItem stashItem);
 

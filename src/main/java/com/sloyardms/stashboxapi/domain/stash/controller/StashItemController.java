@@ -7,7 +7,6 @@ import com.sloyardms.stashboxapi.domain.stash.service.StashItemSearchService;
 import com.sloyardms.stashboxapi.domain.stash.service.StashItemService;
 import com.sloyardms.stashboxapi.infrastructure.security.dto.AuthenticatedUser;
 import com.sloyardms.stashboxapi.shared.validation.SortableFields;
-import com.sloyardms.stashboxapi.shared.validation.ValidSlug;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import lombok.RequiredArgsConstructor;
