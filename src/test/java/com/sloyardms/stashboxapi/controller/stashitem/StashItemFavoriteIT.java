@@ -12,9 +12,10 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.context.jdbc.SqlMergeMode;
+
+import java.util.UUID;
 
 import static io.restassured.RestAssured.given;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -29,9 +30,6 @@ public class StashItemFavoriteIT extends BaseIntegrationTest {
 
     @Autowired
     private StashItemRepository stashItemRepository;
-
-    @MockitoBean
-    private StashItemService stashItemService;
 
     @Nested
     @DisplayName("Successful Operations")
@@ -71,9 +69,10 @@ public class StashItemFavoriteIT extends BaseIntegrationTest {
         @DisplayName("Should return 404 when the stash item does not exist")
         @Sql(scripts = {"/sql/data/users.sql", "/sql/data/item-groups.sql"})
         void  shouldReturn404WhenTheStashItemDoesNotExist() {
+            assertThat(stashItemRepository.count()).isZero();
             givenNormalUserRequest()
                     .pathParam("groupSlug", TestConstants.Groups.DEV_RESOURCES_SLUG)
-                    .pathParam("itemId", TestConstants.StashItems.SPRING_BOOT_DOCS_ID)
+                    .pathParam("itemId", UUID.randomUUID())
                     .when()
                     .put(ENDPOINT)
                     .then()

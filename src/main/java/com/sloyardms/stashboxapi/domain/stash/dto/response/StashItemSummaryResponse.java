@@ -1,4 +1,4 @@
-package com.sloyardms.stashboxapi.domain.tag.dto.response;
+package com.sloyardms.stashboxapi.domain.stash.dto.response;
 
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -10,14 +10,15 @@ import java.util.UUID;
 @Getter
 @Setter
 @NoArgsConstructor
-public class TagCountResponse {
+public class StashItemSummaryResponse {
 
     private UUID id;
-    private String name;
-    private String slug;
-    private Integer itemCount;
+    private String title;
+    private String url;
+    private String description;
+    private String imagePath;
+    private Boolean favorite;
     private Instant createdAt;
     private Instant updatedAt;
-    private Instant lastUsed;
 
 }

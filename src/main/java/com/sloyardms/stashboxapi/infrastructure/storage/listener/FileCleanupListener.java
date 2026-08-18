@@ -2,6 +2,7 @@ package com.sloyardms.stashboxapi.infrastructure.storage.listener;
 
 import com.sloyardms.stashboxapi.infrastructure.storage.event.ImageHardDeleteEvent;
 import com.sloyardms.stashboxapi.infrastructure.storage.event.StashItemHardDeleteEvent;
+import com.sloyardms.stashboxapi.infrastructure.storage.event.StashItemsHardDeleteEvent;
 import com.sloyardms.stashboxapi.infrastructure.storage.event.UserHardDeleteEvent;
 import com.sloyardms.stashboxapi.infrastructure.storage.service.FileStorageService;
 import lombok.RequiredArgsConstructor;
@@ -10,6 +11,8 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.event.TransactionPhase;
 import org.springframework.transaction.event.TransactionalEventListener;
+
+import java.util.UUID;
 
 @Slf4j
 @Component
@@ -34,6 +37,14 @@ public class FileCleanupListener {
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void onImageDeleted(ImageHardDeleteEvent event) {
         fileStorageService.deleteFile(event.imagePath());
+    }
+
+    @Async("fileCleanupExecutor")
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+    public void onStashItemsDeleted(StashItemsHardDeleteEvent event) {
+        for(UUID stashItemId: event.stashItemsIds()){
+            fileStorageService.deleteStashItemFolder(event.userId(), stashItemId);
+        }
     }
 
 }

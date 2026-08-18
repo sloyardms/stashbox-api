@@ -12,5 +12,6 @@ public class UserSettingsResponse {
 
     private Boolean darkModeEnabled;
     private Boolean filtersEnabled;
+    private String sheetPosition;
 
 }

@@ -47,7 +47,8 @@ public class StashItem extends AuditableEntity {
     private User user;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "group_id",
+    @OnDelete(action = OnDeleteAction.CASCADE)
+    @JoinColumn(name = "group_id", nullable = false,
             foreignKey = @ForeignKey(name = "stash_items_group_id_fk"))
     private ItemGroup group;
 

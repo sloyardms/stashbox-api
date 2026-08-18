@@ -13,5 +13,6 @@ public class UserSettings {
 
     private boolean darkModeEnabled = false;
     private boolean filtersEnabled = false;
+    private String sheetPosition = "left";
 
 }

@@ -24,6 +24,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import tools.jackson.databind.JsonNode;
 
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -50,7 +51,9 @@ public class TagService {
     public Page<TagCountResponse> search(UUID userId, String groupSlug, String searchQuery, Pageable pageable) {
         Map<String, String> sortFieldMappings = Map.of(
                 "itemCount", "tu.item_count",
-                "lastUsed", "tu.last_used"
+                "lastUsed", "tu.last_used",
+                "createdAt", "created_at",
+                "updatedAt", "updated_at"
         );
         Pageable mappedPageable = PageableUtils.remapSort(pageable, sortFieldMappings);
         String query = (searchQuery == null || searchQuery.isBlank()) ? null : searchQuery;
@@ -99,6 +102,14 @@ public class TagService {
         if (deleted == 0) {
             throw new ResourceNotFoundException("Tag", "slug", tagSlug);
         }
+    }
+
+    @Transactional(rollbackFor = Exception.class)
+    public void deleteMany(UUID userId, String groupSlug, List<UUID> tagsIds) {
+        if (tagsIds == null || tagsIds.isEmpty()) {
+            return;
+        }
+        tagRepository.deleteMany(userId, groupSlug, tagsIds);
     }
 
 }

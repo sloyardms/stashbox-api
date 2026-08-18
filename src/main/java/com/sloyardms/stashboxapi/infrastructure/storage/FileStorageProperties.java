@@ -44,4 +44,8 @@ public class FileStorageProperties {
         return Path.of(basePath, usersDir, userId.toString(), itemsDir, itemId.toString(), coverDir);
     }
 
+    public Path getFilePathFromRelativePath(String relativePath){
+        return Path.of(basePath, relativePath);
+    }
+
 }

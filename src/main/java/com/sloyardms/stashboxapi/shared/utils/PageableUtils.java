@@ -4,6 +4,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -26,12 +27,18 @@ public class PageableUtils {
      * @return a new {@link Pageable} with remapped sort fields
      */
     public static Pageable remapSort(Pageable pageable, Map<String, String> fieldMappings) {
-        List<Sort.Order> mappedOrders = pageable.getSort().stream()
+        List<Sort.Order> mappedOrders = new ArrayList<>(pageable.getSort().stream()
                 .map(order -> {
                     String mapped = fieldMappings.getOrDefault(order.getProperty(), order.getProperty());
                     return order.withProperty(mapped);
                 })
-                .toList();
+                .toList());
+
+        boolean hasIdTiebreaker = mappedOrders.stream().anyMatch(o -> o.getProperty().equals("id"));
+        if (!hasIdTiebreaker) {
+            mappedOrders.add(Sort.Order.asc("id"));
+        }
+
         return PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), Sort.by(mappedOrders));
     }
 

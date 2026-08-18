@@ -3,7 +3,9 @@ package com.sloyardms.stashboxapi.domain.stash.mapper;
 import com.sloyardms.stashboxapi.domain.stash.dto.request.CreateStashItemRequest;
 import com.sloyardms.stashboxapi.domain.stash.dto.request.UpdateStashItemRequest;
 import com.sloyardms.stashboxapi.domain.stash.dto.response.StashItemDetailResponse;
+import com.sloyardms.stashboxapi.domain.stash.dto.response.StashItemSummaryResponse;
 import com.sloyardms.stashboxapi.domain.stash.model.StashItem;
+import com.sloyardms.stashboxapi.domain.stash.projection.StashItemSearchProjection;
 import com.sloyardms.stashboxapi.domain.tag.mapper.TagMapper;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
@@ -24,10 +26,14 @@ public interface StashItemMapper {
     @Mapping(target = "tags", ignore = true)
     StashItem toEntity(CreateStashItemRequest createStashItemRequest);
 
+    @Mapping(target = "updatedAt", ignore = true)
+    StashItemSummaryResponse toSummaryResponse(StashItemSearchProjection stashItem);
+
     @Mapping(target = "tags", ignore = true)
     StashItemDetailResponse toDetailResponse(StashItem stashItem);
 
     @Mapping(target = "tags", ignore = true)
+    @Mapping(target = "imageAction", ignore = true)
     UpdateStashItemRequest toUpdateRequest(StashItem stashItem);
 
     @Mapping(target = "id", ignore = true)

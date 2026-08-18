@@ -53,7 +53,7 @@ CREATE INDEX url_rules_user_id_domain_idx ON url_rules (user_id, domain, is_acti
 CREATE TABLE stash_items (
     id UUID PRIMARY KEY,
     user_id UUID NOT NULL,
-    group_id UUID,
+    group_id UUID NOT NULL,
     title TEXT,
     title_normalized TEXT,
     url TEXT,
@@ -66,7 +66,7 @@ CREATE TABLE stash_items (
     updated_at TIMESTAMPTZ NOT NULL,
 
     CONSTRAINT stash_items_user_id_fk FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE,
-    CONSTRAINT stash_items_group_id_fk FOREIGN KEY(group_id) REFERENCES item_groups(id) ON DELETE SET NULL
+    CONSTRAINT stash_items_group_id_fk FOREIGN KEY(group_id) REFERENCES item_groups(id) ON DELETE CASCADE
 
 );
 CREATE INDEX stash_items_user_group_active_idx ON stash_items(user_id, group_id, created_at DESC) WHERE deleted_at IS NULL;
@@ -88,6 +88,7 @@ CREATE TABLE tags (
 
     CONSTRAINT tags_user_id_group_id_slug_unique UNIQUE (user_id, group_id, slug)
 );
+CREATE INDEX idx_tags_slug_pattern ON tags (slug text_pattern_ops);
 
 CREATE TABLE item_tags (
     item_id UUID NOT NULL,

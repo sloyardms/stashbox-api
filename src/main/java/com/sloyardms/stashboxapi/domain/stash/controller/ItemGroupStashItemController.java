@@ -1,11 +1,20 @@
 package com.sloyardms.stashboxapi.domain.stash.controller;
 
+import com.sloyardms.stashboxapi.domain.stash.dto.request.BulkStashItemRequest;
 import com.sloyardms.stashboxapi.domain.stash.dto.request.CreateStashItemRequest;
 import com.sloyardms.stashboxapi.domain.stash.dto.response.StashItemDetailResponse;
+import com.sloyardms.stashboxapi.domain.stash.dto.response.StashItemSummaryResponse;
+import com.sloyardms.stashboxapi.domain.stash.service.StashItemSearchService;
 import com.sloyardms.stashboxapi.domain.stash.service.StashItemService;
 import com.sloyardms.stashboxapi.infrastructure.security.dto.AuthenticatedUser;
+import com.sloyardms.stashboxapi.shared.validation.SortableFields;
 import com.sloyardms.stashboxapi.shared.validation.ValidSlug;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.validation.annotation.Validated;
@@ -24,6 +33,38 @@ import java.util.UUID;
 public class ItemGroupStashItemController {
 
     private final StashItemService stashItemService;
+    private final StashItemSearchService stashItemSearchService;
+
+    @GetMapping
+    public ResponseEntity<Page<StashItemSummaryResponse>> listItems(
+            @PathVariable @ValidSlug String groupSlug,
+            @RequestParam(required = false) @Size(max = 250) String tags,
+            @SortableFields(
+                    value = {"title", "url", "description", "createdAt"},
+                    defaultField = "createdAt",
+                    defaultDirection = Sort.Direction.DESC
+            ) Pageable pageable,
+            @AuthenticationPrincipal AuthenticatedUser authenticatedUser) {
+        Page<StashItemSummaryResponse> response = stashItemSearchService
+                .list(authenticatedUser.id(), groupSlug, tags, pageable);
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/search")
+    public ResponseEntity<Page<StashItemSummaryResponse>> searchItems(
+            @PathVariable @ValidSlug String groupSlug,
+            @RequestParam @NotBlank @Size(max = 100) String search,
+            @RequestParam(required = false) @Size(max = 250) String tags,
+            @SortableFields(
+                    value = {"title", "url", "description", "createdAt", "relevance"},
+                    defaultField = "relevance",
+                    defaultDirection = Sort.Direction.DESC
+            ) Pageable pageable,
+            @AuthenticationPrincipal AuthenticatedUser authenticatedUser) {
+        Page<StashItemSummaryResponse> response = stashItemSearchService
+                .search(authenticatedUser.id(), groupSlug, search, tags, pageable);
+        return ResponseEntity.ok(response);
+    }
 
     @PostMapping
     public ResponseEntity<StashItemDetailResponse> create(
@@ -53,15 +94,6 @@ public class ItemGroupStashItemController {
         return ResponseEntity.ok(response);
     }
 
-    @DeleteMapping("/{id}")
-    public ResponseEntity<Void> delete(
-            @PathVariable @ValidSlug String groupSlug,
-            @PathVariable UUID id,
-            @AuthenticationPrincipal AuthenticatedUser authenticatedUser){
-        stashItemService.delete(authenticatedUser.id(), groupSlug, id);
-        return ResponseEntity.noContent().build();
-    }
-
     @PutMapping("/{id}/favorite")
     public ResponseEntity<Void> toggleFavorite(
             @PathVariable @ValidSlug String groupSlug,
@@ -71,12 +103,12 @@ public class ItemGroupStashItemController {
         return ResponseEntity.noContent().build();
     }
 
-    @DeleteMapping("/{id}/image")
-    public ResponseEntity<Void> deleteImage(
+    @PutMapping("/bulk-favorite")
+    public ResponseEntity<Void> toggleFavoriteBulk(
             @PathVariable @ValidSlug String groupSlug,
-            @PathVariable UUID id,
+            @RequestBody BulkStashItemRequest request,
             @AuthenticationPrincipal AuthenticatedUser authenticatedUser){
-        stashItemService.removeImage(authenticatedUser.id(), groupSlug, id);
+        stashItemService.toggleFavoriteMany(authenticatedUser.id(), groupSlug, request.getIds());
         return ResponseEntity.noContent().build();
     }
 

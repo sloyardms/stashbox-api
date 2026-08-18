@@ -35,8 +35,9 @@ public interface TagRepository extends JpaRepository<Tag, UUID> {
             @Param("tagSlug") String tagSlug);
 
     @Query(value = """
-                SELECT t.id, t.name, t.slug,
-                    COALESCE(tu.item_count, 0) AS item_count
+                SELECT t.id, t.name, t.slug, t.created_at, t.updated_at,
+                    COALESCE(tu.item_count, 0) AS item_count,
+                    tu.last_used as last_used
                 FROM tags t
                 INNER JOIN item_groups ig ON ig.id = t.group_id
                 LEFT JOIN tag_usage tu ON tu.tag_id = t.id
@@ -89,4 +90,18 @@ public interface TagRepository extends JpaRepository<Tag, UUID> {
             """, nativeQuery = true)
     List<TagCountProjection> findTagsWithCountForStashItem(
             @Param("stashItemId") UUID stashItemId);
+
+    @Modifying
+    @Query("""
+        DELETE FROM Tag t
+        WHERE t.id IN :tagIds
+          AND t.user.id = :userId
+          AND t.group.slug = :groupSlug
+    """)
+    long deleteMany(
+            @Param("userId") UUID userId,
+            @Param("groupSlug") String groupSlug,
+            @Param("tagIds") List<UUID> tagIds
+    );
+
 }

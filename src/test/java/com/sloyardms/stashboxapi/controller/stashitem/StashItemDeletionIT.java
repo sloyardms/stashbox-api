@@ -26,7 +26,7 @@ import static org.mockito.Mockito.*;
 @SqlMergeMode(SqlMergeMode.MergeMode.MERGE)
 public class StashItemDeletionIT extends BaseIntegrationTest {
 
-    private final String ENDPOINT = "/api/v1/item-groups/{groupSlug}/stash-items/{itemId}";
+    private final String ENDPOINT = "/api/v1/stash-items/{itemId}";
 
     @MockitoBean
     private FileStorageService fileStorageService;
@@ -44,7 +44,6 @@ public class StashItemDeletionIT extends BaseIntegrationTest {
             // Logical deletion
             givenNormalUserRequest()
                     .when()
-                    .pathParam("groupSlug", TestConstants.Groups.DEV_RESOURCES_SLUG)
                     .pathParam("itemId", TestConstants.StashItems.SPRING_BOOT_DOCS_ID)
                     .delete(ENDPOINT)
                     .then()
@@ -61,7 +60,6 @@ public class StashItemDeletionIT extends BaseIntegrationTest {
             // Hard deletion
             givenNormalUserRequest()
                     .when()
-                    .pathParam("groupSlug", TestConstants.Groups.DEV_RESOURCES_SLUG)
                     .pathParam("itemId", TestConstants.StashItems.SPRING_BOOT_DOCS_ID)
                     .delete(ENDPOINT)
                     .then()
@@ -87,7 +85,6 @@ public class StashItemDeletionIT extends BaseIntegrationTest {
         @Sql(scripts = {"/sql/data/users.sql", "/sql/data/item-groups.sql"})
         void  shouldReturn404WhenTheStashItemDoesNotExist() {
             givenNormalUserRequest()
-                    .pathParam("groupSlug", TestConstants.Groups.DEV_RESOURCES_SLUG)
                     .pathParam("itemId", TestConstants.StashItems.SPRING_BOOT_DOCS_ID)
                     .when()
                     .delete(ENDPOINT)
@@ -107,7 +104,6 @@ public class StashItemDeletionIT extends BaseIntegrationTest {
         @DisplayName("Should return 401 when the user is not authenticated")
         void shouldReturn401WhenUserIsNotAuthenticated() {
             given()
-                    .pathParam("groupSlug", TestConstants.Groups.DEV_RESOURCES_SLUG)
                     .pathParam("itemId", TestConstants.StashItems.SPRING_BOOT_DOCS_ID)
                     .when()
                     .delete(ENDPOINT)
