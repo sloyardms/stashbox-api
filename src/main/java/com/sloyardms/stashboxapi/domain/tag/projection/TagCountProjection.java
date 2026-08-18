@@ -1,5 +1,6 @@
 package com.sloyardms.stashboxapi.domain.tag.projection;
 
+import java.time.Instant;
 import java.util.UUID;
 
 /**
@@ -14,5 +15,11 @@ public interface TagCountProjection {
     String getSlug();
 
     Integer getItemCount();
+
+    Instant getCreatedAt();
+
+    Instant getUpdatedAt();
+
+    Instant getLastUsed();
 
 }

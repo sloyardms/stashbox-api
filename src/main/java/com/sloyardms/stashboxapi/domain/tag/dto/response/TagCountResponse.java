@@ -4,6 +4,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.time.Instant;
 import java.util.UUID;
 
 @Getter
@@ -15,5 +16,8 @@ public class TagCountResponse {
     private String name;
     private String slug;
     private Integer itemCount;
+    private Instant createdAt;
+    private Instant updatedAt;
+    private Instant lastUsed;
 
 }
