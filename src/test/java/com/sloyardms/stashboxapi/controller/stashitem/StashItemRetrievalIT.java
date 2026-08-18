@@ -25,7 +25,7 @@ import static org.hamcrest.Matchers.equalTo;
 @SqlMergeMode(SqlMergeMode.MergeMode.MERGE)
 public class StashItemRetrievalIT extends BaseIntegrationTest {
 
-    private final String ENDPOINT = "/api/v1/item-groups/{groupSlug}/stash-items/{itemId}";
+    private final String ENDPOINT = "/api/v1/stash-items/{itemId}";
 
     @Nested
     @DisplayName("Successful Operations")
@@ -36,7 +36,6 @@ public class StashItemRetrievalIT extends BaseIntegrationTest {
         @Sql(scripts = {"/sql/data/users.sql", "/sql/data/item-groups.sql", "/sql/data/tags.sql", "/sql/data/stash-items.sql"})
         void shouldReturn200AndTheStashItem() {
             StashItemDetailResponse response = givenNormalUserRequest()
-                    .pathParam("groupSlug", TestConstants.Groups.UNGROUPED_SLUG)
                     .pathParam("itemId", TestConstants.StashItems.JAVA_STREAMS_GUIDE_ID)
                     .when()
                     .get(ENDPOINT)
@@ -89,7 +88,6 @@ public class StashItemRetrievalIT extends BaseIntegrationTest {
         @Sql(scripts = {"/sql/data/users.sql", "/sql/data/item-groups.sql"})
         void  shouldReturn404WhenTheStashItemDoesNotExist() {
             givenNormalUserRequest()
-                    .pathParam("groupSlug", TestConstants.Groups.UNGROUPED_SLUG)
                     .pathParam("itemId", TestConstants.StashItems.JAVA_STREAMS_GUIDE_ID)
                     .when()
                     .get(ENDPOINT)
@@ -109,7 +107,6 @@ public class StashItemRetrievalIT extends BaseIntegrationTest {
         @DisplayName("Should return 401 when the user is not authenticated")
         void shouldReturn401WhenUserIsNotAuthenticated() {
             given()
-                    .pathParam("groupSlug", TestConstants.Groups.UNGROUPED_SLUG)
                     .pathParam("itemId", TestConstants.StashItems.JAVA_STREAMS_GUIDE_ID)
                     .when()
                     .get(ENDPOINT)

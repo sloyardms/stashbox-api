@@ -23,4 +23,6 @@ public class UpdateStashItemRequest {
 
     private Set<String> tags;
 
+    private ImageAction imageAction;
+
 }

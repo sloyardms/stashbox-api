@@ -1,5 +1,6 @@
 package com.sloyardms.stashboxapi.domain.stash.controller;
 
+import com.sloyardms.stashboxapi.domain.stash.dto.request.BulkStashItemRequest;
 import com.sloyardms.stashboxapi.domain.stash.dto.request.CreateStashItemRequest;
 import com.sloyardms.stashboxapi.domain.stash.dto.response.StashItemDetailResponse;
 import com.sloyardms.stashboxapi.domain.stash.dto.response.StashItemSummaryResponse;
@@ -34,15 +35,6 @@ public class ItemGroupStashItemController {
 
     private final StashItemService stashItemService;
     private final StashItemSearchService stashItemSearchService;
-
-    @GetMapping("/{id}")
-    public ResponseEntity<StashItemDetailResponse> findById(
-            @PathVariable @ValidSlug String groupSlug,
-            @PathVariable UUID id,
-            @AuthenticationPrincipal AuthenticatedUser authenticatedUser) {
-        StashItemDetailResponse response = stashItemSearchService.findById(authenticatedUser.id(), groupSlug, id);
-        return ResponseEntity.ok(response);
-    }
 
     @GetMapping
     public ResponseEntity<Page<StashItemSummaryResponse>> listItems(
@@ -103,15 +95,6 @@ public class ItemGroupStashItemController {
         return ResponseEntity.ok(response);
     }
 
-    @DeleteMapping("/{id}")
-    public ResponseEntity<Void> delete(
-            @PathVariable @ValidSlug String groupSlug,
-            @PathVariable UUID id,
-            @AuthenticationPrincipal AuthenticatedUser authenticatedUser){
-        stashItemService.delete(authenticatedUser.id(), groupSlug, id);
-        return ResponseEntity.noContent().build();
-    }
-
     @PutMapping("/{id}/favorite")
     public ResponseEntity<Void> toggleFavorite(
             @PathVariable @ValidSlug String groupSlug,
@@ -121,12 +104,12 @@ public class ItemGroupStashItemController {
         return ResponseEntity.noContent().build();
     }
 
-    @DeleteMapping("/{id}/image")
-    public ResponseEntity<Void> deleteImage(
+    @PutMapping("/bulk-favorite")
+    public ResponseEntity<Void> toggleFavoriteBulk(
             @PathVariable @ValidSlug String groupSlug,
-            @PathVariable UUID id,
+            @RequestBody BulkStashItemRequest request,
             @AuthenticationPrincipal AuthenticatedUser authenticatedUser){
-        stashItemService.removeImage(authenticatedUser.id(), groupSlug, id);
+        stashItemService.toggleFavoriteMany(authenticatedUser.id(), groupSlug, request.getIds());
         return ResponseEntity.noContent().build();
     }
 

@@ -26,6 +26,7 @@ public interface StashItemMapper {
     @Mapping(target = "tags", ignore = true)
     StashItem toEntity(CreateStashItemRequest createStashItemRequest);
 
+    @Mapping(target = "updatedAt", ignore = true)
     StashItemSummaryResponse toSummaryResponse(StashItemSearchProjection stashItem);
 
     StashItemSummaryResponse toSummaryResponse(StashItem stashItem);
@@ -34,6 +35,7 @@ public interface StashItemMapper {
     StashItemDetailResponse toDetailResponse(StashItem stashItem);
 
     @Mapping(target = "tags", ignore = true)
+    @Mapping(target = "imageAction", ignore = true)
     UpdateStashItemRequest toUpdateRequest(StashItem stashItem);
 
     @Mapping(target = "id", ignore = true)

@@ -47,7 +47,7 @@ public class FileStorageService {
     }
 
     public void deleteFile(String filePath) {
-        Path file = Paths.get(filePath);
+        Path file = fileStorageProperties.getFilePathFromRelativePath(filePath);
         if(!Files.exists(file)){
             log.warn("File does not exist, skipping deletion: {}", filePath);
             return;
@@ -66,18 +66,26 @@ public class FileStorageService {
             return;
         }
 
+        boolean success = true;
+
         try (Stream<Path> paths = Files.walk(folder)) {
-            paths.sorted(Comparator.reverseOrder())
-                    .forEach(path -> {
-                        try {
-                            Files.delete(path);
-                        } catch (IOException e) {
-                            log.error("Failed to delete {}: {}", path, e.getMessage());
-                        }
-                    });
-            log.info("Deleted folder: {}", folder);
+            for (Path path : paths.sorted(Comparator.reverseOrder()).toList()) {
+                try {
+                    Files.delete(path);
+                } catch (IOException e) {
+                    success = false;
+                    log.error("Failed to delete {}", path, e.getMessage(), e);
+                }
+            }
         } catch (IOException e) {
-            log.error("Failed to traverse folder {}: {}", folder, e.getMessage());
+            success = false;
+            log.error("Failed to traverse folder {}", folder, e.getMessage(), e);
+        }
+
+        if (success) {
+            log.info("Deleted folder: {}", folder);
+        } else {
+            log.warn("Folder cleanup incomplete: {}", folder);
         }
     }
 
@@ -170,6 +178,7 @@ public class FileStorageService {
             Path basePath = fileStorageProperties.getBasePath();
             Path fullPath = outputFile;
 
+            // return relative path
             String imagePath = basePath.relativize(fullPath)
                     .toString()
                     .replace('\\', '/');

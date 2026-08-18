@@ -12,5 +12,6 @@ public interface StashItemSearchProjection {
     String getImagePath();
     Boolean getFavorite();
     Instant getCreatedAt();
+    Instant getDeletedAt();
 
 }

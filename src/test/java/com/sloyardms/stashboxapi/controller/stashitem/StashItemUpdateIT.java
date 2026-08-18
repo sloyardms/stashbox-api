@@ -71,7 +71,8 @@ public class StashItemUpdateIT extends BaseIntegrationTest {
                     "tags": [
                         "Browser",
                         "Account"
-                    ]
+                    ],
+                    "imageAction": "REPLACE"
                 }
                 """;
 

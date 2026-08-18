@@ -1,6 +1,7 @@
 package com.sloyardms.stashboxapi.domain.stash.service;
 
 import com.sloyardms.stashboxapi.domain.stash.dto.request.CreateStashItemRequest;
+import com.sloyardms.stashboxapi.domain.stash.dto.request.ImageAction;
 import com.sloyardms.stashboxapi.domain.stash.dto.request.UpdateStashItemRequest;
 import com.sloyardms.stashboxapi.domain.stash.dto.response.StashItemDetailResponse;
 import com.sloyardms.stashboxapi.domain.stash.mapper.StashItemMapper;
@@ -15,6 +16,7 @@ import com.sloyardms.stashboxapi.domain.tag.model.Tag;
 import com.sloyardms.stashboxapi.domain.tag.repository.TagRepository;
 import com.sloyardms.stashboxapi.infrastructure.storage.event.ImageHardDeleteEvent;
 import com.sloyardms.stashboxapi.infrastructure.storage.event.StashItemHardDeleteEvent;
+import com.sloyardms.stashboxapi.infrastructure.storage.event.StashItemsHardDeleteEvent;
 import com.sloyardms.stashboxapi.infrastructure.storage.service.FileStorageService;
 import com.sloyardms.stashboxapi.shared.exception.FieldErrorDetail;
 import com.sloyardms.stashboxapi.shared.exception.types.FieldValidationException;
@@ -80,7 +82,7 @@ public class StashItemService {
 
         // run validations
         validateAtLeastOneFieldProvided(newStashItem, image);
-        verifyRequiredFields(itemGroup, newStashItem, image);
+        verifyRequiredFields(itemGroup, newStashItem, image, null);
         verifyUniqueFields(itemGroup, newStashItem);
 
         // create tags
@@ -125,16 +127,16 @@ public class StashItemService {
         stashItemMapper.updateEntityFromDto(patchedDto, targetStashItem);
 
         // regenerate normalized title and url
-        if(!originalTitle.equals(targetStashItem.getTitle())) {
+        if(originalTitle!=null && !originalTitle.equals(targetStashItem.getTitle())) {
             targetStashItem.setTitleNormalized(SlugUtils.normalize(targetStashItem.getTitle()));
         }
-        if(!originalUrl.equals(targetStashItem.getUrl())) {
+        if(originalUrl!=null && !originalUrl.equals(targetStashItem.getUrl())) {
             targetStashItem.setUrlNormalized(SlugUtils.normalize(targetStashItem.getUrl()));
         }
 
         // run validations
         validateAtLeastOneFieldProvided(targetStashItem, image);
-        verifyRequiredFields(itemGroup, targetStashItem, image);
+        verifyRequiredFields(itemGroup, targetStashItem, image, patchedDto.getImageAction());
         verifyUniqueFields(itemGroup, targetStashItem);
 
         // save the stashitem and tags
@@ -142,16 +144,34 @@ public class StashItemService {
         targetStashItem.setTags(tags);
         targetStashItem = stashItemRepository.saveAndFlush(targetStashItem);
 
-        // save the image
-        if(image!=null && !image.isEmpty()){
-            String previousImagePath = targetStashItem.getImagePath();
-            String newImagePath = saveImageCover(userId, targetStashItem.getId(), image);
-            targetStashItem.setImagePath(newImagePath);
-            targetStashItem = stashItemRepository.save(targetStashItem);
+        switch(patchedDto.getImageAction()){
+            case REMOVE ->{
+                String previousImagePath = targetStashItem.getImagePath();
 
-            // delete old image
-            if(previousImagePath != null && !previousImagePath.equals(targetStashItem.getImagePath())){
-                applicationEventPublisher.publishEvent(new ImageHardDeleteEvent(previousImagePath));
+                if (previousImagePath != null) {
+                    targetStashItem.setImagePath(null);
+                    targetStashItem = stashItemRepository.save(targetStashItem);
+
+                    applicationEventPublisher.publishEvent(
+                            new ImageHardDeleteEvent(previousImagePath)
+                    );
+                }
+            }
+            case REPLACE -> {
+                if (image == null || image.isEmpty()) {
+                    throw new IllegalArgumentException(
+                            "Image is required when imageAction is REPLACE"
+                    );
+                }
+                String previousImagePath = targetStashItem.getImagePath();
+                String newImagePath = saveImageCover(userId, targetStashItem.getId(), image);
+                targetStashItem.setImagePath(newImagePath);
+                targetStashItem = stashItemRepository.save(targetStashItem);
+
+                // delete old image
+                if(previousImagePath != null && !previousImagePath.equals(targetStashItem.getImagePath())){
+                    applicationEventPublisher.publishEvent(new ImageHardDeleteEvent(previousImagePath));
+                }
             }
         }
 
@@ -159,8 +179,8 @@ public class StashItemService {
     }
 
     @Transactional(rollbackFor = Exception.class)
-    public void delete(UUID userId, String groupSlug, UUID stashItemId){
-        StashItem targetStashItem = stashItemRepository.findByIdAndUserIdAndGroupSlug(stashItemId, userId, groupSlug)
+    public void delete(UUID userId, UUID stashItemId){
+        StashItem targetStashItem = stashItemRepository.findByIdAndUserId(stashItemId, userId)
                 .orElseThrow(() -> new ResourceNotFoundException("StashItem", "id", stashItemId));
 
         if(targetStashItem.getDeletedAt() == null){
@@ -174,53 +194,69 @@ public class StashItemService {
     }
 
     @Transactional(rollbackFor = Exception.class)
+    public void deleteMany(UUID userId, List<UUID> stashItemIds){
+        List<StashItem> stashItems = stashItemRepository.findAllByIdInAndUserId(stashItemIds, userId);
+
+        List<StashItem> itemsToSoftDelete = new ArrayList<>();
+        List<StashItem> itemsToHardDelete = new ArrayList<>();
+
+        Instant now = Instant.now();
+
+        for(StashItem stashItem : stashItems){
+            if(stashItem.getDeletedAt() == null){
+                stashItem.setDeletedAt(now);
+                itemsToSoftDelete.add(stashItem);
+            }else{
+                itemsToHardDelete.add(stashItem);
+            }
+        }
+
+        if(!itemsToSoftDelete.isEmpty()){
+            stashItemRepository.saveAll(itemsToSoftDelete);
+        }
+
+        if(!itemsToHardDelete.isEmpty()){
+            List<UUID> hardDeletedIds = itemsToHardDelete.stream()
+                    .map(StashItem::getId)
+                    .toList();
+
+            stashItemRepository.deleteAll(itemsToHardDelete);
+            applicationEventPublisher.publishEvent(new StashItemsHardDeleteEvent(userId, hardDeletedIds));
+        }
+    }
+
+    @Transactional(rollbackFor = Exception.class)
+    public long emptyTrash(UUID userId){
+        List<StashItem> stashItems = stashItemRepository.findAllByUserIdAndDeletedAtNotNull(userId);
+
+        long count = 0;
+        if(!stashItems.isEmpty()){
+            List<UUID> hardDeletedIds = stashItems.stream()
+                    .map(StashItem::getId)
+                    .toList();
+            count = stashItemRepository.emptyTrash(userId);
+            applicationEventPublisher.publishEvent(new StashItemsHardDeleteEvent(userId, hardDeletedIds));
+
+        }
+        return count;
+    }
+
+    @Transactional(readOnly = true)
+    public long softDeletedCount(UUID userId){
+        return stashItemRepository.countByUserIdAndDeletedAtIsNotNull(userId);
+    }
+
+    @Transactional(rollbackFor = Exception.class)
     public void toggleFavorite(UUID userId, String groupSlug, UUID stashItemId){
-        System.out.println("SERVICE");
-
-        int result = stashItemRepository.toggleFavorite(userId, groupSlug, stashItemId);
-
-        System.out.println("RESULT = " + result);
-
+        int result = stashItemRepository.toggleFavoriteMany(userId, groupSlug, List.of(stashItemId));
         if (result != 1) {
             throw new ResourceNotFoundException("StashItem", "id", stashItemId);
         }
     }
 
-    /**
-     * Removes the StashItem's cover image without affecting other fields.
-     * No-op if the item has no image. The underlying file is deleted only after commit.
-     *
-     * @throws ResourceNotFoundException if the item doesn't exist or isn't owned by the user
-     * @throws FieldValidationException if removing the image leaves the item invalid
-     *         per the group's required-field / at-least-one-field rules
-     * @return StashItemDetailResponse the affected StashItem Dto
-     */
     @Transactional(rollbackFor = Exception.class)
-    public StashItemDetailResponse removeImage(UUID userId, String groupSlug, UUID stashItemId){
-        StashItem targetStashItem = stashItemRepository.findByIdAndUserIdAndGroupSlug(stashItemId, userId, groupSlug)
-                .orElseThrow(() -> new ResourceNotFoundException("StashItem", "id", stashItemId));
-        ItemGroup itemGroup = targetStashItem.getGroup();
-
-        String previousImagePath = targetStashItem.getImagePath();
-
-        if(previousImagePath == null){
-            // already no image
-            return stashItemMapper.toDetailResponse(targetStashItem);
-        }
-
-        targetStashItem.setImagePath(null);
-
-        // run validations
-        validateAtLeastOneFieldProvided(targetStashItem, null);
-        verifyRequiredFields(itemGroup, targetStashItem, null);
-
-        // save changes
-        stashItemRepository.save(targetStashItem);
-
-        // delete old image
-        applicationEventPublisher.publishEvent(new ImageHardDeleteEvent(previousImagePath));
-
-        return toDetailResponse(targetStashItem);
+    public void toggleFavoriteMany(UUID userId, String groupSlug, List<UUID> stashItemIds){
+        stashItemRepository.toggleFavoriteMany(userId, groupSlug, stashItemIds);
     }
 
     // HELPER METHODS
@@ -370,9 +406,10 @@ public class StashItemService {
      *
      * @param itemGroup The group to which the item belongs
      * @param stashItem The item to validate
+     * @param imageAction The action to apply to the image
      * @throws FieldValidationException aggregating all violated required fields
      */
-    private void verifyRequiredFields(ItemGroup itemGroup, StashItem stashItem, MultipartFile image) {
+    private void verifyRequiredFields(ItemGroup itemGroup, StashItem stashItem, MultipartFile image, ImageAction imageAction) {
         ItemGroupSettings settings = itemGroup.getSettings();
         List<FieldErrorDetail> errors = new ArrayList<>();
 
@@ -388,7 +425,11 @@ public class StashItemService {
             }
         }
 
-        if (settings.isRequiredImage() && (image == null || image.isEmpty())) {
+        boolean hasNewImage = image != null && !image.isEmpty();
+        boolean hasExistingImage = StringUtils.hasText(stashItem.getImagePath());
+        boolean imageWillExist = hasNewImage || (ImageAction.KEEP.equals(imageAction) && hasExistingImage);
+
+        if (settings.isRequiredImage() && !imageWillExist) {
             errors.add(new FieldErrorDetail("image", "validation.notBlank"));
         }
 

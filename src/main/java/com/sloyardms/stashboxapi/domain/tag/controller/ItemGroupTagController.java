@@ -1,5 +1,6 @@
 package com.sloyardms.stashboxapi.domain.tag.controller;
 
+import com.sloyardms.stashboxapi.domain.tag.dto.request.BulkTagRequest;
 import com.sloyardms.stashboxapi.domain.tag.dto.request.CreateTagRequest;
 import com.sloyardms.stashboxapi.domain.tag.dto.response.TagCountResponse;
 import com.sloyardms.stashboxapi.domain.tag.dto.response.TagDetailResponse;
@@ -49,7 +50,7 @@ public class ItemGroupTagController {
             @PathVariable @ValidSlug String groupSlug,
             @RequestParam(name = "search", required = false) String searchQuery,
             @SortableFields(
-                    value = {"name", "createdAt", "updatedAt",
+                    value = {"name", "slug", "createdAt", "updatedAt",
                             "itemCount", "lastUsed"},
                     defaultField = "itemCount",
                     defaultDirection = Sort.Direction.DESC
@@ -80,11 +81,20 @@ public class ItemGroupTagController {
     }
 
     @DeleteMapping("/{tagSlug}")
-    public ResponseEntity<TagDetailResponse> patchTag(
+    public ResponseEntity<TagDetailResponse> deleteTag(
             @PathVariable @ValidSlug String groupSlug,
             @PathVariable @ValidSlug String tagSlug,
             @AuthenticationPrincipal AuthenticatedUser authenticatedUser) {
         tagService.delete(authenticatedUser.id(), groupSlug, tagSlug);
+        return ResponseEntity.noContent().build();
+    }
+
+    @DeleteMapping("/bulk")
+    public ResponseEntity<Void> deleteBulk(
+            @PathVariable @ValidSlug String groupSlug,
+            @RequestBody BulkTagRequest request,
+            @AuthenticationPrincipal AuthenticatedUser authenticatedUser) {
+        tagService.deleteMany(authenticatedUser.id(), groupSlug,request.getIds());
         return ResponseEntity.noContent().build();
     }
 

@@ -47,8 +47,8 @@ public class StashItemSearchService {
     private final TagMapper tagMapper;
 
     @Transactional(readOnly = true)
-    public StashItemDetailResponse findById(UUID userId, String groupSlug, UUID stashItemId){
-        StashItem stashItem = stashItemRepository.findByIdAndUserIdAndGroupSlug(stashItemId, userId, groupSlug)
+    public StashItemDetailResponse findById(UUID userId, UUID stashItemId){
+        StashItem stashItem = stashItemRepository.findByIdAndUserId(stashItemId, userId)
                 .orElseThrow(()-> new ResourceNotFoundException("StashItem", "id",  stashItemId));
         StashItemDetailResponse response =
                 stashItemMapper.toDetailResponse(stashItem);
@@ -85,6 +85,25 @@ public class StashItemSearchService {
         Pageable mapped = PageableUtils.remapSort(pageable, SEARCH_SORT_MAPPINGS);
         String tsQuery = toPrefixTsQuery(tokens);
         return stashItemRepository.searchInGroup(userId, groupSlug, tsQuery, tagSlugsCsv, mapped)
+                .map(stashItemMapper::toSummaryResponse);
+    }
+
+    @Transactional(readOnly = true)
+    public Page<StashItemSummaryResponse> searchDeleted(UUID userId, String rawQuery,Pageable pageable){
+        List<String> tokens = tokenize(rawQuery);
+        if(tokens.isEmpty()){
+            throw new IllegalArgumentException("search requrires a non-blank query");
+        }
+        Pageable mapped = PageableUtils.remapSort(pageable, SEARCH_SORT_MAPPINGS);
+        String tsQuery = toPrefixTsQuery(tokens);
+        return stashItemRepository.searchInDeleted(userId, tsQuery, mapped)
+                .map(stashItemMapper::toSummaryResponse);
+    }
+
+    @Transactional(readOnly = true)
+    public Page<StashItemSummaryResponse> listDeleted(UUID userId, Pageable pageable){
+        Pageable mappedPageable = PageableUtils.remapSort(pageable, BASE_SORT_MAPPINGS);
+        return stashItemRepository.listInDeleted(userId, mappedPageable)
                 .map(stashItemMapper::toSummaryResponse);
     }
 
