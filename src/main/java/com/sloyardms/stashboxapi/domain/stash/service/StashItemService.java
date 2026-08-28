@@ -118,8 +118,9 @@ public class StashItemService {
 
         validateImageIfPresent(image);
 
-        // fetch the target stash item and its parent group
-        StashItem targetStashItem = stashItemRepository.findByIdAndUserIdAndGroupSlug(stashItemId, userId, groupSlug)
+        // fetch the target stash item and its parent group (active items only, trashed items can't be patched)
+        StashItem targetStashItem = stashItemRepository
+                .findByIdAndUserIdAndGroupSlugAndDeletedAtIsNull(stashItemId, userId, groupSlug)
                 .orElseThrow(() -> new ResourceNotFoundException("StashItem", "id", stashItemId));
         ItemGroup itemGroup = targetStashItem.getGroup();
 
@@ -144,8 +145,9 @@ public class StashItemService {
 
         validateImageIfPresent(image);
 
-        // fetch the target stash item and the target group
-        StashItem targetStashItem = stashItemRepository.findByIdAndUserIdAndGroupSlug(stashItemId, userId, groupSlug)
+        // fetch the target stash item and the target group (active items only, trashed items can't be moved)
+        StashItem targetStashItem = stashItemRepository
+                .findByIdAndUserIdAndGroupSlugAndDeletedAtIsNull(stashItemId, userId, groupSlug)
                 .orElseThrow(() -> new ResourceNotFoundException("StashItem", "id", stashItemId));
         ItemGroup targetGroup = itemGroupRepository.findBySlugAndUserId(targetGroupSlug, userId)
                 .orElseThrow(() -> new ResourceNotFoundException("ItemGroup", "id", targetGroupSlug));

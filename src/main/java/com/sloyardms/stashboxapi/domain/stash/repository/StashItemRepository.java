@@ -30,6 +30,12 @@ public interface StashItemRepository extends JpaRepository<StashItem, UUID> {
 
     Optional<StashItem> findByIdAndUserIdAndGroupSlug(UUID slug, UUID userId, String groupSlug);
 
+    /**
+     * Active-only lookup (deleted_at IS NULL). Use this for mutation paths so that items
+     * sitting in the trash bin can't be edited/moved, which would also drift tag_usage.
+     */
+    Optional<StashItem> findByIdAndUserIdAndGroupSlugAndDeletedAtIsNull(UUID slug, UUID userId, String groupSlug);
+
     @Query(value = """
         SELECT si.id, si.title, si.url, si.description, si.image_path as imagePath,
                si.is_favorite as favorite, si.created_at as createdAt
@@ -120,6 +126,7 @@ public interface StashItemRepository extends JpaRepository<StashItem, UUID> {
         WHERE
             si.user.id = :userId AND
             si.group.slug = :groupSlug AND
+            si.deletedAt IS NULL AND
             si.id IN :stashItemIds
     """)
     int toggleFavoriteMany(
