@@ -3,11 +3,15 @@ package com.sloyardms.stashboxapi.domain.note.service;
 import com.sloyardms.stashboxapi.domain.note.model.ItemNote;
 import com.sloyardms.stashboxapi.domain.note.model.NoteFile;
 import com.sloyardms.stashboxapi.domain.note.repository.NoteFileRepository;
+import com.sloyardms.stashboxapi.infrastructure.storage.AttachmentProperties;
 import com.sloyardms.stashboxapi.infrastructure.storage.PendingUpload;
 import com.sloyardms.stashboxapi.infrastructure.storage.StoredFile;
 import com.sloyardms.stashboxapi.infrastructure.storage.event.ItemNoteHardDeleteEvent;
 import com.sloyardms.stashboxapi.infrastructure.storage.event.NoteFilesHardDeleteEvent;
 import com.sloyardms.stashboxapi.infrastructure.storage.service.FileStorageService;
+import com.sloyardms.stashboxapi.shared.exception.FieldErrorDetail;
+import com.sloyardms.stashboxapi.shared.exception.types.FieldValidationException;
+import com.sloyardms.stashboxapi.shared.utils.FileValidator;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
@@ -32,6 +36,7 @@ public class NoteFileService {
     private final NoteFileRepository noteFileRepository;
     private final NoteFileCleanupService noteFileCleanupService;
     private final ApplicationEventPublisher applicationEventPublisher;
+    private final AttachmentProperties attachmentProperties;
 
     @Transactional(rollbackFor = Exception.class)
     public List<NoteFile> createNoteFiles(ItemNote note, List<MultipartFile> files){
@@ -39,14 +44,17 @@ public class NoteFileService {
         List<PendingUpload> pendingUploads = new ArrayList<>();
         List<MultipartFile> safeFiles = files == null ? List.of() : files;
 
+        validateAttachments(0, safeFiles);
+
         for(int i = 0; i < safeFiles.size(); i++){
             MultipartFile file = safeFiles.get(i);
 
             // generate soted file metadata
             UUID noteFileId = UUID.randomUUID();
+            String detectedMimeType = FileValidator.detectMimeType(file);
             StoredFile storedFile = fileStorageService
                     .generateStoredFileMetadata(note.getUser().getId(), note.getItem().getId(),
-                            note.getId(), noteFileId, file);
+                            note.getId(), noteFileId, file, detectedMimeType);
 
             // create note file entity
             NoteFile noteFile = new NoteFile();
@@ -56,7 +64,7 @@ public class NoteFileService {
             noteFile.setOriginalFilename(file.getOriginalFilename());
             noteFile.setStoredFilename(storedFile.getStoredFilename());
             noteFile.setFilePath(storedFile.getRelativeFilePath());
-            noteFile.setMimeType(file.getContentType());
+            noteFile.setMimeType(detectedMimeType);
             noteFile.setFileSize(file.getSize());
             noteFile.setFileExtension(storedFile.getFileExtension());
             noteFile.setDisplayOrder(i);
@@ -105,12 +113,55 @@ public class NoteFileService {
     public void updateNoteFiles(UUID userId, ItemNote note, List<UUID> removedFileIds, List<MultipartFile> files){
 
         List<String> filesToDelete = handleFileRemovals(userId, note, removedFileIds);
+
+        int remainingCount = note.getFiles().size();
+        validateAttachments(remainingCount, files);
+
         List<PendingUpload> pendingUploads = handleFileAdditions(note, files);
 
         applicationEventPublisher.publishEvent(new NoteFilesHardDeleteEvent(filesToDelete));
         registerPostCommitFileSync(pendingUploads);
     }
 
+
+    /**
+     * Rejects note attachments that exceed the configured count/size limits or whose
+     * content-detected MIME type is not on the allow-list. Content is inspected with
+     * Apache Tika; the client-supplied filename and {@code Content-Type} are ignored.
+     *
+     * @param existingCount number of attachments already on the note (post-removal)
+     * @param files the newly uploaded attachments (may be {@code null}/empty)
+     * @throws FieldValidationException if any file violates a constraint
+     */
+    private void validateAttachments(int existingCount, List<MultipartFile> files){
+        if (files == null || files.isEmpty()) return;
+
+        if (existingCount + files.size() > attachmentProperties.getMaxFilesPerNote()) {
+            throw new FieldValidationException("files", "validation.too_many_files");
+        }
+
+        long maxBytes = attachmentProperties.getMaxFileSize().toBytes();
+        List<FieldErrorDetail> errors = new ArrayList<>();
+
+        for (MultipartFile file : files) {
+            if (file == null || file.isEmpty()) {
+                errors.add(new FieldErrorDetail("files", "validation.file_empty"));
+                continue;
+            }
+            if (file.getSize() > maxBytes) {
+                errors.add(new FieldErrorDetail("files", "validation.file_too_large"));
+                continue;
+            }
+            String detectedMimeType = FileValidator.detectMimeType(file);
+            if (!attachmentProperties.isAllowedMimeType(detectedMimeType)) {
+                errors.add(new FieldErrorDetail("files", "validation.unsupported_file_type"));
+            }
+        }
+
+        if (!errors.isEmpty()) {
+            throw new FieldValidationException(errors);
+        }
+    }
 
     private List<String> handleFileRemovals(UUID userId, ItemNote note, List<UUID> removedFileIds){
         List<UUID> safeIds = removedFileIds == null ? List.of() : removedFileIds;
@@ -136,9 +187,10 @@ public class NoteFileService {
 
             // generate soted file metadata
             UUID noteFileId = UUID.randomUUID();
+            String detectedMimeType = FileValidator.detectMimeType(file);
             StoredFile storedFile = fileStorageService
                     .generateStoredFileMetadata(note.getUser().getId(), note.getItem().getId(),
-                            note.getId(), noteFileId, file);
+                            note.getId(), noteFileId, file, detectedMimeType);
 
             // create note file entity
             NoteFile noteFile = new NoteFile();
@@ -148,7 +200,7 @@ public class NoteFileService {
             noteFile.setOriginalFilename(file.getOriginalFilename());
             noteFile.setStoredFilename(storedFile.getStoredFilename());
             noteFile.setFilePath(storedFile.getRelativeFilePath());
-            noteFile.setMimeType(file.getContentType());
+            noteFile.setMimeType(detectedMimeType);
             noteFile.setFileSize(file.getSize());
             noteFile.setFileExtension(storedFile.getFileExtension());
             noteFile.setDisplayOrder(nextOrder++);

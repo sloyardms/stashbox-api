@@ -13,16 +13,29 @@ public class FileValidator {
     private static final Tika TIKA = new Tika();
 
     public static boolean isImage(MultipartFile file) {
-        if(file == null || file.isEmpty()) {
-            return false;
+        return isImage(detectMimeType(file));
+    }
+
+    public static boolean isImage(String mimeType) {
+        return mimeType != null && mimeType.startsWith("image/");
+    }
+
+    /**
+     * Detects the MIME type of a file from its content only (magic bytes), ignoring the
+     * client-supplied filename and {@code Content-Type} header.
+     *
+     * @return the detected MIME type, or {@code null} if the file is empty or unreadable
+     */
+    public static String detectMimeType(MultipartFile file) {
+        if (file == null || file.isEmpty()) {
+            return null;
         }
 
-        try(InputStream inputStream = file.getInputStream()){
-            String mimeType = TIKA.detect(inputStream);
-            return mimeType != null && mimeType.startsWith("image/");
-        }catch (IOException e){
-            log.error("Error validating file: {}", e.getMessage(), e);
-            return false;
+        try (InputStream inputStream = file.getInputStream()) {
+            return TIKA.detect(inputStream);
+        } catch (IOException e) {
+            log.error("Error detecting file type: {}", e.getMessage(), e);
+            return null;
         }
     }
 

@@ -8,6 +8,8 @@ import com.sloyardms.stashboxapi.shared.utils.FileValidator;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import net.coobird.thumbnailator.Thumbnails;
+import org.apache.tika.mime.MimeTypeException;
+import org.apache.tika.mime.MimeTypes;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -211,21 +213,12 @@ public class FileStorageService {
                 .replace('\\', '/');
     }
 
-    public StoredFile generateStoredFileMetadata(UUID userId, UUID itemId, UUID noteId, UUID fileId, MultipartFile file){
+    public StoredFile generateStoredFileMetadata(UUID userId, UUID itemId, UUID noteId, UUID fileId, MultipartFile file,
+                                                String detectedMimeType){
         StoredFile storedFile = new StoredFile();
 
-        //extension
-        if(FileValidator.isImage(file)){
-            storedFile.setFileExtension(getFileExtension(file));
-            storedFile.setImage(true);
-        }else{
-            String filename = file.getOriginalFilename();
-            String extension = "";
-            if (filename != null && filename.contains(".")) {
-                extension = filename.substring(filename.lastIndexOf(".") + 1);
-            }
-            storedFile.setFileExtension(extension);
-        }
+        storedFile.setImage(FileValidator.isImage(detectedMimeType));
+        storedFile.setFileExtension(resolveSafeExtension(detectedMimeType, file));
 
         Path relativeNoteFilePath = fileStorageProperties
                 .getRelativeNoteFilePath(userId, itemId, noteId)
@@ -244,6 +237,30 @@ public class FileStorageService {
             extension = fileName.substring(fileName.lastIndexOf(".") + 1);
         }
         return extension;
+    }
+
+    /**
+     * Derives the stored-file extension from the <em>content-detected</em> MIME type so the
+     * on-disk name can never carry a client-chosen, dangerous extension (e.g. an image
+     * polyglot named {@code evil.html}). Falls back to a sanitised extension from the
+     * original filename, and finally to {@code bin}.
+     */
+    private String resolveSafeExtension(String detectedMimeType, MultipartFile file) {
+        if (detectedMimeType != null && !detectedMimeType.isBlank()) {
+            try {
+                String ext = MimeTypes.getDefaultMimeTypes()
+                        .forName(detectedMimeType)
+                        .getExtension();
+                if (ext != null && !ext.isBlank()) {
+                    return ext.startsWith(".") ? ext.substring(1) : ext;
+                }
+            } catch (MimeTypeException e) {
+                log.debug("No known extension for MIME type {}", detectedMimeType);
+            }
+        }
+
+        String raw = getFileExtension(file);
+        return raw.matches("[A-Za-z0-9]{1,12}") ? raw.toLowerCase() : "bin";
     }
 
 }
