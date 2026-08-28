@@ -1,3 +1,6 @@
+# syntax=docker/dockerfile:1
+
+##### builder #####################################################################
 FROM eclipse-temurin:25-jdk-alpine AS builder
 
 WORKDIR /app
@@ -12,11 +15,16 @@ RUN ./mvnw clean package -DskipTests -q
 
 RUN java -Djarmode=layertools -jar target/*.jar extract --destination target/extracted
 
-FROM eclipse-temurin:25-jre-alpine AS runtime
+##### runtime #####################################################################
+FROM eclipse-temurin:25-jre-jammy AS runtime
 
-RUN apk add --no-cache curl
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends curl \
+    && rm -rf /var/lib/apt/lists/*
 
-RUN addgroup -S spring && adduser -S spring -G spring
+# Debian/Ubuntu equivalent of Alpine's "addgroup -S / adduser -S -G":
+# groupadd/useradd -r create a system group/user, matching the same intent.
+RUN groupadd -r spring && useradd -r -g spring spring
 
 WORKDIR /app
 
@@ -30,14 +38,9 @@ USER spring
 
 EXPOSE 9001
 
-# JVM flags optimized for containers
-ENV JAVA_OPTS="\
-  -XX:+UseContainerSupport \
-  -XX:MaxRAMPercentage=75.0 \
-  -XX:+UseZGC \
-  -XX:+ZGenerational \
-  -XX:+OptimizeStringConcat \
-  -Djava.security.egd=file:/dev/./urandom \
-  -Dspring.backgroundpreinitializer.ignore=true"
+HEALTHCHECK --interval=10s --timeout=5s --start-period=30s --retries=5 \
+  CMD curl -f http://localhost:9001/actuator/health || exit 1
 
-ENTRYPOINT ["sh", "-c", "java $JAVA_OPTS org.springframework.boot.loader.launch.JarLauncher"]
+# exec form via sh -c so $JAVA_OPTS still expands, but `exec` replaces the
+# shell as PID 1 so SIGTERM reaches the JVM directly for graceful shutdown
+ENTRYPOINT ["sh", "-c", "exec java $JAVA_OPTS org.springframework.boot.loader.launch.JarLauncher"]

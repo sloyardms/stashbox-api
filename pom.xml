@@ -10,7 +10,7 @@
     </parent>
     <groupId>com.sloyardms</groupId>
     <artifactId>stashbox-api</artifactId>
-    <version>0.0.1</version>
+    <version>1.0.0</version>
     <name>stashbox-api</name>
     <description>stashbox-api</description>
     <url/>
@@ -40,6 +40,7 @@
         <thumbnailator.version>0.4.20</thumbnailator.version>
         <caffeine.version>3.2.4</caffeine.version>
         <apache-tika.version>3.3.1</apache-tika.version>
+        <webp-imageio.version>0.1.6</webp-imageio.version>
     </properties>
 
     <dependencies>
@@ -186,6 +187,12 @@
             <groupId>org.apache.tika</groupId>
             <artifactId>tika-core</artifactId>
             <version>${apache-tika.version}</version>
+            <scope>compile</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.sejda.imageio</groupId>
+            <artifactId>webp-imageio</artifactId>
+            <version>${webp-imageio.version}</version>
             <scope>compile</scope>
         </dependency>
     </dependencies>
