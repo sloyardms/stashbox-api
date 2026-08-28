@@ -47,6 +47,13 @@ app:
     cors:
       allowed-origins: ${FRONTEND_URL}
     public-endpoints: ${PUBLIC_ENDPOINTS}
+    jwt:
+      # Extra checks on top of signature/issuer/expiry. The realm is currently dedicated to
+      # Stashbox, so tokens are pinned to the frontend client via azp. If the realm is ever
+      # shared, keep this tight and consider adding a Keycloak audience mapper + accepted-audiences.
+      accepted-authorized-parties: ${KEYCLOAK_ACCEPTED_AUTHORIZED_PARTIES:stashbox-frontend}
+      accepted-audiences: ${KEYCLOAK_ACCEPTED_AUDIENCES:}
+      require-bearer-token-type: true
 
 spring:
   application:
