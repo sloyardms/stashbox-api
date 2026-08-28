@@ -55,11 +55,11 @@ public class UrlRuleService {
     }
 
     @Transactional(readOnly = true)
-    public Page<UrlRuleListResponse> search(UUID userId, String searchQuery, Pageable pageable) {
+    public Page<UrlRuleListResponse> search(UUID userId, String groupSlug, String searchQuery, Pageable pageable) {
         Pageable mappedPageable = PageableUtils.remapSort(pageable, SORT_FIELD_MAPPINGS);
         String query = (searchQuery == null || searchQuery.isBlank()) ? null : searchQuery;
 
-        Page<UrlRuleListProjection> result = urlRuleRepository.search(userId, query, mappedPageable);
+        Page<UrlRuleListProjection> result = urlRuleRepository.search(userId, groupSlug, query, mappedPageable);
         return result.map(urlRuleMapper::toListResponse);
     }
 
@@ -104,6 +104,11 @@ public class UrlRuleService {
         if (deleted == 0) {
             throw new ResourceNotFoundException("UrlRule", "Id", urlRuleId);
         }
+    }
+
+    @Transactional(rollbackFor = Exception.class)
+    public void deleteMany(UUID userId, String groupSlug, List<UUID> urlRuleIds) {
+        List<UrlRule> rules = urlRuleRepository.findAllByIdInAndUserIdAndGroupSlug(urlRuleIds, userId, groupSlug);
     }
 
     @Transactional(rollbackFor = Exception.class)

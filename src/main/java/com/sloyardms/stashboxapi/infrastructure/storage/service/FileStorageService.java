@@ -2,6 +2,8 @@ package com.sloyardms.stashboxapi.infrastructure.storage.service;
 
 import com.sloyardms.stashboxapi.infrastructure.storage.FileStorageProperties;
 import com.sloyardms.stashboxapi.infrastructure.storage.ImageProperties;
+import com.sloyardms.stashboxapi.infrastructure.storage.PendingUpload;
+import com.sloyardms.stashboxapi.infrastructure.storage.StoredFile;
 import com.sloyardms.stashboxapi.shared.utils.FileValidator;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -16,6 +18,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.util.Comparator;
 import java.util.UUID;
 import java.util.stream.Stream;
@@ -42,6 +45,11 @@ public class FileStorageService {
 
     public void deleteStashItemFolder(UUID userId, UUID stashItemId) {
         Path folder = fileStorageProperties.getStashItemPath(userId, stashItemId);
+        deleteFolder(folder);
+    }
+
+    public void deleteItemNoteFolder(UUID userId, UUID itemId, UUID noteId) {
+        Path folder = fileStorageProperties.getNoteFilePath(userId, itemId, noteId);
         deleteFolder(folder);
     }
 
@@ -104,7 +112,7 @@ public class FileStorageService {
             IllegalStateException {
         Path coverFile = fileStorageProperties
                 .getCoverPath(userId, stashItemId)
-                .resolve(imageId + "." + imageProperties.getFormat());
+                .resolve(imageId + "." + getFileExtension(file));
         return writeImage(coverFile, file);
     }
 
@@ -112,18 +120,20 @@ public class FileStorageService {
      * Stores an arbitrary uploaded file, routing to image processing or raw byte copy
      * depending on the detected content type. Used by notes attachments (images and other files).
      *
-     * @param outputFile the path to write the file to
-     * @param file the file to copy
-     * @return the path the file was written to
+     * @param pendingUpload file to be uploaded after creating its row in the db
+     * @return the stored file properties
      * @throws IOException if the file can't be read or written
      * @throws IllegalStateException if the file's bytes can't be decoded as an image
      */
-    private String upload(Path outputFile, MultipartFile file) throws IOException {
-        // TODO: used by upcoming comment file/image uploads
-        if (FileValidator.isImage(file)) {
-            return writeImage(outputFile, file);
-        } else {
-            return writeFile(outputFile, file);
+    public void finalizeUpload(PendingUpload pendingUpload) throws IOException {
+        Path fileOutputPath = fileStorageProperties
+                .getBasePath()
+                .resolve(pendingUpload.relativeOutputPath());
+
+        if(pendingUpload.isImage()){
+            writeImage(fileOutputPath, pendingUpload.file());
+        }else{
+            writeFile(fileOutputPath, pendingUpload.file());
         }
     }
 
@@ -138,7 +148,15 @@ public class FileStorageService {
     private String writeFile(Path outputFile, MultipartFile file) throws IOException {
         Files.createDirectories(outputFile.getParent());
         Files.copy(file.getInputStream(), outputFile);
-        return outputFile.toString();
+
+        Path basePath = fileStorageProperties.getBasePath();
+        Path fullPath = outputFile;
+
+        // return relative path
+        String filePath = basePath.relativize(fullPath)
+                .toString()
+                .replace('\\', '/');
+        return filePath;
     }
 
     /**
@@ -153,37 +171,79 @@ public class FileStorageService {
      */
     private String writeImage(Path outputFile, MultipartFile file) throws IOException {
         Files.createDirectories(outputFile.getParent());
+
+        BufferedImage image;
+
         try (InputStream in = file.getInputStream()) {
-            BufferedImage image = ImageIO.read(in);
-
-            if (image == null) {
-                throw new IllegalStateException("Could not read image — unsupported format or corrupt file");
-            }
-
-            Thumbnails.Builder<BufferedImage> thumbnailBuilder = Thumbnails.of(image)
-                    .outputFormat(imageProperties.getFormat())
-                    .outputQuality(imageProperties.getOutputQuality());
-
-            int width = image.getWidth();
-            if (width > imageProperties.getMaxWidth()) {
-                thumbnailBuilder.width(imageProperties.getMaxWidth());
-            } else {
-                thumbnailBuilder.scale(1.0);
-            }
-
-            File fileToWrite = outputFile.toFile();
-            thumbnailBuilder.toFile(fileToWrite);
-
-            Path basePath = fileStorageProperties.getBasePath();
-            Path fullPath = outputFile;
-
-            // return relative path
-            String imagePath = basePath.relativize(fullPath)
-                    .toString()
-                    .replace('\\', '/');
-
-            return imagePath;
+            image = ImageIO.read(in);
         }
+
+        if (image == null) {
+            throw new IllegalStateException(
+                    "Could not read image — unsupported format or corrupt file"
+            );
+        }
+
+        int maxSize = imageProperties.getMaxSize();
+
+        // Image already fits, preserve the original file as-is.
+        if (image.getWidth() <= maxSize && image.getHeight() <= maxSize) {
+            try (InputStream in = file.getInputStream()) {
+                Files.copy(in, outputFile, StandardCopyOption.REPLACE_EXISTING);
+            }
+        } else {
+            // Image is too large , resize while preserving aspect ratio.
+            Thumbnails.Builder<BufferedImage> builder = Thumbnails.of(image)
+                    .size(maxSize, maxSize)
+                    .keepAspectRatio(true);
+
+            float quality = imageProperties.getOutputQuality();
+            if (quality != 0.0f) {
+                builder.outputQuality(quality);
+            }
+
+            builder.toFile(outputFile.toFile());
+        }
+
+        return fileStorageProperties.getBasePath()
+                .relativize(outputFile)
+                .toString()
+                .replace('\\', '/');
+    }
+
+    public StoredFile generateStoredFileMetadata(UUID userId, UUID itemId, UUID noteId, UUID fileId, MultipartFile file){
+        StoredFile storedFile = new StoredFile();
+
+        //extension
+        if(FileValidator.isImage(file)){
+            storedFile.setFileExtension(getFileExtension(file));
+            storedFile.setImage(true);
+        }else{
+            String filename = file.getOriginalFilename();
+            String extension = "";
+            if (filename != null && filename.contains(".")) {
+                extension = filename.substring(filename.lastIndexOf(".") + 1);
+            }
+            storedFile.setFileExtension(extension);
+        }
+
+        Path relativeNoteFilePath = fileStorageProperties
+                .getRelativeNoteFilePath(userId, itemId, noteId)
+                .resolve(fileId + "." +storedFile.getFileExtension());
+
+        storedFile.setRelativeFilePath(relativeNoteFilePath.toString());
+        storedFile.setStoredFilename(fileId.toString()+"."+storedFile.getFileExtension());
+
+        return storedFile;
+    }
+
+    private String getFileExtension(MultipartFile file){
+        String fileName = file.getOriginalFilename();
+        String extension = "";
+        if (fileName != null && fileName.contains(".")) {
+            extension = fileName.substring(fileName.lastIndexOf(".") + 1);
+        }
+        return extension;
     }
 
 }

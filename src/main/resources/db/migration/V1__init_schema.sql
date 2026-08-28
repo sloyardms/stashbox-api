@@ -110,28 +110,19 @@ CREATE TABLE tag_usage (
     CONSTRAINT tag_usage_item_count_positive CHECK (item_count >= 0)
 );
 
-CREATE TYPE upload_status_enum AS ENUM (
-    'PENDING',
-    'PROCESSING',
-    'COMPLETED',
-    'FAILED'
-    );
-
 CREATE TABLE item_notes (
     id UUID PRIMARY KEY,
     user_id UUID NOT NULL,
     item_id UUID NOT NULL,
     content TEXT,
-    position INTEGER NOT NULL DEFAULT 0,
     is_pinned BOOLEAN NOT NULL DEFAULT false,
-    is_draft BOOLEAN NOT NULL DEFAULT true,
     created_at TIMESTAMPTZ NOT NULL,
     updated_at TIMESTAMPTZ NOT NULL,
 
     CONSTRAINT item_notes_user_id_fk FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE,
     CONSTRAINT item_notes_item_id_fk FOREIGN KEY(item_id) REFERENCES stash_items(id) ON DELETE CASCADE
 );
-CREATE INDEX item_notes_user_item_idx ON item_notes(user_id, item_id);
+CREATE INDEX item_notes_item_feed_idx ON item_notes(user_id, item_id, is_pinned DESC, created_at DESC);
 
 CREATE TABLE note_files (
     id UUID PRIMARY KEY,
@@ -143,7 +134,6 @@ CREATE TABLE note_files (
     mime_type TEXT NOT NULL,
     file_size BIGINT NOT NULL,
     file_extension TEXT NOT NULL,
-    upload_status upload_status_enum NOT NULL DEFAULT 'PENDING',
     display_order INTEGER NOT NULL DEFAULT 0,
     created_at TIMESTAMPTZ NOT NULL,
     updated_at TIMESTAMPTZ NOT NULL,

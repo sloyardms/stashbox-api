@@ -2,6 +2,7 @@ package com.sloyardms.stashboxapi.domain.stash.controller;
 
 import com.sloyardms.stashboxapi.domain.stash.dto.request.BulkStashItemRequest;
 import com.sloyardms.stashboxapi.domain.stash.dto.response.StashItemDetailResponse;
+import com.sloyardms.stashboxapi.domain.stash.dto.response.StashItemRestoreResponse;
 import com.sloyardms.stashboxapi.domain.stash.dto.response.StashItemSummaryResponse;
 import com.sloyardms.stashboxapi.domain.stash.service.StashItemSearchService;
 import com.sloyardms.stashboxapi.domain.stash.service.StashItemService;
@@ -94,4 +95,11 @@ public class StashItemController {
         return ResponseEntity.ok(count);
     }
 
+    @PostMapping("/{id}/restore")
+    public ResponseEntity<StashItemRestoreResponse> restore(
+            @PathVariable UUID id,
+            @AuthenticationPrincipal AuthenticatedUser authenticatedUser){
+        StashItemRestoreResponse response = stashItemService.restoreItem(authenticatedUser.id(), id);
+        return ResponseEntity.ok(response);
+    }
 }

@@ -11,8 +11,7 @@ import org.springframework.stereotype.Component;
 @ConfigurationProperties(prefix = "app.images")
 public class ImageProperties {
 
-    private int maxWidth;
-    private String format;
+    private int maxSize;
     private float outputQuality;
 
 }

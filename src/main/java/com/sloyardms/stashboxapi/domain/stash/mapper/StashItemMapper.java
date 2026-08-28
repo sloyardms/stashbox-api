@@ -3,6 +3,7 @@ package com.sloyardms.stashboxapi.domain.stash.mapper;
 import com.sloyardms.stashboxapi.domain.stash.dto.request.CreateStashItemRequest;
 import com.sloyardms.stashboxapi.domain.stash.dto.request.UpdateStashItemRequest;
 import com.sloyardms.stashboxapi.domain.stash.dto.response.StashItemDetailResponse;
+import com.sloyardms.stashboxapi.domain.stash.dto.response.StashItemRestoreResponse;
 import com.sloyardms.stashboxapi.domain.stash.dto.response.StashItemSummaryResponse;
 import com.sloyardms.stashboxapi.domain.stash.model.StashItem;
 import com.sloyardms.stashboxapi.domain.stash.projection.StashItemSearchProjection;
@@ -47,5 +48,7 @@ public interface StashItemMapper {
     @Mapping(target = "notes", ignore = true)
     @Mapping(target = "tags", ignore = true)
     void updateEntityFromDto(UpdateStashItemRequest updateStashItemRequest, @MappingTarget StashItem stashItem);
+
+    StashItemRestoreResponse toRestoreResponse(StashItem stashItem);
 
 }

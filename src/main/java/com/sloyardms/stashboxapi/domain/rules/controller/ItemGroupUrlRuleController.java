@@ -1,14 +1,20 @@
 package com.sloyardms.stashboxapi.domain.rules.controller;
 
+import com.sloyardms.stashboxapi.domain.rules.dto.request.BulkUrlRuleRequest;
 import com.sloyardms.stashboxapi.domain.rules.dto.request.CreateUrlRuleRequest;
 import com.sloyardms.stashboxapi.domain.rules.dto.response.UrlRuleDetailResponse;
+import com.sloyardms.stashboxapi.domain.rules.dto.response.UrlRuleListResponse;
 import com.sloyardms.stashboxapi.domain.rules.dto.response.UrlRuleSummaryResponse;
 import com.sloyardms.stashboxapi.domain.rules.service.UrlRuleService;
 import com.sloyardms.stashboxapi.infrastructure.security.dto.AuthenticatedUser;
+import com.sloyardms.stashboxapi.shared.validation.SortableFields;
 import com.sloyardms.stashboxapi.shared.validation.ValidSlug;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.validation.annotation.Validated;
@@ -43,6 +49,22 @@ public class ItemGroupUrlRuleController {
             @AuthenticationPrincipal AuthenticatedUser authenticatedUser) {
 
         UrlRuleDetailResponse response = urlRuleService.findById(authenticatedUser.id(), groupSlug, id);
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/search")
+    public ResponseEntity<Page<UrlRuleListResponse>> search(
+            @PathVariable @ValidSlug String groupSlug,
+            @RequestParam(value = "q", required = false) String query,
+            @SortableFields(
+                    value = {"name", "domain", "active", "priority",
+                            "lastMatchedAt", "createdAt", "updatedAt"
+                            , "groupName"},
+                    defaultField = "name",
+                    defaultDirection = Sort.Direction.ASC
+            ) Pageable pageable,
+            @AuthenticationPrincipal AuthenticatedUser authenticatedUser) {
+        Page<UrlRuleListResponse> response = urlRuleService.search(authenticatedUser.id(), groupSlug, query, pageable);
         return ResponseEntity.ok(response);
     }
 
@@ -90,6 +112,16 @@ public class ItemGroupUrlRuleController {
             @AuthenticationPrincipal AuthenticatedUser authenticatedUser) {
 
         urlRuleService.delete(authenticatedUser.id(), groupSlug, id);
+        return ResponseEntity.noContent().build();
+    }
+
+    @DeleteMapping("/{id}/bulk")
+    public ResponseEntity<Void> deleteBulk(
+            @PathVariable @ValidSlug String groupSlug,
+            @RequestBody BulkUrlRuleRequest request,
+            @AuthenticationPrincipal AuthenticatedUser authenticatedUser) {
+
+        urlRuleService.deleteMany(authenticatedUser.id(), groupSlug, request.getIds());
         return ResponseEntity.noContent().build();
     }
 

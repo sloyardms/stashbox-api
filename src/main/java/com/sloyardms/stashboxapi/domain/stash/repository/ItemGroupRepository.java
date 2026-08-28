@@ -1,5 +1,6 @@
 package com.sloyardms.stashboxapi.domain.stash.repository;
 
+import com.sloyardms.stashboxapi.domain.stash.dto.response.ItemGroupItemCountResponse;
 import com.sloyardms.stashboxapi.domain.stash.model.ItemGroup;
 import com.sloyardms.stashboxapi.domain.stash.projection.ItemGroupWithCount;
 import org.springframework.data.domain.Page;
@@ -43,6 +44,7 @@ public interface ItemGroupRepository extends JpaRepository<ItemGroup, UUID> {
                COUNT(si.id) AS itemCount
         FROM ItemGroup ig
         LEFT JOIN StashItem si ON si.group = ig
+                AND si.deletedAt IS NULL
         WHERE ig.user.id = :userId
         GROUP BY ig.id, ig.name, ig.slug, ig.icon, ig.defaultGroup, ig.position
         ORDER BY ig.position ASC
@@ -53,4 +55,18 @@ public interface ItemGroupRepository extends JpaRepository<ItemGroup, UUID> {
         """
     )
     Page<ItemGroupWithCount> findAllWithItemCountByUserId(UUID userId, Pageable pageable);
+
+    @Query("""
+        SELECT new com.sloyardms.stashboxapi.domain.stash.dto.response.ItemGroupItemCountResponse(
+            SUM(CASE WHEN si.deletedAt IS NOT NULL THEN 1L ELSE 0L END),
+            SUM(CASE WHEN si.deletedAt IS NULL THEN 1L ELSE 0L END)
+        )
+        FROM StashItem si
+        WHERE si.group.slug = :slug 
+                AND si.user.id = :userId
+        """)
+    ItemGroupItemCountResponse getItemCount(
+            @Param("userId") UUID userId,
+            @Param("slug") String slug
+    );
 }

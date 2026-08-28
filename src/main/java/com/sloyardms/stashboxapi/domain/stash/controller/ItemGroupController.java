@@ -2,6 +2,7 @@ package com.sloyardms.stashboxapi.domain.stash.controller;
 
 import com.sloyardms.stashboxapi.domain.stash.dto.request.CreateItemGroupRequest;
 import com.sloyardms.stashboxapi.domain.stash.dto.response.ItemGroupDetailResponse;
+import com.sloyardms.stashboxapi.domain.stash.dto.response.ItemGroupItemCountResponse;
 import com.sloyardms.stashboxapi.domain.stash.dto.response.ItemGroupResponse;
 import com.sloyardms.stashboxapi.domain.stash.service.ItemGroupService;
 import com.sloyardms.stashboxapi.infrastructure.security.dto.AuthenticatedUser;
@@ -98,4 +99,11 @@ public class ItemGroupController {
         return ResponseEntity.noContent().build();
     }
 
+    @GetMapping("/{slug}/count")
+    public ResponseEntity<ItemGroupItemCountResponse> itemCount(
+            @PathVariable @ValidSlug String slug,
+            @AuthenticationPrincipal AuthenticatedUser authenticatedUser) {
+        ItemGroupItemCountResponse response = itemGroupService.getItemCount(authenticatedUser.id(), slug);
+        return ResponseEntity.ok(response);
+    }
 }

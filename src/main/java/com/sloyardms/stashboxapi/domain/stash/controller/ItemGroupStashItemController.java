@@ -2,6 +2,7 @@ package com.sloyardms.stashboxapi.domain.stash.controller;
 
 import com.sloyardms.stashboxapi.domain.stash.dto.request.BulkStashItemRequest;
 import com.sloyardms.stashboxapi.domain.stash.dto.request.CreateStashItemRequest;
+import com.sloyardms.stashboxapi.domain.stash.dto.request.UpdateStashItemRequest;
 import com.sloyardms.stashboxapi.domain.stash.dto.response.StashItemDetailResponse;
 import com.sloyardms.stashboxapi.domain.stash.dto.response.StashItemSummaryResponse;
 import com.sloyardms.stashboxapi.domain.stash.service.StashItemSearchService;
@@ -9,12 +10,15 @@ import com.sloyardms.stashboxapi.domain.stash.service.StashItemService;
 import com.sloyardms.stashboxapi.infrastructure.security.dto.AuthenticatedUser;
 import com.sloyardms.stashboxapi.shared.validation.SortableFields;
 import com.sloyardms.stashboxapi.shared.validation.ValidSlug;
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.repository.query.Param;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.validation.annotation.Validated;
@@ -66,7 +70,7 @@ public class ItemGroupStashItemController {
         return ResponseEntity.ok(response);
     }
 
-    @PostMapping
+    @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<StashItemDetailResponse> create(
             @PathVariable @ValidSlug String groupSlug,
             @RequestPart("data") CreateStashItemRequest createStashItemRequest,
@@ -83,7 +87,7 @@ public class ItemGroupStashItemController {
         return ResponseEntity.created(location).body(response);
     }
 
-    @PatchMapping("/{id}")
+    @PatchMapping(value = "/{id}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<StashItemDetailResponse> patch(
             @PathVariable @ValidSlug String groupSlug,
             @PathVariable UUID id,
@@ -92,6 +96,18 @@ public class ItemGroupStashItemController {
             @AuthenticationPrincipal AuthenticatedUser authenticatedUser){
         StashItemDetailResponse response = stashItemService.patch(authenticatedUser.id(), groupSlug,id, body, image);
         return ResponseEntity.ok(response);
+    }
+
+    @PostMapping(value = "/{id}/move")
+    public ResponseEntity<Void> moveItem(
+            @PathVariable @ValidSlug String groupSlug,
+            @PathVariable UUID id,
+            @RequestParam("targetGroup") String targetGroupSlug,
+            @RequestPart("data") JsonNode body,
+            @RequestPart(value = "image", required = false) MultipartFile image,
+            @AuthenticationPrincipal AuthenticatedUser authenticatedUser){
+        stashItemService.moveItem(authenticatedUser.id(), groupSlug, id, body, targetGroupSlug, image);
+        return ResponseEntity.noContent().build();
     }
 
     @PutMapping("/{id}/favorite")

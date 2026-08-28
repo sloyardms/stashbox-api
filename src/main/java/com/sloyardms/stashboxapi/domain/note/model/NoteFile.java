@@ -37,7 +37,6 @@ import java.util.UUID;
 public class NoteFile extends AuditableEntity {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
     @ToString.Include
     @Column(name = "id", nullable = false, updatable = false)
     private UUID id;
@@ -77,11 +76,6 @@ public class NoteFile extends AuditableEntity {
     @Column(name = "file_extension", nullable = false)
     @ToString.Include
     private String fileExtension;
-
-    @Column(name = "upload_status", nullable = false, columnDefinition = "upload_status_enum")
-    @Enumerated(EnumType.STRING)
-    @ToString.Include
-    private UploadStatus status = UploadStatus.PENDING;
 
     @Column(name = "display_order", nullable = false)
     @ToString.Include
