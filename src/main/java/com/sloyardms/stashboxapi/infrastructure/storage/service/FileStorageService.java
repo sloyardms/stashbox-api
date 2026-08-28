@@ -15,7 +15,6 @@ import org.springframework.web.multipart.MultipartFile;
 
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
@@ -123,7 +122,6 @@ public class FileStorageService {
      * depending on the detected content type. Used by notes attachments (images and other files).
      *
      * @param pendingUpload file to be uploaded after creating its row in the db
-     * @return the stored file properties
      * @throws IOException if the file can't be read or written
      * @throws IllegalStateException if the file's bytes can't be decoded as an image
      */

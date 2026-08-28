@@ -6,7 +6,6 @@ import com.sloyardms.stashboxapi.domain.note.repository.NoteFileRepository;
 import com.sloyardms.stashboxapi.infrastructure.storage.AttachmentProperties;
 import com.sloyardms.stashboxapi.infrastructure.storage.PendingUpload;
 import com.sloyardms.stashboxapi.infrastructure.storage.StoredFile;
-import com.sloyardms.stashboxapi.infrastructure.storage.event.ItemNoteHardDeleteEvent;
 import com.sloyardms.stashboxapi.infrastructure.storage.event.NoteFilesHardDeleteEvent;
 import com.sloyardms.stashboxapi.infrastructure.storage.service.FileStorageService;
 import com.sloyardms.stashboxapi.shared.exception.FieldErrorDetail;
@@ -78,7 +77,7 @@ public class NoteFileService {
                     storedFile.isImage()));
         }
 
-        if(noteFiles.size() > 0){
+        if(!noteFiles.isEmpty()){
             noteFiles = noteFileRepository.saveAll(noteFiles);
             note.getFiles().addAll(noteFiles);
 
