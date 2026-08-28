@@ -2,8 +2,10 @@ package com.sloyardms.stashboxapi.domain.stash.repository;
 
 import com.sloyardms.stashboxapi.domain.stash.model.StashItem;
 import com.sloyardms.stashboxapi.domain.stash.projection.StashItemSearchProjection;
+import com.sloyardms.stashboxapi.domain.user.model.User;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -23,9 +25,16 @@ public interface StashItemRepository extends JpaRepository<StashItem, UUID> {
 
     boolean existsByGroupIdAndUrlNormalizedAndIdNot(UUID groupId, String url, UUID excludedId);
 
+    @EntityGraph(attributePaths = "group")
     Optional<StashItem> findByIdAndUserId(UUID id, UUID userId);
 
     Optional<StashItem> findByIdAndUserIdAndGroupSlug(UUID slug, UUID userId, String groupSlug);
+
+    /**
+     * Active-only lookup (deleted_at IS NULL). Use this for mutation paths so that items
+     * sitting in the trash bin can't be edited/moved, which would also drift tag_usage.
+     */
+    Optional<StashItem> findByIdAndUserIdAndGroupSlugAndDeletedAtIsNull(UUID slug, UUID userId, String groupSlug);
 
     @Query(value = """
         SELECT si.id, si.title, si.url, si.description, si.image_path as imagePath,
@@ -117,6 +126,7 @@ public interface StashItemRepository extends JpaRepository<StashItem, UUID> {
         WHERE
             si.user.id = :userId AND
             si.group.slug = :groupSlug AND
+            si.deletedAt IS NULL AND
             si.id IN :stashItemIds
     """)
     int toggleFavoriteMany(
@@ -170,8 +180,7 @@ public interface StashItemRepository extends JpaRepository<StashItem, UUID> {
 
     long countByUserIdAndDeletedAtIsNotNull(UUID userId);
 
-    @Modifying
-    @Query(value = "UPDATE stash_items SET deleted_at = NULL WHERE id = :itemId AND user_id = :userId", nativeQuery = true)
-    long restore(@Param("itemId") UUID itemId, @Param("userId") UUID userId);
+    @Query("SELECT s.id FROM StashItem s WHERE s.user.id = :userId AND s.group.slug = :groupSlug")
+    List<UUID> findIdsByUserIdAndGroupSlug(UUID userId, String groupSlug);
 
 }

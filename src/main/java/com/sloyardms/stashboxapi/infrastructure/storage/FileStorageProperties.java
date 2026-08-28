@@ -18,7 +18,7 @@ public class FileStorageProperties {
     private String tempDir;
     private String itemsDir;
     private String coverDir;
-    private String commentsDir;
+    private String notesDir;
 
     public Path getBasePath(){
         return Paths.get(basePath);
@@ -42,6 +42,14 @@ public class FileStorageProperties {
 
     public Path getCoverPath(UUID userId, UUID itemId) {
         return Path.of(basePath, usersDir, userId.toString(), itemsDir, itemId.toString(), coverDir);
+    }
+
+    public Path getNoteFilePath(UUID userId, UUID itemId, UUID noteId){
+        return Path.of(basePath, usersDir, userId.toString(), itemsDir, itemId.toString(), notesDir, noteId.toString() );
+    }
+
+    public Path getRelativeNoteFilePath(UUID userId, UUID itemId, UUID noteId){
+        return Path.of(usersDir, userId.toString(), itemsDir, itemId.toString(), notesDir, noteId.toString() );
     }
 
     public Path getFilePathFromRelativePath(String relativePath){

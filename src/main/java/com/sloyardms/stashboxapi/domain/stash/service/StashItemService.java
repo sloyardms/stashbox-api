@@ -4,6 +4,7 @@ import com.sloyardms.stashboxapi.domain.stash.dto.request.CreateStashItemRequest
 import com.sloyardms.stashboxapi.domain.stash.dto.request.ImageAction;
 import com.sloyardms.stashboxapi.domain.stash.dto.request.UpdateStashItemRequest;
 import com.sloyardms.stashboxapi.domain.stash.dto.response.StashItemDetailResponse;
+import com.sloyardms.stashboxapi.domain.stash.dto.response.StashItemRestoreResponse;
 import com.sloyardms.stashboxapi.domain.stash.mapper.StashItemMapper;
 import com.sloyardms.stashboxapi.domain.stash.model.ItemGroup;
 import com.sloyardms.stashboxapi.domain.stash.model.ItemGroupSettings;
@@ -27,10 +28,13 @@ import com.sloyardms.stashboxapi.shared.service.JsonPatchService;
 import com.sloyardms.stashboxapi.shared.utils.FileValidator;
 import com.sloyardms.stashboxapi.shared.utils.SlugUtils;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.hibernate.sql.Update;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
+import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.multipart.MultipartFile;
 import tools.jackson.databind.JsonNode;
 
@@ -39,6 +43,7 @@ import java.time.Instant;
 import java.util.*;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class StashItemService {
@@ -113,69 +118,50 @@ public class StashItemService {
 
         validateImageIfPresent(image);
 
-        // fetch the target stash item and its parent group
-        StashItem targetStashItem = stashItemRepository.findByIdAndUserIdAndGroupSlug(stashItemId, userId, groupSlug)
+        // fetch the target stash item and its parent group (active items only, trashed items can't be patched)
+        StashItem targetStashItem = stashItemRepository
+                .findByIdAndUserIdAndGroupSlugAndDeletedAtIsNull(stashItemId, userId, groupSlug)
                 .orElseThrow(() -> new ResourceNotFoundException("StashItem", "id", stashItemId));
         ItemGroup itemGroup = targetStashItem.getGroup();
 
-        String originalTitle = targetStashItem.getTitle();
-        String originalUrl = targetStashItem.getUrl();
-
-        // apply patch
-        UpdateStashItemRequest updateDto = stashItemMapper.toUpdateRequest(targetStashItem);
-        UpdateStashItemRequest patchedDto = jsonPatchService.applyPatch(patch, updateDto, UpdateStashItemRequest.class);
-        stashItemMapper.updateEntityFromDto(patchedDto, targetStashItem);
-
-        // regenerate normalized title and url
-        if(originalTitle!=null && !originalTitle.equals(targetStashItem.getTitle())) {
-            targetStashItem.setTitleNormalized(SlugUtils.normalize(targetStashItem.getTitle()));
-        }
-        if(originalUrl!=null && !originalUrl.equals(targetStashItem.getUrl())) {
-            targetStashItem.setUrlNormalized(SlugUtils.normalize(targetStashItem.getUrl()));
-        }
-
-        // run validations
-        validateAtLeastOneFieldProvided(targetStashItem, image);
-        verifyRequiredFields(itemGroup, targetStashItem, image, patchedDto.getImageAction());
-        verifyUniqueFields(itemGroup, targetStashItem);
+        UpdateStashItemRequest patchedDto = applyPatchAndValidate(itemGroup, targetStashItem, patch, image);
 
         // save the stashitem and tags
         Set<Tag> tags = createTags(targetStashItem.getGroup(), patchedDto.getTags());
         targetStashItem.setTags(tags);
         targetStashItem = stashItemRepository.saveAndFlush(targetStashItem);
 
-        switch(patchedDto.getImageAction()){
-            case REMOVE ->{
-                String previousImagePath = targetStashItem.getImagePath();
-
-                if (previousImagePath != null) {
-                    targetStashItem.setImagePath(null);
-                    targetStashItem = stashItemRepository.save(targetStashItem);
-
-                    applicationEventPublisher.publishEvent(
-                            new ImageHardDeleteEvent(previousImagePath)
-                    );
-                }
-            }
-            case REPLACE -> {
-                if (image == null || image.isEmpty()) {
-                    throw new IllegalArgumentException(
-                            "Image is required when imageAction is REPLACE"
-                    );
-                }
-                String previousImagePath = targetStashItem.getImagePath();
-                String newImagePath = saveImageCover(userId, targetStashItem.getId(), image);
-                targetStashItem.setImagePath(newImagePath);
-                targetStashItem = stashItemRepository.save(targetStashItem);
-
-                // delete old image
-                if(previousImagePath != null && !previousImagePath.equals(targetStashItem.getImagePath())){
-                    applicationEventPublisher.publishEvent(new ImageHardDeleteEvent(previousImagePath));
-                }
-            }
-        }
+        applyImageAction(userId, targetStashItem, patchedDto.getImageAction(), image);
 
         return toDetailResponse(targetStashItem);
+    }
+
+    @Transactional(rollbackFor = Exception.class)
+    public void moveItem(UUID userId, String groupSlug, UUID stashItemId, JsonNode body,
+                         String targetGroupSlug, MultipartFile image){
+        if(groupSlug.equals(targetGroupSlug)){
+            throw new FieldValidationException("targetGroup", "validation.same_group");
+        }
+
+        validateImageIfPresent(image);
+
+        // fetch the target stash item and the target group (active items only, trashed items can't be moved)
+        StashItem targetStashItem = stashItemRepository
+                .findByIdAndUserIdAndGroupSlugAndDeletedAtIsNull(stashItemId, userId, groupSlug)
+                .orElseThrow(() -> new ResourceNotFoundException("StashItem", "id", stashItemId));
+        ItemGroup targetGroup = itemGroupRepository.findBySlugAndUserId(targetGroupSlug, userId)
+                .orElseThrow(() -> new ResourceNotFoundException("ItemGroup", "id", targetGroupSlug));
+
+        UpdateStashItemRequest patchedDto = applyPatchAndValidate(targetGroup, targetStashItem, body, image);
+
+        // save the stashitem and tags
+        Set<Tag> tags = createTags(targetGroup, patchedDto.getTags());
+        targetStashItem.setGroup(targetGroup);
+        targetStashItem.setTags(tags);
+        targetStashItem = stashItemRepository.saveAndFlush(targetStashItem);
+
+        applyImageAction(userId, targetStashItem, patchedDto.getImageAction(), image);
+
     }
 
     @Transactional(rollbackFor = Exception.class)
@@ -259,7 +245,78 @@ public class StashItemService {
         stashItemRepository.toggleFavoriteMany(userId, groupSlug, stashItemIds);
     }
 
+    @Transactional(rollbackFor = Exception.class)
+    public StashItemRestoreResponse restoreItem(UUID userId, UUID stashItemId){
+        StashItem stashItem = stashItemRepository.findByIdAndUserId(stashItemId, userId)
+                .orElseThrow(() -> new ResourceNotFoundException("StashItem", "id", stashItemId));
+
+        stashItem.setDeletedAt(null);
+        stashItemRepository.save(stashItem);
+
+        return stashItemMapper.toRestoreResponse(stashItem);
+    }
+
     // HELPER METHODS
+
+    private UpdateStashItemRequest applyPatchAndValidate(ItemGroup validationGroup, StashItem targetStashItem,
+                                                         JsonNode patch, MultipartFile image) {
+        String originalTitle = targetStashItem.getTitle();
+        String originalUrl = targetStashItem.getUrl();
+
+        // apply patch
+        UpdateStashItemRequest updateDto = stashItemMapper.toUpdateRequest(targetStashItem);
+        UpdateStashItemRequest patchedDto = jsonPatchService.applyPatch(patch, updateDto, UpdateStashItemRequest.class);
+        stashItemMapper.updateEntityFromDto(patchedDto, targetStashItem);
+
+        // regenerate normalized title and url
+        if(originalTitle!=null && !originalTitle.equals(targetStashItem.getTitle())) {
+            targetStashItem.setTitleNormalized(SlugUtils.normalize(targetStashItem.getTitle()));
+        }
+        if(originalUrl!=null && !originalUrl.equals(targetStashItem.getUrl())) {
+            targetStashItem.setUrlNormalized(SlugUtils.normalize(targetStashItem.getUrl()));
+        }
+
+        // run validations
+        validateAtLeastOneFieldProvided(targetStashItem, image);
+        verifyRequiredFields(validationGroup, targetStashItem, image, patchedDto.getImageAction());
+        verifyUniqueFields(validationGroup, targetStashItem);
+
+        return patchedDto;
+    }
+
+    private void applyImageAction(UUID userId, StashItem stashItem, ImageAction action, MultipartFile image) {
+        // update imagePath
+        switch(action){
+            case REMOVE ->{
+                String previousImagePath = stashItem.getImagePath();
+
+                if (previousImagePath != null) {
+                    stashItem.setImagePath(null);
+                    stashItemRepository.save(stashItem);
+
+                    applicationEventPublisher.publishEvent(
+                            new ImageHardDeleteEvent(previousImagePath)
+                    );
+                }
+            }
+            case REPLACE -> {
+                if (image == null || image.isEmpty()) {
+                    throw new IllegalArgumentException(
+                            "Image is required when imageAction is REPLACE"
+                    );
+                }
+                String previousImagePath = stashItem.getImagePath();
+                String newImagePath = saveImageCover(userId, stashItem.getId(), image);
+                stashItem.setImagePath(newImagePath);
+                stashItem = stashItemRepository.save(stashItem);
+
+                // delete old image
+                if(previousImagePath != null && !previousImagePath.equals(stashItem.getImagePath())){
+                    applicationEventPublisher.publishEvent(new ImageHardDeleteEvent(previousImagePath));
+                }
+            }
+        }
+    }
 
     /**
      * Builds a detailed response DTO for a stash item, including tag usage information.

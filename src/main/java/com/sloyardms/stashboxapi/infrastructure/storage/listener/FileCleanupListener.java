@@ -1,9 +1,6 @@
 package com.sloyardms.stashboxapi.infrastructure.storage.listener;
 
-import com.sloyardms.stashboxapi.infrastructure.storage.event.ImageHardDeleteEvent;
-import com.sloyardms.stashboxapi.infrastructure.storage.event.StashItemHardDeleteEvent;
-import com.sloyardms.stashboxapi.infrastructure.storage.event.StashItemsHardDeleteEvent;
-import com.sloyardms.stashboxapi.infrastructure.storage.event.UserHardDeleteEvent;
+import com.sloyardms.stashboxapi.infrastructure.storage.event.*;
 import com.sloyardms.stashboxapi.infrastructure.storage.service.FileStorageService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -47,4 +44,17 @@ public class FileCleanupListener {
         }
     }
 
+    @Async("fileCleanupExecutor")
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+    public void onItemNoteDeleted(ItemNoteHardDeleteEvent event) {
+        fileStorageService.deleteItemNoteFolder(event.userId(), event.itemId(), event.noteId());
+    }
+
+    @Async("fileCleanupExecutor")
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+    public void onNoteFilesDeleted(NoteFilesHardDeleteEvent event) {
+        for(String relativeFilePath: event.relativeFilesPaths()){
+            fileStorageService.deleteFile(relativeFilePath);
+        }
+    }
 }

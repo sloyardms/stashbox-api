@@ -5,6 +5,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 
@@ -19,5 +20,6 @@ public class UrlRuleSummaryResponse {
     private String urlPattern;
     private List<Transform> transforms;
     private Integer priority;
+    private Instant createdAt;
 
 }

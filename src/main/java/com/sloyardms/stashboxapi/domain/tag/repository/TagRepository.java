@@ -104,4 +104,42 @@ public interface TagRepository extends JpaRepository<Tag, UUID> {
             @Param("tagIds") List<UUID> tagIds
     );
 
+    /**
+     * Creates a tag_usage row for any tag that is missing one (e.g. drift, or a tag
+     * created before the tag_usage trigger existed). Safe to run repeatedly.
+     *
+     * @return number of rows inserted
+     */
+    @Modifying
+    @Query(value = """
+        INSERT INTO tag_usage (tag_id, item_count, last_used)
+        SELECT t.id, 0, now()
+        FROM tags t
+        WHERE NOT EXISTS (SELECT 1 FROM tag_usage tu WHERE tu.tag_id = t.id)
+    """, nativeQuery = true)
+    int backfillMissingTagUsageRows();
+
+    /**
+     * Recomputes tag_usage.item_count from the source of truth (item_tags joined to
+     * non-soft-deleted stash_items), only touching rows that actually drifted.
+     *
+     * @return number of rows corrected
+     */
+    @Modifying
+    @Query(value = """
+        UPDATE tag_usage tu
+        SET item_count = sub.cnt
+        FROM (
+            SELECT t.id AS tag_id,
+                   COUNT(si.id) FILTER (WHERE si.deleted_at IS NULL) AS cnt
+            FROM tags t
+            LEFT JOIN item_tags it ON it.tag_id = t.id
+            LEFT JOIN stash_items si ON si.id = it.item_id
+            GROUP BY t.id
+        ) sub
+        WHERE tu.tag_id = sub.tag_id
+          AND tu.item_count IS DISTINCT FROM sub.cnt
+    """, nativeQuery = true)
+    int reconcileTagUsageCounts();
+
 }

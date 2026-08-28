@@ -3,20 +3,24 @@ package com.sloyardms.stashboxapi.domain.stash.service;
 import com.sloyardms.stashboxapi.domain.stash.dto.request.CreateItemGroupRequest;
 import com.sloyardms.stashboxapi.domain.stash.dto.request.UpdateItemGroupRequest;
 import com.sloyardms.stashboxapi.domain.stash.dto.response.ItemGroupDetailResponse;
+import com.sloyardms.stashboxapi.domain.stash.dto.response.ItemGroupItemCountResponse;
 import com.sloyardms.stashboxapi.domain.stash.dto.response.ItemGroupResponse;
 import com.sloyardms.stashboxapi.domain.stash.mapper.ItemGroupMapper;
 import com.sloyardms.stashboxapi.domain.stash.model.ItemGroup;
 import com.sloyardms.stashboxapi.domain.stash.model.ItemGroupSettings;
 import com.sloyardms.stashboxapi.domain.stash.projection.ItemGroupWithCount;
 import com.sloyardms.stashboxapi.domain.stash.repository.ItemGroupRepository;
+import com.sloyardms.stashboxapi.domain.stash.repository.StashItemRepository;
 import com.sloyardms.stashboxapi.domain.user.model.User;
 import com.sloyardms.stashboxapi.domain.user.repository.UserRepository;
+import com.sloyardms.stashboxapi.infrastructure.storage.event.StashItemsHardDeleteEvent;
 import com.sloyardms.stashboxapi.shared.exception.types.DefaultGroupDeletionNotAllowedException;
 import com.sloyardms.stashboxapi.shared.exception.types.ResourceNotFoundException;
 import com.sloyardms.stashboxapi.shared.service.JsonPatchService;
 import com.sloyardms.stashboxapi.shared.utils.SlugUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.access.AccessDeniedException;
@@ -39,6 +43,8 @@ public class ItemGroupService {
     private final ItemGroupMapper itemGroupMapper;
     private final UserRepository userRepository;
     private final JsonPatchService jsonPatchService;
+    private final StashItemRepository stashItemRepository;
+    private final ApplicationEventPublisher applicationEventPublisher;
 
     @Transactional(readOnly = true)
     public ItemGroupDetailResponse findBySlug(UUID userId, String slug) {
@@ -104,7 +110,13 @@ public class ItemGroupService {
         if (targetGroup.isDefaultGroup()) {
             throw new DefaultGroupDeletionNotAllowedException();
         }
+
+        List<UUID> stashItemIds = stashItemRepository.findIdsByUserIdAndGroupSlug(userId, slug);
         itemGroupRepository.deleteById(targetGroup.getId());
+
+        if(!stashItemIds.isEmpty()) {
+            applicationEventPublisher.publishEvent(new StashItemsHardDeleteEvent(userId, stashItemIds));
+        }
     }
 
     @Transactional(rollbackFor = Exception.class)
@@ -147,6 +159,11 @@ public class ItemGroupService {
         }
 
         itemGroupRepository.saveAll(groups);
+    }
+
+    @Transactional(readOnly = true)
+    public ItemGroupItemCountResponse getItemCount(UUID userId, String slug){
+        return itemGroupRepository.getItemCount(userId, slug);
     }
 
 }

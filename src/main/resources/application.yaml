@@ -1,21 +1,44 @@
 server:
-  port: ${BACKEND_PORT}
+  port: 9001
 
 app:
   storage:
-    base-path: ${STORAGE_BASE_PATH}
+    base-path: /stashbox
     users-dir: users
     temp-dir: temp
     items-dir: items
     cover-dir: cover
-    comments-dir: comments
+    notes-dir: notes
   images:
-    max-width: 2000
-    format: jpg
-    output-quality: 0.9
+    max-size: ${IMAGE_OUTPUT_MAX_SIZE}
+    output-quality: ${IMAGE_OUTPUT_QUALITY}
+  attachments:
+    max-file-size: 25MB
+    max-files-per-note: 5
+    allowed-mime-types:
+      - image/jpeg
+      - image/png
+      - image/gif
+      - image/webp
+      - image/avif
+      - image/bmp
+      - image/tiff
+      - application/pdf
+      - text/plain
+      - text/csv
+      - application/json
+      - application/zip
+      - application/vnd.openxmlformats-officedocument.wordprocessingml.document
+      - application/vnd.openxmlformats-officedocument.spreadsheetml.sheet
+      - application/vnd.openxmlformats-officedocument.presentationml.presentation
+      - application/msword
+      - application/vnd.ms-excel
+      - application/vnd.ms-powerpoint
+      - application/vnd.oasis.opendocument.text
+      - application/vnd.oasis.opendocument.spreadsheet
   security:
     keycloak:
-      server-url: ${KEYCLOAK_URL}
+      server-url: ${KEYCLOAK_INTERNAL_URL}
       realm: ${KEYCLOAK_REALM}
       client-id: ${KEYCLOAK_CLIENT_ID}
       client-secret: ${KEYCLOAK_CLIENT_SECRET}
@@ -24,6 +47,13 @@ app:
     cors:
       allowed-origins: ${FRONTEND_URL}
     public-endpoints: ${PUBLIC_ENDPOINTS}
+    jwt:
+      # Extra checks on top of signature/issuer/expiry. The realm is currently dedicated to
+      # Stashbox, so tokens are pinned to the frontend client via azp. If the realm is ever
+      # shared, keep this tight and consider adding a Keycloak audience mapper + accepted-audiences.
+      accepted-authorized-parties: ${KEYCLOAK_ACCEPTED_AUTHORIZED_PARTIES:stashbox-frontend}
+      accepted-audiences: ${KEYCLOAK_ACCEPTED_AUDIENCES:}
+      require-bearer-token-type: true
 
 spring:
   application:
@@ -43,8 +73,8 @@ spring:
     password: ${STASHBOX_DB_PASSWORD}
     driver-class-name: org.postgresql.Driver
     hikari:
-      minimum-idle: 2
-      maximum-pool-size: 5
+      minimum-idle: 3
+      maximum-pool-size: 10
       connection-timeout: 10000
   jpa:
     hibernate:
@@ -58,8 +88,8 @@ spring:
     locations: classpath:db/migration
   servlet:
     multipart:
-      max-file-size: 30MB
-      max-request-size: 30MB
+      max-file-size: 25MB
+      max-request-size: 125MB
   cache:
     type: caffeine
     caffeine:
@@ -70,7 +100,8 @@ spring:
     oauth2:
       resourceserver:
         jwt:
-          issuer-uri: ${KEYCLOAK_URL}/realms/${KEYCLOAK_REALM}
+          issuer-uri: ${KEYCLOAK_PUBLIC_URL}/realms/${KEYCLOAK_REALM}
+          jwk-set-uri: ${KEYCLOAK_INTERNAL_URL}/realms/${KEYCLOAK_REALM}/protocol/openid-connect/certs
       client:
         registration:
           keycloak:
@@ -80,7 +111,8 @@ spring:
             scope: openid
         provider:
           keycloak:
-            issuer-uri: ${KEYCLOAK_URL}/realms/${KEYCLOAK_REALM}
+            # Server-to-server only (client_credentials grant) - no browser involved, so internal is correct.
+            token-uri: ${KEYCLOAK_INTERNAL_URL}/realms/${KEYCLOAK_REALM}/protocol/openid-connect/token
 
 logging:
   level:

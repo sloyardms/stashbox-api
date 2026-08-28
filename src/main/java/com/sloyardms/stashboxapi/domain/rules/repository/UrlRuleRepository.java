@@ -2,6 +2,7 @@ package com.sloyardms.stashboxapi.domain.rules.repository;
 
 import com.sloyardms.stashboxapi.domain.rules.model.UrlRule;
 import com.sloyardms.stashboxapi.domain.rules.projection.UrlRuleListProjection;
+import com.sloyardms.stashboxapi.domain.user.model.User;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.EntityGraph;
@@ -48,7 +49,7 @@ public interface UrlRuleRepository extends JpaRepository<UrlRule, UUID> {
                 AND ur.group.slug = :groupSlug
                 AND ur.domain = :domain
                 AND ur.active = true
-                ORDER BY ur.priority ASC
+                ORDER BY ur.priority ASC, ur.createdAt DESC
             """)
     List<UrlRule> findActiveByDomain(
             @Param("userId") UUID userId,
@@ -70,6 +71,7 @@ public interface UrlRuleRepository extends JpaRepository<UrlRule, UUID> {
             FROM url_rules ur
             LEFT JOIN item_groups ig ON ur.group_id = ig.id
             WHERE ur.user_id = :userId
+                AND ig.slug = :groupSlug
                 AND (
                     :searchQuery IS NULL
                     OR ur.name ILIKE CONCAT('%', :searchQuery, '%')
@@ -87,6 +89,7 @@ public interface UrlRuleRepository extends JpaRepository<UrlRule, UUID> {
             """, nativeQuery = true)
     Page<UrlRuleListProjection> search(
             @Param("userId") UUID userId,
+            @Param("groupSlug") String groupSlug,
             @Param("searchQuery") String searchQuery,
             Pageable pageable);
 
@@ -118,5 +121,7 @@ public interface UrlRuleRepository extends JpaRepository<UrlRule, UUID> {
             @Param("ruleId") UUID ruleId,
             @Param("userId") UUID userId,
             @Param("groupSlug") String groupSlug);
+
+    List<UrlRule> findAllByIdInAndUserIdAndGroupSlug(List<UUID> ids, UUID userId, String groupSlug);
 
 }

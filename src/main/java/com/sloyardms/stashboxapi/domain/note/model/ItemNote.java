@@ -3,24 +3,17 @@ package com.sloyardms.stashboxapi.domain.note.model;
 import com.sloyardms.stashboxapi.shared.persistence.AuditableEntity;
 import com.sloyardms.stashboxapi.domain.stash.model.StashItem;
 import com.sloyardms.stashboxapi.domain.user.model.User;
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.FetchType;
-import jakarta.persistence.ForeignKey;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.Index;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
+import org.hibernate.annotations.BatchSize;
 import org.hibernate.annotations.OnDelete;
 import org.hibernate.annotations.OnDeleteAction;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 @Getter
@@ -28,15 +21,10 @@ import java.util.UUID;
 @NoArgsConstructor
 @ToString(onlyExplicitlyIncluded = true)
 @Entity
-@Table(name = "item_notes",
-        indexes = {
-                @Index(name = "item_notes_user_item_idx", columnList = "user_id,item_id")
-        }
-)
+@Table(name = "item_notes")
 public class ItemNote extends AuditableEntity {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
     @ToString.Include
     @Column(name = "id", nullable = false, updatable = false)
     private UUID id;
@@ -57,16 +45,13 @@ public class ItemNote extends AuditableEntity {
     @ToString.Include
     private String content;
 
-    @Column(name = "position", nullable = false)
-    @ToString.Include
-    private Integer position = 0;
-
     @Column(name = "is_pinned", nullable = false)
     @ToString.Include
     private Boolean pinned = false;
 
-    @Column(name = "is_draft", nullable = false)
-    @ToString.Include
-    private Boolean draft = true;
+    @OneToMany(mappedBy = "note", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @OrderBy("displayOrder ASC")
+    @BatchSize(size = 20)
+    private List<NoteFile> files = new ArrayList<>();
 
 }
