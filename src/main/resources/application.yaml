@@ -1,21 +1,20 @@
 server:
-  port: ${BACKEND_PORT}
+  port: 9001
 
 app:
   storage:
-    base-path: ${STORAGE_BASE_PATH}
+    base-path: /stashbox
     users-dir: users
     temp-dir: temp
     items-dir: items
     cover-dir: cover
-    comments-dir: comments
+    notes-dir: notes
   images:
-    max-width: 2000
-    format: jpg
-    output-quality: 0.9
+    max-size: ${IMAGE_OUTPUT_MAX_SIZE}
+    output-quality: ${IMAGE_OUTPUT_QUALITY}
   security:
     keycloak:
-      server-url: ${KEYCLOAK_URL}
+      server-url: ${KEYCLOAK_INTERNAL_URL}
       realm: ${KEYCLOAK_REALM}
       client-id: ${KEYCLOAK_CLIENT_ID}
       client-secret: ${KEYCLOAK_CLIENT_SECRET}
@@ -43,8 +42,8 @@ spring:
     password: ${STASHBOX_DB_PASSWORD}
     driver-class-name: org.postgresql.Driver
     hikari:
-      minimum-idle: 2
-      maximum-pool-size: 5
+      minimum-idle: 3
+      maximum-pool-size: 10
       connection-timeout: 10000
   jpa:
     hibernate:
@@ -58,8 +57,8 @@ spring:
     locations: classpath:db/migration
   servlet:
     multipart:
-      max-file-size: 30MB
-      max-request-size: 30MB
+      max-file-size: 50MB
+      max-request-size: 50MB
   cache:
     type: caffeine
     caffeine:
@@ -70,7 +69,8 @@ spring:
     oauth2:
       resourceserver:
         jwt:
-          issuer-uri: ${KEYCLOAK_URL}/realms/${KEYCLOAK_REALM}
+          issuer-uri: ${KEYCLOAK_PUBLIC_URL}/realms/${KEYCLOAK_REALM}
+          jwk-set-uri: ${KEYCLOAK_INTERNAL_URL}/realms/${KEYCLOAK_REALM}/protocol/openid-connect/certs
       client:
         registration:
           keycloak:
@@ -80,7 +80,8 @@ spring:
             scope: openid
         provider:
           keycloak:
-            issuer-uri: ${KEYCLOAK_URL}/realms/${KEYCLOAK_REALM}
+            # Server-to-server only (client_credentials grant) - no browser involved, so internal is correct.
+            token-uri: ${KEYCLOAK_INTERNAL_URL}/realms/${KEYCLOAK_REALM}/protocol/openid-connect/token
 
 logging:
   level:

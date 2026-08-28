@@ -43,8 +43,8 @@ spring:
     password: stashboxdbpassword
     driver-class-name: org.postgresql.Driver
     hikari:
-      minimum-idle: 2
-      maximum-pool-size: 5
+      minimum-idle: 3
+      maximum-pool-size: 10
       connection-timeout: 10000
   jpa:
     hibernate:
